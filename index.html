@@ -1491,8 +1491,10 @@ async function bouwGrond(meld){
      oudere cache-regel vanzelf niet meer. Beide caches vroeg checken, vóór
      al het rekenwerk hieronder: staan ze er allebei al, dan hoeft ook het
      hoogteveld — nodig voor zowel de kleuring als de rivieren — niet meer
-     berekend te worden. */
-  const reliefSleutel="v1-"+(donker?"dark":"light")+"-"+hashTekst(svgTekst)+"-"+hashTekst(JSON.stringify(DATA));
+     berekend te worden. RUWDATA (nog tweetalig, vóór vertaal()) in plaats van
+     DATA: het reliëf hangt niet van de taal af, dus zo blijft de cache-hit
+     staan als je alleen van taal wisselt. */
+  const reliefSleutel="v1-"+(donker?"dark":"light")+"-"+hashTekst(svgTekst)+"-"+hashTekst(JSON.stringify(RUWDATA));
   const [gecached,gecachedRivieren]=await Promise.all([
     reliefCache.get("png",reliefSleutel),
     reliefCache.get("rivieren",reliefSleutel),
