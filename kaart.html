@@ -1,0 +1,3007 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Araluen &amp; de Bekende Wereld</title>
+<style>
+:root{
+  --donker:0;
+  --sea:#A3B9BE; --sea-deep:#8CA6AC; --sea-line:#8AA4A9;
+  /* de zee loopt in banden van de kust af het diepe in; zee-1 ligt tegen het
+     strand aan, zee-diep is de open oceaan */
+  --zee-1:#C0CFD1; --zee-2:#B4C5C8; --zee-3:#AABEC2; --zee-diep:#93ADB3;
+  --rivier:#7C99A0; --rots:#9C9782; --sneeuw:#F1EFE4; --terrein:#5F6A5C;
+  --tone-a:#D6D2B6; --tone-b:#C4CAAE; --tone-c:#E1DBC1; --tone-d:#CDC3A2; --tone-e:#E5D6A9; --tone-f:#BEC9B3;
+  --land-base:#D2CEB7; --coast:#5A6356; --halo:#EAE7D9;
+  --ink:#222A25; --ink-soft:#5A6159; --ink-faint:#848A7C;
+  --paper:#DCDDD2; --paper-2:#E4E4DA; --edge:#B7BAAC;
+  --accent:#8A2F27; --accent-soft:#B0554A; --brass:#94794A;
+  --route-1:#1F5F6B; --route-2:#6B4A86; --route-3:#8A5A1F;
+  --shadow:0 1px 2px rgba(35,42,38,.10),0 8px 24px rgba(35,42,38,.10);
+  --font-map:"Iowan Old Style","Hoefler Text","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --font-ui:-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,system-ui,sans-serif;
+  --font-mono:"Cascadia Mono",Consolas,"SF Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --donker:1;
+  --sea:#0E1A1E; --sea-deep:#0A1215; --sea-line:#1A2A30;
+  --zee-1:#1E3238; --zee-2:#17272C; --zee-3:#121F23; --zee-diep:#0A1216;
+  --rivier:#4E7B87; --rots:#575A4B; --sneeuw:#B9BFB4; --terrein:#8C9A88;
+  --tone-a:#3A422F; --tone-b:#2B352E; --tone-c:#484D3C; --tone-d:#403926; --tone-e:#4D4330; --tone-f:#2E3B33;
+  --land-base:#303829; --coast:#7E8C7C; --halo:#0A1215;
+  --ink:#D9DDD2; --ink-soft:#9BA497; --ink-faint:#6F7A6E;
+  --paper:#151B18; --paper-2:#1C231F; --edge:#2D352F;
+  --accent:#CE7264; --accent-soft:#E09183; --brass:#B9995F;
+  --route-1:#5FB6C4; --route-2:#B192CE; --route-3:#D0985A;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  --donker:1;
+  --sea:#0E1A1E; --sea-deep:#0A1215; --sea-line:#1A2A30;
+  --zee-1:#1E3238; --zee-2:#17272C; --zee-3:#121F23; --zee-diep:#0A1216;
+  --rivier:#4E7B87; --rots:#575A4B; --sneeuw:#B9BFB4; --terrein:#8C9A88;
+  --tone-a:#3A422F; --tone-b:#2B352E; --tone-c:#484D3C; --tone-d:#403926; --tone-e:#4D4330; --tone-f:#2E3B33;
+  --land-base:#303829; --coast:#7E8C7C; --halo:#0A1215;
+  --ink:#D9DDD2; --ink-soft:#9BA497; --ink-faint:#6F7A6E;
+  --paper:#151B18; --paper-2:#1C231F; --edge:#2D352F;
+  --accent:#CE7264; --accent-soft:#E09183; --brass:#B9995F;
+  --route-1:#5FB6C4; --route-2:#B192CE; --route-3:#D0985A;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-ui);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+/* Op de kaart geen rechthoekige focusrand: die trekt een enorm kader om het
+   hele land heen. De vorm zelf licht op, dat is duidelijker en netter. */
+#map .gebied:focus,#map .marker:focus,#map .gebied:focus-visible,#map .marker:focus-visible{outline:none}
+.app{display:grid;grid-template-columns:322px 1fr;height:100vh;height:100dvh;width:100%}
+
+/* ---------- rail ---------- */
+.rail{display:flex;flex-direction:column;min-height:0;background:var(--paper);
+  border-right:1px solid var(--edge);z-index:3}
+.brand{padding:18px 20px 14px;border-bottom:1px solid var(--edge);flex:none;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.brand h1{margin:0;font-family:var(--font-map);font-size:22px;line-height:1.15;font-weight:600;text-wrap:balance}
+.brand p{margin:5px 0 0;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+.themetoggle{flex:none;display:grid;place-items:center;width:32px;height:32px;margin-top:1px;
+  background:none;border:1px solid var(--edge);border-radius:999px;cursor:pointer;color:var(--ink-soft)}
+.themetoggle:hover{border-color:var(--ink-faint);color:var(--ink)}
+.themetoggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6}
+.themetoggle .i-moon{display:none}
+:root[data-theme="dark"] .themetoggle .i-sun{display:none}
+:root[data-theme="dark"] .themetoggle .i-moon{display:block}
+.tools{padding:14px 20px 14px;display:flex;flex-direction:column;gap:16px;flex:none;
+  border-bottom:1px solid var(--edge)}
+.tools>div{display:flex;flex-direction:column;gap:9px}
+.search{position:relative;display:flex;align-items:center}
+.search svg{position:absolute;left:10px;width:15px;height:15px;stroke:var(--ink-faint);fill:none;stroke-width:1.6}
+.search input{width:100%;padding:8px 10px 8px 32px;background:var(--paper-2);
+  border:1px solid var(--edge);border-radius:4px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:4px 10px;background:transparent;border:1px solid var(--edge);border-radius:999px;
+  font-size:12px;cursor:pointer;color:var(--ink-soft);transition:background .15s,color .15s,border-color .15s}
+.chip:hover:not(:disabled){border-color:var(--ink-faint)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip:disabled{opacity:.35;cursor:not-allowed}
+.lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0}
+.rgrid{display:flex;flex-direction:column;gap:8px}
+.rrow{display:grid;grid-template-columns:74px 1fr;gap:9px;align-items:start}
+.rgl{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);
+  padding-top:6px;line-height:1.3}
+.chip.mini{min-width:27px;padding:3px 5px;text-align:center;font-size:11.5px;
+  font-family:var(--font-mono);letter-spacing:.02em}
+.rcap{margin:2px 0 0;padding:9px 11px;background:var(--paper-2);border-left:2px solid var(--accent);
+  border-radius:0 3px 3px 0;font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
+.rcap b{display:block;color:var(--ink);font-weight:500;font-family:var(--font-map);font-size:13.5px;margin-bottom:2px}
+.rcap[hidden]{display:none}
+
+.list{flex:1;overflow-y:auto;padding:6px 0 24px;min-height:0;overscroll-behavior:contain}
+.grp{padding:14px 20px 5px;position:sticky;top:0;background:var(--paper);
+  font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0}
+.item{display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;padding:6px 20px;
+  background:none;border:0;cursor:pointer;border-left:2px solid transparent}
+.item:hover{background:var(--paper-2)}
+.item[aria-current="true"]{background:var(--paper-2);border-left-color:var(--accent)}
+.item b{font-weight:500;font-size:14px}
+.item.wacht b{color:var(--ink-faint)}
+.item span{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);white-space:nowrap}
+.empty{padding:20px;color:var(--ink-faint);font-size:13px}
+.railfoot{flex:none;border-top:1px solid var(--edge);padding:10px 20px 12px;display:flex;flex-direction:column;gap:8px}
+.railfoot .links{display:flex;gap:14px;align-items:center}
+.railfoot .disclaimer{font-size:10.5px;color:var(--ink-faint)}
+.link{background:none;border:0;padding:0;cursor:pointer;font-size:12.5px;color:var(--ink-soft);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--edge)}
+.link:hover{color:var(--accent)}
+.list,.dbody{scrollbar-width:thin;scrollbar-color:var(--edge) transparent}
+.list::-webkit-scrollbar,.dbody::-webkit-scrollbar{width:11px}
+.list::-webkit-scrollbar-track,.dbody::-webkit-scrollbar-track{background:transparent}
+.list::-webkit-scrollbar-thumb,.dbody::-webkit-scrollbar-thumb{
+  background:var(--edge);border-radius:99px;border:3.5px solid var(--paper);background-clip:padding-box}
+.list::-webkit-scrollbar-thumb:hover,.dbody::-webkit-scrollbar-thumb:hover{background:var(--ink-faint)}
+
+/* ---------- kaart ---------- */
+.stage{position:relative;min-width:0;background:var(--sea);overflow:hidden}
+#map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#map.drag{cursor:grabbing}
+.ctrl{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px;z-index:2}
+.ctrl button{width:34px;height:34px;display:grid;place-items:center;background:var(--paper);
+  border:1px solid var(--edge);border-radius:4px;cursor:pointer;box-shadow:var(--shadow)}
+.ctrl button:hover{border-color:var(--ink-faint)}
+.ctrl button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.railtoggle{display:none}
+
+/* ---------- licht en kompas ----------
+   Deze twee liggen op het scherm, niet op de kaart: ze schuiven en zoomen niet
+   mee. Hier hing eerder ook een korrellaag met een mengstand (mix-blend-mode)
+   overheen. Die is eruit: een mengstand dwingt de browser om bij elk beeldje
+   de hele kaart eronder terug te lezen, en dat maakte het schuiven stroperig.
+   De korrel zit nu in het reliëfbeeld zelf, waar hij niets kost. */
+/* een zachte inval van licht: in het midden helder, naar de randen toe dieper */
+.vignet{position:absolute;inset:0;pointer-events:none;z-index:1;
+  box-shadow:inset 0 0 160px 24px rgba(28,36,32,.16)}
+:root[data-theme="dark"] .vignet{box-shadow:inset 0 0 180px 30px rgba(0,0,0,.42)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .vignet{
+  box-shadow:inset 0 0 180px 30px rgba(0,0,0,.42)}}
+.roos{position:absolute;left:18px;bottom:16px;width:74px;height:74px;z-index:2;
+  pointer-events:none;opacity:.5}
+.roos .rl{fill:var(--paper)}
+.roos .rd{fill:var(--ink-soft)}
+.roos .rr{fill:none;stroke:var(--ink-soft);stroke-width:1.1}
+.roos .rn{fill:var(--ink-soft);font-family:var(--font-map);font-size:11px;font-weight:600;
+  letter-spacing:.06em}
+
+/* ---------- bewerkstand ---------- */
+.zetbalk{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:5;display:none;
+  flex-direction:column;gap:8px;padding:8px 10px 8px 14px;background:var(--paper);
+  border:1px solid var(--edge);border-radius:6px;box-shadow:var(--shadow);font-size:13px;
+  max-width:calc(100vw - 32px)}
+body.zetten .zetbalk{display:flex}
+.zrij{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.zsel{border-top:1px solid var(--edge);padding-top:8px;gap:14px}
+.zscheid{width:1px;align-self:stretch;background:var(--edge)}
+.zgroep{display:flex;align-items:center;gap:4px}
+.zlbl{color:var(--ink-faint);font-size:12px;margin-right:2px}
+.zgroep output{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;font-size:12.5px}
+.zgroep button{padding:3px 8px!important;min-width:28px}
+.zetbalk b{font-weight:500}
+.zetbalk em{font-style:normal;color:var(--ink-faint);font-size:12px}
+.zetbalk select{padding:5px 6px;background:var(--paper-2);border:1px solid var(--edge);border-radius:4px;font-size:12.5px}
+.zetbalk button{padding:5px 11px;background:var(--paper-2);border:1px solid var(--edge);
+  border-radius:4px;cursor:pointer;font-size:12.5px}
+.zetbalk button:hover{border-color:var(--ink-faint)}
+.zetbalk button.klaar{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.zetbalk button:disabled{opacity:.4;cursor:not-allowed}
+body.zetten .marker{cursor:grab}
+body.zetten .marker.pak{cursor:grabbing}
+body.zetten .marker .glyph{stroke:var(--accent)}
+/* In de bewerkstand blijven alle markeringen staan, maar de namen volgen de
+   gewone regels: alles tegelijk tonen maakt van een eiland vol plaatsen één
+   zwarte kluwen, en juist een naam moet je kunnen aanwijzen. Zoom in en de
+   namen komen vanzelf. Wat je onder handen hebt is altijd te lezen. */
+body.zetten .marker.puntsel .mlabel,.mlabel.naamsel{opacity:1}
+body.zetten .gebied{pointer-events:none}
+/* Een landnaam laat de klik door naar het land eronder, zodat je een land ook
+   op zijn naam kunt aanwijzen. Onder een zeenaam ligt niets, dus die vangt de
+   klik zelf op — anders zou een zee nergens aan te wijzen zijn. */
+.t-gebied{pointer-events:none}
+.t-zee{cursor:pointer}
+.t-zee.sel{fill:var(--accent);opacity:1}
+body.zetten .t-zee,body.zetten .t-gebied,body.zetten .mlabelg{pointer-events:auto;cursor:grab}
+body.zetten .pak .mlabelg,body.zetten .mlabelg.pak{cursor:grabbing}
+.naamsel{fill:var(--accent)!important;stroke-width:3.5px}
+.marker.puntsel .glyph{stroke:var(--accent)!important}
+.marker.puntsel .glyph .solid{fill:var(--accent)!important}
+
+/* ---------- detail ---------- */
+.detail{position:absolute;top:0;right:0;height:100%;width:378px;max-width:100%;background:var(--paper);
+  border-left:1px solid var(--edge);box-shadow:var(--shadow);z-index:4;display:flex;flex-direction:column;
+  transform:translateX(101%);transition:transform .28s cubic-bezier(.4,0,.2,1);visibility:hidden}
+.detail.open{transform:none;visibility:visible}
+.dhead{padding:20px 22px 16px;border-bottom:1px solid var(--edge);flex:none;position:relative}
+.dclose{position:absolute;top:14px;right:14px;width:28px;height:28px;border:0;background:none;cursor:pointer;
+  color:var(--ink-faint);font-size:19px;line-height:1;border-radius:4px}
+.dclose:hover{color:var(--accent);background:var(--paper-2)}
+.eyebrow{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 6px}
+.dhead h2{margin:0;font-family:var(--font-map);font-size:26px;line-height:1.15;font-weight:600;
+  padding-right:32px;text-wrap:balance}
+/* Het paneel houdt zelf zijn zijmarge; alleen de afbeelding breekt eruit met
+   negatieve marges. Andersom (marge op de losse kinderen) ging mis, want de
+   feitentabel en de boekchips zetten hun eigen marge en verloren hem dan. */
+.dbody{flex:1;overflow-y:auto;padding:18px 22px 40px;min-height:0;overscroll-behavior:contain}
+.dbody p{margin:0 0 14px;max-width:60ch}
+.beeld{margin:0 -22px 18px;position:relative;background:var(--paper-2)}
+.beeld:first-child{margin-top:-18px}
+.beeld img{display:block;width:100%;height:210px;object-fit:cover;border-bottom:1px solid var(--edge)}
+.beeld figcaption{position:absolute;left:0;right:0;bottom:0;padding:16px 22px 8px;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#F2EFE4;
+  background:linear-gradient(transparent,rgba(12,16,14,.72))}
+.note{display:flex;gap:8px;padding:9px 11px;background:var(--paper-2);border-left:2px solid var(--brass);
+  border-radius:0 3px 3px 0;font-size:12.5px;color:var(--ink-soft);margin:0 0 16px}
+.legalbox{font-size:12.5px;color:var(--ink-soft);line-height:1.6;padding-bottom:16px;
+  margin:0 0 18px;border-bottom:1px solid var(--edge)}
+.legalbox p{margin:0 0 10px}
+.legalbox p:last-child{margin-bottom:0}
+.legalbox strong{color:var(--ink)}
+.facts{margin:0 0 18px;padding:0;list-style:none;border-top:1px solid var(--edge)}
+.facts div{display:grid;grid-template-columns:96px 1fr;gap:12px;padding:7px 0;border-bottom:1px solid var(--edge);
+  font-size:13.5px;align-items:baseline}
+.facts dt{color:var(--ink-faint);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.facts dd{margin:0}
+.books{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 20px}
+.book{display:flex;align-items:center;gap:7px;padding:3px 9px 3px 3px;border:1px solid var(--edge);
+  border-radius:999px;font-size:12.5px;color:var(--ink-soft)}
+.book i{font-family:var(--font-mono);font-style:normal;font-size:10px;background:var(--paper-2);
+  border-radius:999px;padding:2px 7px;color:var(--ink)}
+.legend{display:grid;gap:9px}
+.lrow{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;font-size:13px;color:var(--ink-soft)}
+.lrow svg{width:30px;height:22px;overflow:visible}
+.lrow .glyph .solid{fill:var(--ink);stroke:none}
+
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .rail{position:absolute;inset:0 auto 0 0;width:min(322px,86vw);transform:translateX(-101%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:var(--shadow)}
+  .rail.open{transform:none}
+  .railtoggle{display:grid;position:absolute;left:16px;top:16px;z-index:2;width:38px;height:38px;
+    place-items:center;background:var(--paper);border:1px solid var(--edge);border-radius:4px;
+    box-shadow:var(--shadow);cursor:pointer}
+  .railtoggle svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round}
+  .detail{top:auto;bottom:0;width:100%;height:min(64dvh,520px);border-left:0;border-top:1px solid var(--edge);
+    transform:translateY(101%);border-radius:10px 10px 0 0}
+  .ctrl{bottom:auto;top:16px}
+  /* op een smal scherm schuift het zijpaneel van onderen omhoog en zou het
+     kompas eronder verdwijnen; dan liever helemaal weg */
+  .roos{display:none}
+}
+
+/* ---------- kaartonderdelen ---------- */
+.gebied{cursor:pointer}
+/* Zodra het reliëf getekend is neemt dat de kleur van het land over en wordt
+   dit vlak onzichtbaar. Het blijft wel liggen: het vangt de klik op en het is
+   waar de kaart aan rekent — welk punt in welk land ligt, waar de ruimste plek
+   voor een landnaam zit. pointer-events:all zorgt dat een onzichtbaar vlak nog
+   steeds aan te wijzen is. Lukt het reliëf niet, dan is dit gewoon de kaart
+   zoals hij was. */
+.gebied .vlak{stroke:none;pointer-events:all}
+body.relief .gebied .vlak{fill-opacity:0}
+/* selectie als eigen markeerlaag in plaats van een felheidsfilter: dat laatste
+   maakt de landkleur vaal en vies */
+.gebied .mark{fill:var(--accent);fill-opacity:0;stroke:var(--accent);stroke-width:0;
+  stroke-linejoin:round;vector-effect:non-scaling-stroke;pointer-events:none;
+  transition:fill-opacity .18s,stroke-width .18s}
+.gebied:hover .mark{fill-opacity:.07}
+.gebied.sel .mark{fill-opacity:.15;stroke-width:1.5}
+.gebied:focus-visible .mark{fill-opacity:.12;stroke-width:1.5;stroke-dasharray:5 3}
+.marker:focus-visible .ring{opacity:.85}
+/* De kustlijn ligt onder de landvlakken en is dubbel zo dik. Daardoor steekt
+   alleen de buitenste helft uit voorbij de kust, en wordt de binnenste helft
+   afgedekt door het land zelf. Op een grens tussen twee landen dekken de buren
+   elkaars lijn af, zodat daar geen dubbele streep meer ontstaat. */
+.coast{fill:none;stroke:var(--coast);stroke-width:2.2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+/* De diepte van de zee in banden, zoals in een zeekaart. Elke band is een
+   dikke streep langs de kust; de volgende, dunnere streep overschildert het
+   midden van de vorige, zodat er scherpe randen tussen de banden overblijven.
+   Het is dus vectorwerk: bij elke zoomstap even scherp. Het loopt van licht
+   ondiep water tegen het strand naar het donkere open water.
+
+   De strepen houden hun dikte in schermpunten in plaats van in kaarteenheden.
+   Op het overzicht is dat hetzelfde, maar ingezoomd scheelt het enorm: een
+   streep van vierendertig eenheden is bij zes keer inzoomen ruim tweehonderd
+   punten breed, en zo'n brede streep langs een grillige kust laten uitrekenen
+   bij elk beeldje is wat het schuiven zwaar maakte. */
+.band{fill:none;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.band1{stroke:var(--zee-3);stroke-width:34}
+.band2{stroke:var(--zee-2);stroke-width:17}
+.band3{stroke:var(--zee-1);stroke-width:7}
+.grens{fill:none;stroke:var(--coast);stroke-width:.5;stroke-dasharray:2.4 2;opacity:.5;vector-effect:non-scaling-stroke}
+.grat{stroke:var(--sea-line);stroke-width:.35;opacity:.22;fill:none;vector-effect:non-scaling-stroke}
+/* Het reliëf is een bitmap: licht, schaduw, hoogtekleur en de korrel van de
+   begroeiing lopen vloeiend in elkaar over en horen niet in lijnen gevat te
+   worden. Wat scherp moet blijven — kust, grenzen, rivieren, namen — is vector
+   en ligt erbovenop. */
+.reliefbeeld{opacity:0;transition:opacity .5s}
+body.relief .reliefbeeld{opacity:1}
+/* Een dunne kustlijn bovenop het reliëf. De dikke lijn eronder houdt het land
+   van de zee gescheiden; deze houdt de rand ook bij het verste inzoomen scherp,
+   waar de bitmap zacht wordt. */
+/* Hier lag ook een kustlijn bovenop het land. Die is eruit: elk land tekent
+   zijn eigen omtrek, en omdat de vormen in world.svg elkaar op de grenzen
+   overlappen kwamen daar overal twee lijntjes naast elkaar te liggen. De
+   landsgrenzen worden nu in het reliëfbeeld zelf getrokken — daar is per punt
+   maar één land, dus daar is ook maar één grens. */
+/* rivieren: drie keer hetzelfde pad, elk een stuk korter en een tikje dikker,
+   zodat de stroom naar de monding toe aanzwelt zoals een rivier hoort te doen */
+.rivier{fill:none;stroke:var(--rivier);stroke-linecap:round;stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;opacity:.85}
+.rivier.r1{stroke-width:.85}
+.rivier.r2{stroke-width:1.4}
+.rivier.r3{stroke-width:2.1}
+/* Bos, woestijn en steppe staan niet als tekentjes op de kaart maar zitten in
+   het reliëfbeeld zelf: als kleur en als korrel. Zie GROEI bij het rekenwerk. */
+text{font-family:var(--font-map);paint-order:stroke fill;stroke:var(--halo);stroke-width:3px;
+  stroke-linejoin:round;fill:var(--ink);user-select:none}
+.t-gebied{font-size:13px;letter-spacing:.28em;text-transform:uppercase;fill:var(--ink-soft);opacity:.9}
+.t-zee{font-size:12px;letter-spacing:.3em;font-style:italic;fill:var(--ink-soft);
+  stroke:var(--sea);stroke-width:2.4px;opacity:.7}
+.t-plaats{font-size:10.5px;fill:var(--ink)}
+.t-water{fill:var(--rivier);font-style:italic;letter-spacing:.05em}
+.marker{cursor:pointer}
+.marker .glyph{stroke:var(--ink);fill:var(--halo);stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}
+.marker .glyph .solid{fill:var(--ink);stroke:none}
+.marker.approx .glyph{stroke-dasharray:2.4 2}
+.marker .hit{fill:transparent;stroke:none}
+.marker:hover .glyph,.marker:focus-visible .glyph{stroke:var(--accent)}
+.marker:hover .glyph .solid,.marker:focus-visible .glyph .solid{fill:var(--accent)}
+.marker.sel .glyph{stroke:var(--accent)}
+.marker.sel .glyph .solid{fill:var(--accent)}
+.marker.dim{opacity:.2}
+.marker.hidden,.marker.weg{display:none}
+/* ver uitgezoomd blijven alleen de landnamen over; zie stil() bij het zoomen */
+.marker{transition:opacity .3s}
+.marker.stil{opacity:0;pointer-events:none}
+.mlabel{opacity:0;transition:opacity .18s}
+.marker.showlabel .mlabel,.marker:hover .mlabel,.marker:focus-visible .mlabel,.marker.sel .mlabel{opacity:1}
+.marker.sel .mlabel{fill:var(--accent);font-weight:600}
+.ring{fill:none;stroke:var(--accent);stroke-width:1.4;opacity:0;vector-effect:non-scaling-stroke}
+.marker.sel .ring{opacity:.75}
+.route{opacity:0;transition:opacity .25s;pointer-events:none}
+.route path{fill:none;stroke:inherit;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:5 4;
+  vector-effect:non-scaling-stroke}
+.route .end{stroke-dasharray:none}
+.route.on{opacity:.95}
+.route.on path:not(.end){animation:flow 1.6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-18}}
+.routepunt{display:none;fill:var(--paper);stroke:var(--accent);stroke-width:1.4;r:2.4;
+  vector-effect:non-scaling-stroke;cursor:grab}
+body.zetten .routepunt{display:block}
+body.zetten .routepunt.pak{cursor:grabbing;fill:var(--accent)}
+@media (prefers-reduced-motion:reduce){
+  .route.on path{animation:none}
+  .detail,.rail,.mlabel{transition:none}
+}
+/* ---------- laadscherm ----------
+   Beslaat alleen het kaartgedeelte (.stage), niet de zijbalk: die staat er
+   al meteen. Licht doorzichtig, zodat de kaart erachter al waarneembaar
+   opdoemt terwijl hij nog getekend wordt. Een kompasje en een balk die
+   continu heen en weer glijdt — de duur is niet vooraf bekend, dus geen
+   balk die "klaar" belooft. Geen los kaartje eromheen: het staat gewoon op
+   de overlay, net als de rest.
+
+   Dezelfde opmaak wordt ook gebruikt bij het herbouwen ná het eerste bezoek
+   (andere taal of kleurstelling): dan blijft de kaart zichtbaar onder de
+   doorzichtige laag, maar verder is het precies hetzelfde scherm — niet een
+   los, ander soort berichtje. Staat in de HTML zelf (niet door het script
+   aangemaakt): het opbouwen blokkeert de browser, dus iets dat het script
+   zelf zou aanmaken zou pas ná afloop verschijnen. */
+.laad{position:absolute;inset:0;z-index:50;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--paper) 82%,transparent);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  opacity:1;visibility:visible;
+  transition:opacity .5s ease,visibility .5s}
+.laad[hidden]{display:grid!important;opacity:0;visibility:hidden;pointer-events:none}
+.laadvak{display:flex;flex-direction:column;align-items:center;gap:20px}
+
+/* Dezelfde tekening als het kompasje op de kaart zelf (.roos): een achtpuntige
+   roos met om en om een licht en een donker vlak per punt. Hier voluit
+   zichtbaar (geen .5 opacity) en met de noordpunt in de accentkleur, zodat
+   hij als blikvanger op zichzelf kan staan. */
+.laadroos{width:72px;height:72px;overflow:visible}
+.laadroos .lr{fill:none;stroke:var(--ink-soft);stroke-width:1;opacity:.6}
+.laadroos .ll{fill:var(--paper-2)}
+.laadroos .ld{fill:var(--ink-soft);opacity:.8}
+.laadroos .lnoord-p{fill:var(--accent)}
+.laadroos .lspil{fill:var(--paper);stroke:var(--ink-soft);stroke-width:1}
+.laadroos .lnoord{fill:var(--ink-soft);font-family:var(--font-map);font-size:10px;
+  font-weight:600;letter-spacing:.08em}
+
+.laadtitel{margin:0;font-family:var(--font-map);font-size:18px;font-weight:600;
+  letter-spacing:.01em;color:var(--ink)}
+.laadsub{margin:-12px 0 0;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft)}
+
+/* Indeterminate: geen percentage, gewoon een streepje dat blijft heen-en-weer
+   glijden zolang het laadscherm er staat — eerlijker dan een balk doen alsof
+   hij weet hoe lang het nog duurt. */
+.laadbalk{width:150px;height:3px;background:var(--edge);border-radius:99px;overflow:hidden}
+.laadbalk i{display:block;height:100%;width:38%;border-radius:99px;
+  background:linear-gradient(90deg,var(--brass),var(--accent));
+  animation:laadzoef 1.3s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes laadzoef{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(365%)}
+}
+
+</style>
+<script>
+/* Thema en taal meteen zetten, nog voor de eerste stip verf op het scherm komt.
+   Het laadscherm hieronder staat er al voordat het grote script draait, en zou
+   anders eerst in het lichte thema opflitsen om daarna om te klappen. De rest
+   van de code leest deze zelfde waarden verderop nog een keer. */
+(function(){
+  try{
+    var th=localStorage.getItem("gj-thema");
+    if(th==="dark"||th==="light")document.documentElement.dataset.theme=th;
+  }catch(e){}
+})();
+</script>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div>
+        <h1 data-t="merknaam">Araluen &amp; de Bekende Wereld</h1>
+        <p data-t="merkserie">De Grijze Jager &middot; Broederband</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+        <button class="themetoggle" id="themetoggle" data-t-aria="themeToggle" aria-label="Wissel tussen licht en donker thema" aria-pressed="false">
+          <svg class="i-sun" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="3.4"/><path d="M9 1.5v2M9 14.5v2M16.5 9h-2M3.5 9h-2M14.4 3.6l-1.4 1.4M4.98 13l-1.4 1.4M14.4 14.4l-1.4-1.4M4.98 5l-1.4-1.4"/></svg>
+          <svg class="i-moon" viewBox="0 0 18 18" aria-hidden="true"><path d="M15 10.2A6.2 6.2 0 0 1 7.8 3 6.5 6.5 0 1 0 15 10.2Z"/></svg>
+        </button>
+        <button class="themetoggle" id="langtoggle" aria-label="Switch language / wissel taal" style="font-size:10.5px;font-weight:600;letter-spacing:.02em">EN</button>
+      </div>
+    </div>
+    <div class="tools">
+      <label class="search">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M10.8 10.8 14 14"/></svg>
+        <input id="q" type="search" data-t-attr="placeholder:zoekPlaceholder" placeholder="Zoek een plaats of land&hellip;" data-t-aria="zoekLabel" aria-label="Zoek een plaats of land">
+      </label>
+      <div>
+        <p class="lbl" id="lb-serie" data-t="lblReeks">Reeks</p>
+        <div class="chips" role="group" aria-labelledby="lb-serie" id="series"></div>
+      </div>
+      <div>
+        <p class="lbl" id="lb-routes" data-t="lblRoutes">Reisroutes &mdash; kies een boek</p>
+        <div class="rgrid" role="group" aria-labelledby="lb-routes" id="routes"></div>
+        <p class="rcap" id="rcap" hidden></p>
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="railfoot">
+      <div class="links">
+        <button class="link" id="about" data-t="overDezeKaart">Over deze kaart</button>
+        <button class="link" id="legendBtn" data-t="legenda">Legenda</button>
+        <button class="link" id="zetaan" data-t="bewerken">Bewerken</button>
+      </div>
+      <p class="disclaimer" data-t="footerDisclaimer">Fanproject · niet geaffilieerd met John Flanagan</p>
+    </div>
+  </aside>
+
+  <div class="stage">
+    <!-- Laadscherm. Staat bewust hier in de HTML en niet in het script: het
+         script eronder bouwt de kaart in één blokkerende ruk op, dus alles
+         wat het zelf zou aanmaken zou pas te zien zijn als het werk al
+         klaar is. -->
+    <div class="laad" id="laad" role="status" aria-live="polite">
+      <div class="laadvak">
+        <svg class="laadroos" viewBox="-34 -38 68 72" aria-hidden="true">
+          <circle class="lr" r="26"/><circle class="lr" r="19.5"/>
+          <g transform="rotate(45)">
+            <path class="ll" d="M0-17-3.2 0 0 17Z"/><path class="ld" d="M0-17 3.2 0 0 17Z"/>
+            <path class="ll" d="M-17 0 0-3.2 17 0Z"/><path class="ld" d="M-17 0 0 3.2 17 0Z"/>
+          </g>
+          <path class="lnoord-p" d="M0-26-6 0 0 26Z"/><path class="ld" d="M0-26 6 0 0 26Z"/>
+          <path class="ll" d="M-26 0 0-6 26 0Z"/><path class="ld" d="M-26 0 0 6 26 0Z"/>
+          <circle class="lspil" r="3"/>
+          <text class="lnoord" x="0" y="-29" text-anchor="middle">N</text>
+        </svg>
+        <p class="laadtitel" id="laadtitel" data-t="merknaam">Araluen &amp; the Known World</p>
+        <p class="laadsub" id="laadsub"></p>
+        <div class="laadbalk"><i></i></div>
+      </div>
+    </div>
+    <button class="railtoggle" id="railtoggle" data-t-aria="railtoggleLabel" aria-label="Toon of verberg het zijpaneel">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 4h14M2 9h14M2 14h14"/></svg>
+    </button>
+    <svg id="map" role="application" data-t-aria="kaartLabel" aria-label="Interactieve kaart van de wereld van De Grijze Jager en Broederband"></svg>
+    <div class="vignet" aria-hidden="true"></div>
+    <svg class="roos" viewBox="-34 -38 68 72" aria-hidden="true">
+      <circle class="rr" r="26"/><circle class="rr" r="19.5"/>
+      <g transform="rotate(45)">
+        <path class="rl" d="M0-17-3.2 0 0 17Z"/><path class="rd" d="M0-17 3.2 0 0 17Z"/>
+        <path class="rl" d="M-17 0 0-3.2 17 0Z"/><path class="rd" d="M-17 0 0 3.2 17 0Z"/>
+      </g>
+      <path class="rl" d="M0-26-6 0 0 26Z"/><path class="rd" d="M0-26 6 0 0 26Z"/>
+      <path class="rl" d="M-26 0 0-6 26 0Z"/><path class="rd" d="M-26 0 0 6 26 0Z"/>
+      <text class="rn" x="0" y="-29" text-anchor="middle" data-t="noord">N</text>
+    </svg>
+    <div class="zetbalk" id="zetbalk">
+      <div class="zrij">
+        <b data-t="bewerkenKop">Bewerken</b>
+        <em id="zetstand" data-t="sleepHint">sleep een markering of een naam</em>
+        <span class="zscheid"></span>
+        <select id="zetsoort" data-t-aria="soortNieuweLabel" aria-label="Soort voor een nieuwe plaats">
+          <option value="stad" data-t="optDorpStad">Dorp of stad</option>
+          <option value="kasteel" data-t="optKasteel">Kasteel</option>
+          <option value="haven" data-t="optHaven">Havenstad</option>
+          <option value="ruine" data-t="optRuine">Ruïne</option>
+          <option value="slagveld" data-t="optSlagveld">Slagveld</option>
+          <option value="natuur" data-t="optLandschap">Landschap</option>
+          <option value="rivier" data-t="optRivier">Rivier</option>
+        </select>
+        <button id="zetnieuw" data-t="nieuwePlaats">+ Nieuwe plaats</button>
+        <span class="zscheid"></span>
+        <button id="zetkopie" data-t="kopieer">Kopieer</button>
+        <button id="zetbestand" data-t="opslaanAls">Opslaan als data.json</button>
+        <button id="zetterug" data-t="allesTerug">Alles terug</button>
+        <button id="zetklaar" class="klaar" data-t="klaar">Klaar</button>
+      </div>
+      <div class="zrij zsel" id="zetsel" hidden>
+        <b id="zetselnaam">&nbsp;</b>
+        <span class="zgroep" id="zetdraai">
+          <span class="zlbl" data-t="draaien">Draaien</span>
+          <button data-draai="-5" data-t-aria="naarLinksDraaien" aria-label="Naar links draaien">&#8630;</button>
+          <output id="zetrot">0&deg;</output>
+          <button data-draai="5" data-t-aria="naarRechtsDraaien" aria-label="Naar rechts draaien">&#8631;</button>
+        </span>
+        <span class="zgroep" id="zetmaat">
+          <span class="zlbl" data-t="maat">Maat</span>
+          <button data-maat="-1" data-t-aria="kleiner" aria-label="Kleiner">&minus;</button>
+          <output id="zetmt">1,0&times;</output>
+          <button data-maat="1" data-t-aria="groter" aria-label="Groter">+</button>
+        </span>
+        <button id="zetstd" data-t="standaard">Standaard</button>
+        <button id="zetlos" data-t="loslaten">Loslaten</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button id="zin" data-t-aria="inzoomen" aria-label="Inzoomen"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></button>
+      <button id="zout" data-t-aria="uitzoomen" aria-label="Uitzoomen"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button>
+      <button id="zfit" data-t-aria="heleKaart" aria-label="Hele kaart tonen"><svg viewBox="0 0 16 16"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg></button>
+    </div>
+  </div>
+
+  <aside class="detail" id="detail" role="dialog" aria-labelledby="dtitle">
+    <div class="dhead">
+      <p class="eyebrow" id="dkind">&nbsp;</p>
+      <h2 id="dtitle">&nbsp;</h2>
+      <button class="dclose" id="dclose" data-t-aria="sluitPaneel" aria-label="Sluit paneel">&times;</button>
+    </div>
+    <div class="dbody" id="dbody"></div>
+  </aside>
+</div>
+
+<!-- type=module, want een module draait pas nadat de HTML geparseerd is.
+     Dat is hier geen detail maar de kern: zonder dit uitstel zou de browser
+     het laadscherm hierboven nooit geschilderd krijgen — je zou al die tijd
+     naar een leeg venster kijken. Het script hieronder haalt world.svg en
+     data.json eerst asynchroon op (blokkeert niet), en bouwt de kaart en het
+     reliëf daarna nog in een paar blokkerende seconden op. Een module heeft
+     ook zijn eigen bereik, dus alle namen hieronder blijven binnen dit blok;
+     top-level await mag hier ook, dat kan alleen in een module. -->
+<script type="module">
+/* ================= de kaart inlezen: world.svg en data.json =================
+   Beide bestanden staan los naast kaart.html en worden hier rechtstreeks
+   opgehaald — geen ingebakken kopie meer. Dat betekent dat deze pagina via
+   een webserver moet draaien (bijvoorbeeld `npx serve` in deze map): met
+   dubbelklik openen (file://) mag de browser geen ander bestand van schijf
+   lezen en blijft de kaart leeg. Beide verzoeken lopen tegelijk, en de
+   module wacht er hier op met een top-level await — de rest van het
+   bestand draait pas als beide binnen zijn, precies zoals voorheen met de
+   ingebakken kopie, maar nu zonder de hoofdthread te blokkeren.
+
+     world.svg    de landvormen. Elk <path id="..."> is een gebied; een
+                  <g id="..."> met paden erin wordt samengevoegd tot een
+                  gebied. Zo groeit de kaart mee zodra er landen bijkomen.
+     data.json    alle inhoud: boeken, gebieden, zeeën, de detailkaart van
+                  Araluen, de plaatsen en de reisroutes. Dit bestand is ook
+                  in de kaart zelf te bewerken — knop Bewerken linksonder —
+                  en daar weer op te slaan; de volgende herlaadbeurt leest
+                  het meteen weer in.                                      */
+function leesSvg(tekst){
+  const vormen={}, stapel=[];
+  const re=/<(g|path|\/g)\b([^>]*)>/g;
+  let m;
+  while((m=re.exec(tekst))){
+    const tag=m[1], attr=m[2]||"";
+    if(tag==="/g"){stapel.pop();continue;}
+    const id=(attr.match(/\bid="([^"]+)"/)||[])[1];
+    if(tag==="g"){stapel.push(id||null);continue;}
+    const d=(attr.match(/\bd="([^"]+)"/)||[])[1];
+    if(!d)continue;
+    const groep=[...stapel].reverse().find(Boolean);
+    const naam=(id||groep||"").replace(/_+$/,"");
+    if(!naam)continue;
+    (vormen[naam]=vormen[naam]||[]).push(d);
+  }
+  return vormen;
+}
+const [svgTekst,DATA]=await Promise.all([
+  fetch("world.svg").then(r=>r.text()),
+  fetch("data.json").then(r=>r.json()),
+]);
+const vb=(svgTekst.match(/viewBox="([^"]+)"/)||[])[1];
+const [,,VW,VH]=(vb||"0 0 1080 644").split(/\s+/).map(Number);
+const GEO={vw:VW,vh:VH,vormen:leesSvg(svgTekst)};
+
+
+/* ---- taal ----
+   Vertaalbare tekst staat in data.json als {"nl":"...","en":"..."} in plaats
+   van een kale string. Deze stap loopt eenmalig door DATA heen en vervangt
+   elk taalobject door de tekst van de gekozen taal, zodat de rest van de
+   code — die overal gewoon .naam/.tekst/... als string verwacht — nergens
+   hoeft te weten dat een veld tweetalig is. Standaard Engels; het onthouden
+   gebeurt net als bij het thema in localStorage. */
+const TAAL=(()=>{
+  try{
+    const o=localStorage.getItem("gj-taal");
+    if(o==="nl"||o==="en")return o;
+  }catch(e){}
+  return "en";
+})();
+function isTaalObject(v){
+  return v&&typeof v==="object"&&!Array.isArray(v)
+    &&typeof v.nl==="string"&&typeof v.en==="string"
+    &&Object.keys(v).length===2;
+}
+function vertaal(v){
+  if(Array.isArray(v)){ for(let i=0;i<v.length;i++)v[i]=vertaal(v[i]); return v; }
+  if(v&&typeof v==="object"){
+    if(isTaalObject(v))return v[TAAL];
+    for(const k in v)v[k]=vertaal(v[k]);
+    return v;
+  }
+  return v;
+}
+/* Wat je in de bewerkstand verandert gaat rechtstreeks in DATA, en de hele
+   stand wordt in deze browser bewaard zodat een verversing je werk niet
+   weggooit. Sla je hem op als data.json, dan gaat die kopie weg: anders zou
+   hij het bestand dat je zojuist hebt ingebakken blijven overstemmen. Dit
+   moet vóór vertaal() gebeuren: de bewaarde stand staat, net als data.json
+   zelf, nog tweetalig in localStorage (schoneData() bewaart hem zo) — pas
+   je hem toe ná het platslaan, dan overschrijft de ene taal de andere. */
+let bewerkt=0;                   /* veranderingen sinds het laatst opslaan */
+try{
+  const b=JSON.parse(localStorage.getItem("gj-data")||"null");
+  if(b&&b.data&&b.data.plaatsen){Object.assign(DATA,b.data);bewerkt=b.bewerkt||0;}
+}catch(e){}
+
+/* Bewaard vóór vertaal() de brontekst platslaat: hierin blijven naam/tekst
+   altijd tweetalig staan. Bewerken (slepen, roteren, een been aanpassen)
+   muteert de vertaalde DATA; terugvertaal() na afloop verwerkt zo'n
+   wijziging in RUWDATA zonder de andere taal te verliezen — anders zou
+   "Opslaan als data.json" na één sleepje de niet-actieve taal wissen. */
+const RUWDATA=JSON.parse(JSON.stringify(DATA));
+vertaal(DATA);
+document.documentElement.lang=TAAL;
+document.title=TAAL==="nl"?"Araluen & de Bekende Wereld":"Araluen & the Known World";
+
+/* Alle vaste UI-tekst die niet uit data.json komt: knoppen, labels, kopjes,
+   soort-namen. U[key] geeft de tekst in de actieve taal. */
+const U={
+  merknaam:{nl:"Araluen & de Bekende Wereld",en:"Araluen & the Known World"},
+  merkserie:{nl:"De Grijze Jager · Broederband",en:"Ranger's Apprentice · Brotherband"},
+  themeToggle:{nl:"Wissel tussen licht en donker thema",en:"Switch between light and dark theme"},
+  zoekPlaceholder:{nl:"Zoek een plaats of land…",en:"Search a place or country…"},
+  zoekLabel:{nl:"Zoek een plaats of land",en:"Search a place or country"},
+  lblReeks:{nl:"Reeks",en:"Series"},
+  lblRoutes:{nl:"Reisroutes — kies een boek",en:"Travel routes — pick a book"},
+  overDezeKaart:{nl:"Over deze kaart",en:"About this map"},
+  footerDisclaimer:{nl:"Onofficieel fanproject. Alle rechten op deze wereld berusten bij John Flanagan en zijn uitgevers.",en:"Unofficial fan project. All rights to this world remain with John Flanagan and his publishers."},
+  legenda:{nl:"Legenda",en:"Legend"},
+  bewerken:{nl:"Bewerken",en:"Edit"},
+  bewerkenAfsluiten:{nl:"Bewerken afsluiten",en:"Exit editing"},
+  railtoggleLabel:{nl:"Toon of verberg het zijpaneel",en:"Show or hide the side panel"},
+  kaartLabel:{nl:"Interactieve kaart van de wereld van De Grijze Jager en Broederband",
+    en:"Interactive map of the world of Ranger's Apprentice and Brotherband"},
+  noord:{nl:"N",en:"N"},
+  bewerkenKop:{nl:"Bewerken",en:"Editing"},
+  sleepHint:{nl:"sleep een markering of een naam",en:"drag a marker or a name"},
+  soortNieuweLabel:{nl:"Soort voor een nieuwe plaats",en:"Type for a new place"},
+  optDorpStad:{nl:"Dorp of stad",en:"Village or town"},
+  optKasteel:{nl:"Kasteel",en:"Castle"},
+  optHaven:{nl:"Havenstad",en:"Port town"},
+  optRuine:{nl:"Ruïne",en:"Ruin"},
+  optSlagveld:{nl:"Slagveld",en:"Battlefield"},
+  optLandschap:{nl:"Landschap",en:"Landscape"},
+  optRivier:{nl:"Rivier",en:"River"},
+  nieuwePlaats:{nl:"+ Nieuwe plaats",en:"+ New place"},
+  klikOpKaart:{nl:"Klik op de kaart…",en:"Click on the map…"},
+  kopieer:{nl:"Kopieer",en:"Copy"},
+  opslaanAls:{nl:"Opslaan als data.json",en:"Save as data.json"},
+  allesTerug:{nl:"Alles terug",en:"Revert all"},
+  klaar:{nl:"Klaar",en:"Done"},
+  draaien:{nl:"Draaien",en:"Rotate"},
+  naarLinksDraaien:{nl:"Naar links draaien",en:"Rotate left"},
+  naarRechtsDraaien:{nl:"Naar rechts draaien",en:"Rotate right"},
+  maat:{nl:"Maat",en:"Size"},
+  kleiner:{nl:"Kleiner",en:"Smaller"},
+  groter:{nl:"Groter",en:"Bigger"},
+  standaard:{nl:"Standaard",en:"Reset"},
+  loslaten:{nl:"Loslaten",en:"Deselect"},
+  inzoomen:{nl:"Inzoomen",en:"Zoom in"},
+  uitzoomen:{nl:"Uitzoomen",en:"Zoom out"},
+  heleKaart:{nl:"Hele kaart tonen",en:"Show whole map"},
+  sluitPaneel:{nl:"Sluit paneel",en:"Close panel"},
+  nietsGevonden:{nl:"Niets gevonden. Pas de zoekterm of de filters aan.",
+    en:"Nothing found. Adjust the search term or the filters."},
+  nogGeenKaart:{nl:"nog geen kaart",en:"not mapped yet"},
+  reisroute:{nl:"Reisroute",en:"Travel route"},
+  wachtOpLand:{nl:" — wacht op meer land in world.svg",en:" — waiting on more land in world.svg"},
+  plaatsFallback:{nl:"Plaats",en:"Place"},
+  bekendUit:{nl:"Bekend uit",en:"Known from"},
+  nogGeenKaartLang:{nl:"Deze plaats staat nog niet op de kaart:",en:"This place isn't on the map yet:"},
+  ontbreektNog:{nl:"ontbreekt nog in",en:"is still missing from"},
+  zodraLandErbij:{nl:"Zodra dat land erbij komt, verschijnt de plaats vanzelf.",
+    en:"Once that land is added, the place will appear automatically."},
+  positieBenadering:{nl:"Positie bij benadering: de boeken noemen deze plaats, maar geven geen exacte ligging.",
+    en:"Approximate position: the books mention this place but don't give an exact location."},
+  hierHoortBeschrijving:{nl:"Hier hoort nog een beschrijving. Vul",en:"A description belongs here. Add"},
+  legendaKaart:{nl:"Kaart",en:"Map"},
+  legKasteel:{nl:"Kasteel of vesting",en:"Castle or fortress"},
+  legRuine:{nl:"Ruïne",en:"Ruin"},
+  legStad:{nl:"Stad",en:"Town"},
+  legHaven:{nl:"Havenstad",en:"Port town"},
+  legSlagveld:{nl:"Slagveld",en:"Battlefield"},
+  legLandschap:{nl:"Landschap of gebergte",en:"Landscape or mountains"},
+  legRivier:{nl:"Rivier",en:"River"},
+  legStippellijn:{nl:"Stippellijn: positie bij benadering",en:"Dotted line: approximate position"},
+  legLandschapKop:{nl:"Landschap",en:"Terrain"},
+  legLoofbos:{nl:"Loofbos",en:"Deciduous forest"},
+  legNaaldbos:{nl:"Naaldbos",en:"Coniferous forest"},
+  legJungle:{nl:"Jungle",en:"Jungle"},
+  legAkker:{nl:"Akkerland",en:"Farmland"},
+  legGrasland:{nl:"Grasland",en:"Grassland"},
+  legSteppe:{nl:"Steppe",en:"Steppe"},
+  legHeide:{nl:"Heide en hoogland",en:"Heath and highland"},
+  legWoestijn:{nl:"Woestijn",en:"Desert"},
+  legKaal:{nl:"Kaal gesteente",en:"Bare rock"},
+  legSneeuw:{nl:"Sneeuw op de toppen",en:"Snow on the peaks"},
+  legRivierUitleg:{nl:"Rivier — breder naar de monding toe",en:"River — widens toward the mouth"},
+  legBediening:{nl:"Bediening",en:"Controls"},
+  bedSlepen:{nl:"Slepen",en:"Drag"},
+  bedSlepenUitleg:{nl:"Verschuif de kaart",en:"Move the map"},
+  bedScrollen:{nl:"Scrollen",en:"Scroll"},
+  bedScrollenUitleg:{nl:"In- en uitzoomen rond de muis",en:"Zoom in and out around the cursor"},
+  bedZoom:{nl:"+ en −",en:"+ and −"},
+  bedZoomUitleg:{nl:"Zoomen met het toetsenbord",en:"Zoom with the keyboard"},
+  bedPijltjes:{nl:"Pijltjes",en:"Arrow keys"},
+  bedPijltjesUitleg:{nl:"De kaart verschuiven",en:"Move the map"},
+  bedEsc:{nl:"Esc",en:"Esc"},
+  bedEscUitleg:{nl:"Selectie opheffen",en:"Clear selection"},
+  verantwoording:{nl:"Verantwoording",en:"Credits"},
+  aboutDisclaimer:{nl:"<strong>Onofficieel fanproject.</strong> Deze kaart is niet gemaakt, goedgekeurd of ondersteund door John Flanagan (1944–2026) of zijn uitgevers. Araluen, de wereld van De Grijze Jager/Ranger's Apprentice en Brotherband, en alle bijbehorende namen, personages en verhaallijnen zijn en blijven hun eigendom. Deze kaart wordt niet commercieel geëxploiteerd.",
+    en:"<strong>Unofficial fan project.</strong> This map is not produced, endorsed or supported by John Flanagan (1944–2026) or his publishers. Araluen, the world of Ranger's Apprentice and Brotherband, and all associated names, characters and storylines remain their property. This map is not commercially exploited."},
+  aboutIntro:{nl:"Het landschap is met de hand getekend en ingekleurd naar wat de boeken erover vertellen: Skandia bergachtig met naaldbos, Arrida een woestijn, Indus jungle. Waar de boeken geen details geven, is het landschap zo waarschijnlijk mogelijk ingevuld.",
+    en:"The landscape is hand-drawn and colored to match what the books describe: Skandia mountainous with conifer forest, Arrida a desert, Indus jungle. Where the books leave details out, the landscape is filled in as plausibly as possible."},
+  aboutApprox:{nl:"Plaatsen met een stippelmarkering staan wél in de boeken, maar krijgen daar geen exacte ligging. Die zijn op de meest waarschijnlijke plek gezet.",
+    en:"Places with a dotted marker are mentioned in the books but aren't given an exact location there. Those are placed at the most likely spot."},
+  veranderingEnkel:{nl:"verandering",en:"change"},
+  veranderingMeervoud:{nl:"veranderingen",en:"changes"},
+  nogNietOpgeslagen:{nl:"— nog niet opgeslagen",en:"— not saved yet"},
+  gekopieerd:{nl:"gekopieerd naar het klembord",en:"copied to clipboard"},
+  bewerkteKaart:{nl:"Bewerkte kaart",en:"Edited map"},
+  kopieerUitleg:{nl:"Kopieer dit en bewaar het als <code>data.json</code> in de map:",
+    en:"Copy this and save it as <code>data.json</code> in the folder:"},
+  opgeslagenAls:{nl:"opgeslagen als data.json",en:"saved as data.json"},
+  vraagNaamPlaats:{nl:"Naam van de plaats:",en:"Name of the place:"},
+  zelfToegevoegd:{nl:"Zelf toegevoegd aan de kaart; nog geen beschrijving.",
+    en:"Added by hand to the map; no description yet."},
+  bevestigTerug:{nl:"Alle veranderingen sinds het laatst opslaan weggooien?",
+    en:"Discard all changes since the last save?"},
+  reisrouteAria:{nl:"Reisroute — ",en:"Travel route — "},
+  laadEerst:{nl:"De kaart wordt getekend",en:"Drawing the map"},
+  bezigThema:{nl:"Kleuren opnieuw bakken",en:"Rebaking the colors"},
+  bezigTaal:{nl:"Van taal wisselen",en:"Switching language"},
+};
+const t=k=>{ const v=U[k]; return v?v[TAAL]:k; };
+/* Vult alle statische HTML met data-t/data-t-attr/data-t-aria in de actieve
+   taal. Loopt bij het laden één keer over de hele pagina — losse elementen
+   hoeven dan zelf niets met TAAL te doen. */
+function pasTaalToe(){
+  for(const e of document.querySelectorAll("[data-t]"))e.textContent=t(e.dataset.t);
+  for(const e of document.querySelectorAll("[data-t-aria]"))e.setAttribute("aria-label",t(e.dataset.tAria));
+  for(const e of document.querySelectorAll("[data-t-attr]")){
+    const [attr,key]=e.dataset.tAttr.split(":");
+    e.setAttribute(attr,t(key));
+  }
+}
+pasTaalToe();
+
+const BOEKEN=DATA.boeken;        /* {code:[titel, reeks + nummer]}                 */
+const GEBIEDEN=DATA.gebieden;    /* sleutel = id van het pad in world.svg          */
+const ZEEEN=DATA.zeeen;          /* namen van zeeën met hun plek                   */
+const DETAIL=DATA.detail;        /* de detailkaart van Araluen                     */
+const PLAATSEN=DATA.plaatsen;    /* de plaatsen zelf                               */
+const RGRP=DATA.routegroepen;    /* de vier reeksen, met hun kleur                 */
+const ROUTES=DATA.routes;        /* de reisroutes per boek                         */
+
+/* ============================ tekenen ============================ */
+let state={q:"",series:{GJ:true,BB:true},route:null,sel:null};
+const NS="http://www.w3.org/2000/svg";
+const el=(n,a={},p)=>{const e=document.createElementNS(NS,n);
+  for(const k in a)e.setAttribute(k,a[k]); if(p)p.appendChild(e); return e;};
+const $=s=>document.querySelector(s);
+const W=GEO.vw, H=GEO.vh;
+
+const svg=$("#map");
+svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+const world=el("g",{id:"world"},svg);
+
+/* ---- de lagen, van onder naar boven ----
+   zee            de open zee, donkerder naar de randen toe
+   grat           het gradennet
+   band           de dieptebanden langs de kust
+   lijn           de kustlijn; ligt onder het land, zie hieronder
+   land           het reliëf als bitmap: licht, schaduw en hoogtekleur
+   vlak           de gebieden zelf — het klikvlak en de selectie
+   water          rivieren
+   terr           bergen, bossen, duinen: de begroeiing in inkt
+   kust           een haarscherpe kustlijn bovenop de bitmap
+   daarna volgen verderop de namen, de reisroutes en de markeringen        */
+const gZee=el("g",{},world);
+const gGrat=el("g",{class:"grat"},world);
+const gBand=el("g",{},world), gLijn=el("g",{},world);
+const gBand1=el("g",{},gBand), gBand2=el("g",{},gBand), gBand3=el("g",{},gBand);
+const gLand=el("g",{},world), gVlak=el("g",{},world);
+const gWater=el("g",{},world);
+
+/* De open zee loopt donkerder naar de randen. Het vlak is drie keer zo groot
+   als het kader van world.svg, want je kunt een eind buiten de kaart schuiven
+   en daar mag geen naad staan. */
+{
+  const gr=el("radialGradient",{id:"zeediep",gradientUnits:"userSpaceOnUse",
+    cx:W/2,cy:H/2,r:W*.86},el("defs",{},svg));
+  el("stop",{offset:"0",style:"stop-color:var(--sea)"},gr);
+  el("stop",{offset:".52",style:"stop-color:var(--sea)"},gr);
+  el("stop",{offset:"1",style:"stop-color:var(--zee-diep)"},gr);
+  el("rect",{x:-W,y:-H,width:3*W,height:3*H,fill:"url(#zeediep)"},gZee);
+}
+/* zeegrid, net zo ver doorgetrokken als de zee zelf */
+for(let x=-W;x<=2*W;x+=60)el("path",{d:`M${x} ${-H}V${2*H}`},gGrat);
+for(let y=-H;y<=2*H;y+=60)el("path",{d:`M${-W} ${y}H${2*W}`},gGrat);
+const gebiedEls={};
+/* Een vorm uit world.svg hoort bij een gebied uit GEBIEDEN, of — zoals bij
+   Skorghijl — bij een losse plaats die zijn eigen eiland heeft. In beide
+   gevallen is de vorm zelf aanklikbaar, niet alleen de markering erop. */
+for(const id in GEO.vormen){
+  const meta=GEBIEDEN[id];
+  const plaatsVorm=meta?null:PLAATSEN.find(p=>p.vorm===id);
+  const naam=meta?meta.naam:(plaatsVorm?plaatsVorm.naam:id);
+  const doel=meta?"gebied:"+id:(plaatsVorm?plaatsVorm.id:null);
+  const tint=meta?meta.tint:(plaatsVorm&&plaatsVorm.tint?plaatsVorm.tint:"a");
+  const paden=GEO.vormen[id];
+  const g=el("g",{class:"gebied",tabindex:doel?"0":"-1",role:doel?"button":"presentation",
+    "aria-label":naam},gVlak);
+  /* De banden gaan van breed naar smal, elk in een lichtere tint: de smallere
+     streep overschildert het midden van de bredere, zodat er langs de kust
+     drie duidelijke dieptetreden overblijven. Alle banden van alle landen
+     eerst, daarna pas de kustlijnen — anders zou de band van de buurman over
+     de kustlijn van dit land heen komen te liggen. */
+  for(const d of paden){
+    el("path",{d,class:"band band1"},gBand1);
+    el("path",{d,class:"band band2"},gBand2);
+    el("path",{d,class:"band band3"},gBand3);
+    el("path",{d,class:"vlak",fill:`var(--tone-${tint})`},g);
+    el("path",{d,class:"mark"},g);
+    el("path",{d,class:"coast"},gLijn);
+  }
+  gebiedEls[id]=g;
+  if(doel){
+    g.addEventListener("click",e=>{e.stopPropagation();if(!gesleept())kies(doel);});
+    g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();kies(doel);}});
+  }else g.style.pointerEvents="none";
+}
+
+/* ---- inpassing van de Araluen-detailkaart ----
+   De omtrek die in world.svg staat is leidend; de punten uit de detailkaart
+   worden daar met behoud van verhouding in gepast. Wordt het eiland opnieuw
+   getekend, dan schuiven de plaatsen vanzelf mee.                          */
+let pasIn=(p)=>p;
+(function(){
+  const hulp=el("g",{},svg);
+  let n=0;
+  for(const id of DETAIL.gebieden) if(GEO.vormen[id]) for(const d of GEO.vormen[id]){el("path",{d},hulp);n++;}
+  if(!n){hulp.remove();return;}
+  const b=hulp.getBBox(); hulp.remove();
+  const [bx0,by0,bx1,by1]=DETAIL.bron;
+  const bw=bx1-bx0, bh=by1-by0;
+  const f=Math.min(b.width/bw,b.height/bh);
+  const dx=b.x+(b.width-bw*f)/2, dy=b.y+(b.height-bh*f)/2;
+  pasIn=([x,y])=>[+(dx+(x-bx0)*f).toFixed(2),+(dy+(y-by0)*f).toFixed(2)];
+})();
+/* Ligt een punt binnen het pad van zijn eigen land? Zo niet, dan zoekt het
+   script spiraalsgewijs de dichtstbijzijnde plek die er wel in ligt. Daardoor
+   belandt geen enkele stad in zee, ook niet als jij de kust verlegt. */
+const svgPt=svg.createSVGPoint();
+function inGebied(id,x,y){
+  const g=gebiedEls[id]; if(!g)return false;
+  svgPt.x=x; svgPt.y=y;
+  for(const pad of g.querySelectorAll("path.vlak"))
+    if(pad.isPointInFill(svgPt))return true;
+  return false;
+}
+function opLand(id,x,y){
+  if(!gebiedEls[id]||inGebied(id,x,y))return [x,y];
+  for(let r=1;r<=80;r++){
+    const n=Math.max(8,r*8);
+    for(let a=0;a<n;a++){
+      const t=a/n*Math.PI*2, nx=x+Math.cos(t)*r, ny=y+Math.sin(t)*r;
+      if(inGebied(id,nx,ny))return [+nx.toFixed(1),+ny.toFixed(1)];
+    }
+  }
+  return [x,y];
+}
+const plekCache={};
+/* Drie manieren om een plaats te plaatsen:
+   rel    — als deel van de omhullende doos van een vorm uit world.svg. Handig
+            voor kleine gebieden waar de detailkaart van het hele eiland te
+            grof voor is; verplaats jij de vorm, dan schuift de plaats mee.
+   detail — punt uit de Araluen-detailkaart, ingepast in jouw eilandvorm.
+   x,y    — vaste plek, die daarna zijn eigen land in wordt geschoven, tenzij
+            geenSnap gezet is: dan blijft hij precies staan waar hij staat.
+            Wat je in de bewerkstand versleept komt zo in data.json terecht. */
+function plek(p){
+  if(plekCache[p.id]!==undefined)return plekCache[p.id];
+  let r=null;
+  if(p.rel&&gebiedEls[p.rel[0]]){
+    const b=gebiedEls[p.rel[0]].getBBox();
+    const x=+(b.x+b.width*p.rel[1]).toFixed(2), y=+(b.y+b.height*p.rel[2]).toFixed(2);
+    /* De Spleet is juist de kloof zelf: die hoort in de opening tussen het
+       land te blijven staan en mag niet naar de dichtstbijzijnde kust worden
+       geschoven, zoals bij steden wel de bedoeling is. */
+    r=p.geenSnap?[x,y]:opLand(p.gebied,x,y);
+  }
+  else if(p.detail&&DETAIL.punten[p.detail])r=pasIn(DETAIL.punten[p.detail]);
+  else if(p.x!=null)r=p.geenSnap?[p.x,p.y]:opLand(p.gebied,p.x,p.y);
+  return (plekCache[p.id]=r);
+}
+
+/* ---- namen van gebieden en zeeën ----
+   Een naam bestaat uit twee lagen: een <g> met de plek en de draaiing, en
+   daarin een <text> met de maat. Dat scheelt rekenwerk — de maat verandert
+   bij elke zoomstap mee, de plek niet — en het is precies de verdeling die
+   de bewerkstand nodig heeft. Alles wat hier langskomt gaat in NAMEN en is
+   daarmee te pakken, te verslepen, te draaien en te vergroten.           */
+const gLbl=el("g",{},world), gebiedLabels=[], zeeLabels=[], NAMEN=[];
+function label(txt,cls,soort,d){
+  const g=el("g",{},gLbl);
+  const t=el("text",{class:cls,"text-anchor":"middle"},g);
+  t.textContent=txt;
+  const it={soort,d,g,t};
+  NAMEN.push(it); return it;
+}
+/* d.lx/d.ly verschuiven de naam, d.rot draait hem. Bij een zee is er geen
+   berekende plek en zijn d.x/d.y de plek zelf. */
+function zetNaamPlek(it){
+  if(it.soort==="zee"){it.x=it.d.x; it.y=it.d.y;}
+  else {it.x=it.bx+(it.d.lx||0); it.y=it.by+(it.d.ly||0);}
+  it.g.setAttribute("transform",`translate(${it.x},${it.y}) rotate(${it.d.rot||0})`);
+}
+/* Het midden van de omhullende doos ligt bij een grillig land vaak scheef of
+   zelfs in zee. Dit zoekt het punt dat het verst van elke kust af ligt — het
+   ruimste plekje binnen de vorm — door een rooster over het gebied te leggen
+   en per vakje de afstand tot de rand te schatten. Daarnaast meet het hoeveel
+   ruimte er op die hoogte opzij is; dat bepaalt hoe groot de naam mag worden. */
+function visueelMidden(groep,obstakels){
+  const b=groep.getBBox();
+  if(!b.width||!b.height)return null;
+  const N=34, sx=b.width/N, sy=b.height/N;
+  const paden=[...groep.querySelectorAll("path.vlak")];
+  const land=new Uint8Array((N+2)*(N+2));
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    svgPt.x=b.x+(i+.5)*sx; svgPt.y=b.y+(j+.5)*sy;
+    for(const p of paden) if(p.isPointInFill(svgPt)){land[(j+1)*(N+2)+i+1]=1;break;}
+  }
+  const binnen=land.slice();
+  /* markeringen tellen als bezet, zodat de landnaam de rustigste hoek opzoekt
+     in plaats van boven op een cluster kastelen te belanden */
+  for(const [ox,oy] of obstakels||[]){
+    const i=Math.round((ox-b.x)/sx), j=Math.round((oy-b.y)/sy);
+    for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){
+      const ni=i+di+1, nj=j+dj+1;
+      if(ni>0&&nj>0&&ni<=N&&nj<=N)binnen[nj*(N+2)+ni]=0;
+    }
+  }
+  /* afstand tot de rand, in twee vegen over het rooster geschat */
+  const d=new Float32Array((N+2)*(N+2));
+  for(let j=1;j<=N;j++)for(let i=1;i<=N;i++){
+    const k=j*(N+2)+i;
+    d[k]=binnen[k]?Math.min(d[k-1],d[k-(N+2)],d[k-(N+2)-1]+1.4,d[k-(N+2)+1]+1.4)+1:0;
+  }
+  let best=0,bi=0,bj=0;
+  for(let j=N;j>=1;j--)for(let i=N;i>=1;i--){
+    const k=j*(N+2)+i;
+    if(!binnen[k]){d[k]=0;continue;}
+    d[k]=Math.min(d[k],d[k+1]+1,d[k+(N+2)]+1,d[k+(N+2)+1]+1.4,d[k+(N+2)-1]+1.4);
+    if(d[k]>best){best=d[k];bi=i;bj=j;}
+  }
+  if(!best)return {x:b.x+b.width/2,y:b.y+b.height/2,breed:b.width};
+  /* Hoe groot de naam mag worden hangt niet af van de ruimste cirkel maar van
+     de ruimte opzij: een naam loopt nu eenmaal horizontaal. Bij een langgerekt
+     land als Araluen scheelt dat een factor. Gemeten wordt naar links en naar
+     rechts vanaf het gekozen punt, en het kortste van de twee telt dubbel,
+     zodat de naam — die om dat punt gecentreerd staat — aan geen van beide
+     kanten de kust over gaat. Markeringen tellen hier niet mee: landnamen
+     krijgen voorrang, ontwar() laat de markeringen ervoor wijken. */
+  let l=0,r=0;
+  while(land[bj*(N+2)+bi-l-1])l++;
+  while(land[bj*(N+2)+bi+r+1])r++;
+  return {x:b.x+(bi-.5)*sx, y:b.y+(bj-.5)*sy, breed:(2*Math.min(l,r)+1)*sx};
+}
+const zeeById={};
+for(const z of ZEEEN){
+  const it=label(z.naam,"t-zee","zee",z);
+  zeeLabels.push(it); zetNaamPlek(it);
+  if(z.id){
+    zeeById[z.id]=it;
+    /* buiten de bewerkstand opent een klik op een zeenaam het zijpaneel; in de
+       bewerkstand pakt hangNaamOp hem eerder af om te slepen */
+    it.g.addEventListener("click",e=>{e.stopPropagation();if(!zetten&&!gesleept())kies("zee:"+z.id);});
+  }
+}
+
+/* ---- reisroutes ---- */
+const gRoutes=el("g",{},world), routeEls={};
+const plaatsById={}; for(const p of PLAATSEN)plaatsById[p.id]=p;
+const opKaart=p=>!p.wacht && plek(p)!==null;
+function beenPunten(been){
+  const uit=[];
+  for(const stap of been){
+    if(Array.isArray(stap)){uit.push(stap);continue;}
+    const p=plaatsById[stap]; if(!p||!opKaart(p))return null;
+    uit.push(plek(p));
+  }
+  return uit;
+}
+/* Een reis loopt niet langs een liniaal. Door de punten van een been wordt een
+   vloeiende lijn getrokken in plaats van rechte stukken met knikken: een
+   Catmull-Rom-kromme, omgezet naar de bezierkrommen die SVG kent. De spanning
+   staat bewust onder de volle waarde — een te losse kromme schiet in een bocht
+   door en zou een schip alsnog het strand op sturen. */
+const SPANNING=.75;
+function vloeiend(p){
+  if(p.length<3)return "M"+p.map(q=>q.join(" ")).join("L");
+  const n=p.length;
+  let d="M"+p[0].join(" ");
+  for(let i=0;i<n-1;i++){
+    const p0=p[i-1]||p[0], p1=p[i], p2=p[i+1], p3=p[i+2]||p[n-1];
+    const c=(a,b,e,f)=>[+(b[0]+(e[0]-a[0])/6*SPANNING).toFixed(2),
+                        +(b[1]+(e[1]-a[1])/6*SPANNING).toFixed(2)];
+    const c1=c(p0,p1,p2), c2=[+(p2[0]-(p3[0]-p1[0])/6*SPANNING).toFixed(2),
+                              +(p2[1]-(p3[1]-p1[1])/6*SPANNING).toFixed(2)];
+    d+=`C${c1[0]} ${c1[1]},${c2[0]} ${c2[1]},${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+/* opnieuw op te bouwen, want een plaats die je verzet verlegt ook haar routes */
+function bouwRoutes(){
+  gRoutes.textContent="";
+  for(const r of ROUTES){
+    r.paden=r.benen.map(beenPunten);
+    r.kanNiet=r.paden.some(p=>!p);
+    const g=el("g",{class:"route",stroke:RGRP[r.grp].kleur},gRoutes);
+    if(!r.kanNiet)for(const pad of r.paden){
+      el("path",{d:vloeiend(pad)},g);
+      el("circle",{class:"end",cx:pad[0][0],cy:pad[0][1],r:1.6,fill:RGRP[r.grp].kleur},g);
+      const z=pad[pad.length-1];
+      el("circle",{class:"end",cx:z[0],cy:z[1],r:2.4,fill:"none",stroke:RGRP[r.grp].kleur,"stroke-width":1},g);
+    }
+    if(r.id===state.route)g.classList.add("on");
+    routeEls[r.id]=g;
+  }
+}
+
+/* ---- route-tussenpunten verslepen ----
+   Alleen de coördinaten in benen zijn hier van belang: een been-stap die een
+   plaats-id is, hoort bij die plaats en sleep je via de markering zelf. Om de
+   kaart niet vol te zetten met grepen tonen we dit alleen voor de route die
+   nu open staat in het zijpaneel. */
+const gRoutepunten=el("g",{},world);
+function bouwRoutepunten(){
+  gRoutepunten.textContent="";
+  const r=ROUTES.find(x=>x.id===state.route);
+  if(!r)return;
+  r.benen.forEach((been,beenIdx)=>{
+    been.forEach((stap,stapIdx)=>{
+      if(!Array.isArray(stap))return;
+      const c=el("circle",{class:"routepunt",cx:stap[0],cy:stap[1]},gRoutepunten);
+      c.addEventListener("pointerdown",e=>{
+        if(!zetten)return;
+        e.stopPropagation(); e.preventDefault();
+        sleep={soort:"routepunt",been,stapIdx,c,bewogen:0};
+        c.classList.add("pak");
+        try{c.setPointerCapture(e.pointerId);}catch(err){}
+      });
+    });
+  });
+}
+bouwRoutes(); bouwRoutepunten();
+
+/* ---- plaatsmarkeringen ---- */
+const GLYPH={
+  kasteel:'<path class="solid" d="M-5.5 3.5v-7h1.8v2h1.6v-2h1.8v-2.2h.6v2.2h1.8v-2h1.6v2h1.8v7z"/>',
+  ruine:'<path d="M-5.5 3.5v-6l1.8-1.4v2.2l1.7-1.6v2.6l2-2.4 1.9 2v-2.6l1.6 1.4v5.8z"/>',
+  stad:'<circle class="solid" r="2.3"/><circle r="5" fill="none"/>',
+  haven:'<circle class="solid" r="2.1"/><path d="M0 -6.4v9M-3.4 -4.6h6.8M-4.6 1.4a4.6 4.6 0 0 0 9.2 0" fill="none"/>',
+  slagveld:'<path d="M-4.6 -4.6L4.6 4.6M4.6 -4.6L-4.6 4.6" fill="none"/>',
+  natuur:'<path d="M-6 3.2 -1.6-3.6 2 1.2 3.6-1.2 6 3.2z"/>',
+  rivier:'<path d="M-6 -1q3 -3 6 0t6 0" fill="none"/>'
+};
+const gMark=el("g",{},world), markerEls={};
+/* Het bordje staat standaard tien punten boven de markering. lx/ly schuiven
+   het daarvandaan; die tellen in schermpunten, niet in wereldmaat, want het
+   bordje zit in de laag die met de zoom mee terugschaalt. Zo blijft de
+   afstand tot de markering bij elke zoomstap hetzelfde.                  */
+function zetPlaatsNaam(m,p){
+  m.lg.setAttribute("transform",
+    `translate(${p.lx||0},${(p.ly||0)-10}) rotate(${p.rot||0}) scale(${p.maat||1})`);
+}
+function maakMarker(p){
+  const pos=opKaart(p)?plek(p):null;
+  if(!pos)return null;
+  const g=el("g",{class:"marker"+(p.approx?" approx":""),transform:`translate(${pos[0]},${pos[1]})`,
+    tabindex:"0",role:"button","aria-label":p.naam},gMark);
+  const inner=el("g",{},g);
+  el("circle",{class:"hit",r:9},inner);
+  el("circle",{class:"ring",r:8},inner);
+  const gl=el("g",{class:"glyph"},inner);
+  gl.innerHTML=GLYPH[p.soort]||GLYPH.stad;
+  /* het naambordje in een eigen groep: dan draait het om zijn eigen punt in
+     plaats van om de markering, en kan het los versleept worden */
+  const lg=el("g",{class:"mlabelg"},inner);
+  /* een riviernaam hoort bij het water en niet bij het land: schuin en in de
+     kleur van de rivier waar hij op ligt */
+  const t=el("text",{class:"t-plaats mlabel"+(p.soort==="rivier"?" t-water":""),
+    "text-anchor":"middle"},lg);
+  t.textContent=p.naam;
+  const m={g,inner,t,lg,pos};
+  markerEls[p.id]=m;
+  NAMEN.push({soort:"plaats",d:p,g:lg,t,m});
+  zetPlaatsNaam(m,p);
+  /* in de bewerkstand opent een klik geen paneel: daar kies je het onderdeel
+     dat je onder handen neemt */
+  g.addEventListener("click",e=>{e.stopPropagation();if(!zetten&&!gesleept())kies(p.id);});
+  g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();kies(p.id);}});
+  g.addEventListener("pointerdown",e=>{
+    if(!zetten)return;
+    e.stopPropagation(); e.preventDefault();
+    sleep={soort:"punt",p,m,bewogen:0};
+    g.classList.add("pak");
+    try{g.setPointerCapture(e.pointerId);}catch(err){}
+  });
+  return m;
+}
+for(const p of PLAATSEN)maakMarker(p);
+
+/* De landnamen komen ná de markeringen aan de beurt: pas dan is bekend waar
+   de drukte zit, en kan de naam de rustigste plek in zijn land opzoeken.
+   Ze worden wel in de laag eronder getekend, dus de volgorde op het scherm
+   blijft gelijk. */
+for(const id in GEO.vormen){
+  const meta=GEBIEDEN[id]; if(!meta||meta.geenLabel)continue;
+  const b=gebiedEls[id].getBBox();
+  const hier=[];
+  for(const p of PLAATSEN){
+    const m=markerEls[p.id]; if(!m)continue;
+    if(m.pos[0]>=b.x&&m.pos[0]<=b.x+b.width&&m.pos[1]>=b.y&&m.pos[1]<=b.y+b.height)hier.push(m.pos);
+  }
+  const m=visueelMidden(gebiedEls[id],hier); if(!m)continue;
+  const it=label(meta.naam,"t-gebied","gebied",meta);
+  it.bx=m.x; it.by=m.y; it.breed=m.breed;   /* bx/by = de berekende plek */
+  gebiedLabels.push(it); zetNaamPlek(it);
+}
+
+/* ================== reliëf, begroeiing en rivieren ==================
+   Tot hier is de kaart een verzameling egale vlakken. Wat hieronder staat
+   maakt er land van, en het doet dat in twee soorten werk:
+
+     als bitmap   licht, schaduw, hoogtekleur en de korrel van de begroeiing.
+                  Dat loopt vloeiend in elkaar over en is in lijnen niet te
+                  vangen; het wordt één keer uitgerekend en als plaatje op de
+                  kaart gelegd.
+     als vector   kust, grenzen, rivieren, namen. Dat moet scherp blijven bij
+                  elke zoomstap, dus dat blijft tekenwerk.
+
+   Hier stonden eerder ook getekende bergjes en boompjes over het land. Die
+   zijn eruit: van bovenaf zie je geen boom maar een bos, en dat is een kleur
+   met een korrel, geen tekentje. Het scheelde bovendien bijna zesduizend losse
+   vormen die bij elke schuifbeweging opnieuw getekend moesten worden.
+
+   Waar het reliëf op stoelt: het land loopt vanaf de kust omhoog, en hoe ver
+   het omhoog gaat en hoe grillig het wordt staat per gebied in data.json onder
+   terrein. Daar bovenop komt ruis — bij bergland ruis met scherpe kammen, wat
+   bergketens geeft in plaats van bulten. Uit dat hoogteveld volgt daarna al het
+   andere vanzelf: de schaduw, de rotskleur, de sneeuw op de toppen en welke
+   kant de rivieren op lopen.
+
+   Het gebeurt na het opbouwen van de kaart, niet ervoor: je ziet meteen een
+   kaart, en het reliëf komt er een ogenblik later overheen.               */
+
+const RELIEF={               /* hoe hoog het land wordt, en hoe grillig */
+  vlak:     {amp:.20, rug:.10},
+  heuvels:  {amp:.50, rug:.34},
+  hoogland: {amp:.70, rug:.56},
+  bergen:   {amp:1,   rug:.86}
+};
+/* Elke begroeiing heeft een kleur voor het lichte en voor het donkere thema,
+   en een korrel: hoe grof het oppervlak eruitziet. Een naaldwoud is van boven
+   gezien een dek van kruinen met schaduw ertussen en is dus grof; een akker of
+   een steppe is glad. Die korrel is wat een vlak van groene verf tot bos maakt
+   — er staan geen boompjes op de kaart, er staat bos.
+
+   vlek gaat over de grovere afwisseling: open plekken in een woud, droge
+   stukken op de steppe, kleuren die per streek een tikje verschillen. */
+const GROEI={
+  akker:   {licht:"#D2CE96", donker:"#454F2F", korrel:.10, vlek:.13},
+  grasland:{licht:"#C0C88C", donker:"#3E4B2F", korrel:.09, vlek:.11},
+  steppe:  {licht:"#BFC985", donker:"#414E30", korrel:.10, vlek:.14},
+  heide:   {licht:"#B3A88E", donker:"#443F35", korrel:.16, vlek:.16},
+  loofbos: {licht:"#84A05C", donker:"#2C3E24", korrel:.32, vlek:.18},
+  naaldbos:{licht:"#688B5E", donker:"#26362A", korrel:.36, vlek:.19},
+  jungle:  {licht:"#6E9C4B", donker:"#24391F", korrel:.40, vlek:.20},
+  woestijn:{licht:"#E7D8A2", donker:"#564B31", korrel:.14, vlek:.16},
+  moeras:  {licht:"#94A67E", donker:"#2C3A2B", korrel:.24, vlek:.22},
+  toendra: {licht:"#C6C6AC", donker:"#464A3C", korrel:.11, vlek:.12},
+  kaal:    {licht:"#C2B698", donker:"#4A4735", korrel:.18, vlek:.15}
+};
+const STD_TERREIN={relief:"heuvels",begroeiing:"grasland"};
+/* Een vorm uit world.svg hoort bij een gebied, of — zoals Skorghijl — bij een
+   losse plaats. Beide mogen een terrein hebben. */
+function terreinVan(id){
+  const m=GEBIEDEN[id]||PLAATSEN.find(p=>p.vorm===id);
+  const t=m&&m.terrein;
+  if(!t)return STD_TERREIN;
+  return t;
+}
+
+/* ---- ruis ----
+   Waardenruis: een vast rooster van willekeurige getallen met zachte
+   overgangen ertussen. Het getal hangt alleen van de plek af, dus de bergen
+   staan na een verversing weer precies waar ze stonden. Met rug erbij worden
+   de dalen omgeklapt naar kammen: dat is wat een bergketen een rug geeft in
+   plaats van een reeks losse bulten. */
+/* Twee getallen door elkaar husselen tot één getal tussen nul en één. Er wordt
+   twee keer gemengd: bij één ronde blijft er verband tussen buurpunten over, en
+   dat verband tekent zich op de kaart af als een patroon. */
+function hash2(x,y){
+  let h=Math.imul(x|0,374761393)^Math.imul(y|0,668265263);
+  h=Math.imul(h^h>>>15,2246822519);
+  h=Math.imul(h^h>>>13,3266489917);
+  return ((h^h>>>16)>>>0)/4294967296;
+}
+const soep=t=>t*t*(3-2*t);
+/* Voor de ruis is soep() niet zacht genoeg. De helling ervan loopt wel door,
+   maar knikt op elke roosterlijn — en de schaduw op de kaart is niets anders
+   dan een meting van de helling, dus die knik wordt zichtbaar als een ruitjes-
+   patroon over het hele land. Deze overgang knikt ook niet: hij begint en
+   eindigt niet alleen vlak, maar ook zonder kromming. */
+const zeepzacht=t=>t*t*t*(t*(t*6-15)+10);
+function ruis(x,y){
+  const x0=Math.floor(x),y0=Math.floor(y);
+  const fx=zeepzacht(x-x0),fy=zeepzacht(y-y0);
+  const a=hash2(x0,y0),b=hash2(x0+1,y0),c=hash2(x0,y0+1),d=hash2(x0+1,y0+1);
+  return a+(b-a)*fx+(c-a)*fy+(a-b-c+d)*fx*fy;
+}
+/* Elke laag is twee keer zo fijn en telt minder zwaar mee dan de vorige. Hoe
+   ruw het terrein is bepaalt hóéveel minder: in bergland blijven de fijne
+   lagen meetellen, wat rotsig oplevert; op de steppen sterven ze snel uit en
+   blijft het glooiend. Zonder die fijne lagen wordt een klein land als Araluen
+   één vage veeg — daar passen nog geen twee golven van de grofste laag in. */
+/* Elke laag krijgt een eigen draaiing en verschuiving mee. Zonder dat liggen
+   de roosters van alle lagen op dezelfde assen en met hetzelfde nulpunt, en
+   dan vallen hun randen samen tot een streepjespatroon dat als corduroy over
+   het land ligt. Gedraaid vallen ze nergens meer samen. */
+const LAAG=[[1,0,0,0],[.6235,.7818,37.1,11.7],[-.2225,.9749,-19.3,63.4],
+            [-.9010,.4339,71.9,-42.6],[-.9010,-.4339,-55.2,28.8],
+            [-.2225,-.9749,13.6,-77.1],[.6235,-.7818,88.4,52.3]];
+function fbm(x,y,lagen,rug){
+  const val=.45+.17*rug;
+  let som=0,gew=1,tot=0,f=1;
+  for(let i=0;i<lagen;i++){
+    const L=LAAG[i%LAAG.length];
+    let n=ruis((x*L[0]-y*L[1])*f+L[2],(x*L[1]+y*L[0])*f+L[3]);
+    /* Kammen zitten alleen in de grove lagen. Een kam is een vouw in het
+       landschap: op de schaal van een bergketen hoort die er, maar in de
+       fijnste lagen wordt het een net van haarscherpe vouwtjes, en dat leest
+       als een streepjespatroon in plaats van als rots. */
+    if(rug>0&&i<3)n+=((1-Math.abs(n*2-1))-n)*rug;
+    som+=n*gew; tot+=gew; gew*=val; f*=2.07;
+  }
+  return som/tot;
+}
+/* Ruis in twee vaste fijnheden, en daartussen overgevloeid.
+
+   Waarom niet gewoon de gewenste fijnheid per punt in de coördinaat
+   vermenigvuldigen — ruis(x*f, y*f) met f dat plaatselijk oploopt? Omdat de
+   plek in het ruispatroon dan x·f is, en de kaart is duizend eenheden breed.
+   Een verandering in f van een duizendste verschuift het patroon aan de
+   overkant van de kaart al over een hele roostercel. Zo'n f loopt op tussen
+   twee roosterpunten en dat gaat dus schoksgewijs: het patroon verspringt op
+   elke roosterlijn, en het land kwam onder een corduroy van fijne ribbels te
+   liggen die de schaduw genadeloos uitvergrootte.
+
+   Met twee vaste fijnheden staat het patroon overal stil en is er alleen nog
+   overgevloeid tussen twee stilstaande patronen. Waar de fijnheid aan een van
+   beide uiteinden zit — en dat is verreweg het meeste land — hoeft er maar één
+   uitgerekend te worden, dus het kost bijna niets extra. */
+function landruis(x,y,fijn,basis,lagen,rug){
+  const f0=basis*.75, f1=basis*2.6, t=(fijn-.75)/1.85;
+  if(t<=0)return fbm(x*f0,y*f0,lagen,rug);
+  if(t>=1)return fbm(x*f1,y*f1,lagen,rug);
+  const a=fbm(x*f0,y*f0,lagen,rug), b=fbm(x*f1,y*f1,lagen,rug);
+  return a+(b-a)*t;
+}
+/* Een veld van het grovere terreinrooster aflezen tussen de vier omliggende
+   punten in. Puntsgewijs aflezen is niet genoeg: deze velden bepalen mede de
+   vórm van de ruis — hoe hoog, hoe ruig, hoe grof — en een sprongetje in zo'n
+   veld verspringt het hele ruispatroon eronder. Op elke roosterlijn kwam er zo
+   een randje, en samen vormden die een ruitjespatroon dat de schaduw netjes
+   uitvergrootte. Met een zachte overgang is er niets meer om te verspringen. */
+function tussen(f,a,b,c,d,w0,w1,w2,w3){ return f[a]*w0+f[b]*w1+f[c]*w2+f[d]*w3; }
+/* doosvervaging, in twee vegen; hiermee lopen de terreinen van buurlanden in
+   elkaar over in plaats van met een klif op de grens te botsen */
+function veeg(a,w,h,r){
+  const t=new Float32Array(a.length), n=2*r+1;
+  const kx=x=>x<0?0:x>w-1?w-1:x, ky=y=>y<0?0:y>h-1?h-1:y;
+  for(let y=0;y<h;y++){
+    const o=y*w; let som=0;
+    for(let x=-r;x<=r;x++)som+=a[o+kx(x)];
+    for(let x=0;x<w;x++){ t[o+x]=som/n; som+=a[o+kx(x+r+1)]-a[o+kx(x-r)]; }
+  }
+  for(let x=0;x<w;x++){
+    let som=0;
+    for(let y=-r;y<=r;y++)som+=t[x+w*ky(y)];
+    for(let y=0;y<h;y++){ a[y*w+x]=som/n; som+=t[x+w*ky(y+r+1)]-t[x+w*ky(y-r)]; }
+  }
+}
+const hexRGB=s=>{
+  s=s.trim().replace("#","");
+  if(s.length===3)s=s[0]+s[0]+s[1]+s[1]+s[2]+s[2];
+  const n=parseInt(s,16);
+  return [n>>16&255,n>>8&255,n&255];
+};
+
+/* ---- het rekenwerk ---- */
+/* RES is het aantal rasterpunten per kaarteenheid van het reliëf. Hoger is
+   scherper bij het inzoomen en kost evenredig meer rekentijd en geheugen; op
+   3 blijft het onder de seconde en is het tot een stap of vier inzoomen mooi.
+   Het is het enige getal dat je hoeft te veranderen als je dat anders wilt. */
+let hoogte=null, RW=0, RH=0, landvlak=null;
+const RES=3;
+
+/* De hooggebergte die van de noordkust van Skandia, langs de bergpas boven
+   Hallasholm, door Teutland naar Alpina loopt — een eigen kronkelende rug,
+   los van de gebiedsgrenzen, zodat hij er als één keten uitziet in plaats
+   van als aparte vlekken per land. Punten in world.svg-maat. */
+const BERGKETENS=[
+  {punten:[
+    [230,232,20],[230,226,22],[252,244,20],[264,259,16],
+    [278,276,13],[290,299,11],[302,314,9],[317,331,9],[328,354,9]
+  ]}
+];
+function afstandTotKeten(wx,wy){
+  let dmin=Infinity;
+  for(const keten of BERGKETENS){
+    const pts=keten.punten;
+    for(let i=0;i<pts.length-1;i++){
+      const [ax,ay,ar]=pts[i], [bx,by,br]=pts[i+1];
+      const dx=bx-ax, dy=by-ay;
+      const len=Math.hypot(dx,dy), len2=dx*dx+dy*dy;
+      let t=len2>0?((wx-ax)*dx+(wy-ay)*dy)/len2:0;
+      t=t<0?0:t>1?1:t;
+      let px=ax+t*dx, py=ay+t*dy;
+      /* een rechte rug tussen twee punten oogt als een liniaal; deze golf
+         schuift het punt zijdelings, deterministisch (dezelfde vorm bij elke
+         herberekening) en continu langs de hele keten — de ruis wordt
+         gelezen op de lijn zelf (niet per segment apart), zodat er geen
+         sprong ontstaat waar het ene segment in het andere overgaat */
+      if(len>0){
+        const nx=-dy/len, ny=dx/len;
+        const golf=(fbm(px*.028,py*.028,2,.2)-.5)*2;
+        px+=nx*golf*9; py+=ny*golf*9;
+      }
+      const breed=ar+(br-ar)*t;
+      const d=Math.hypot(wx-px,wy-py)-breed;
+      if(d<dmin)dmin=d;
+    }
+  }
+  return Math.max(0,dmin);
+}
+
+/* ---- cache voor het gekleurde reliëf ----
+   Het duurste deel van bouwGrond is niet het hoogteveld maar de kleuring
+   erna: per rasterpunt licht, hoogtekleur, sneeuw en begroeiing uitrekenen
+   en naar een PNG schilderen. Die PNG hangt alleen af van de landvormen, het
+   terrein en de kleurstelling (licht/donker) — verandert daar niets aan, dan
+   is de vorige PNG nog steeds precies dezelfde. Die bewaren we in IndexedDB
+   (te groot voor localStorage: een paar MB per kleurstelling) onder een
+   sleutel die meeverandert zodra world.svg, data.json of het thema anders
+   is, zodat een verouderde cache vanzelf niet meer treft. Het hoogteveld
+   zelf blijft altijd opnieuw berekend — dat heeft ook bouwRivieren() nodig
+   en is met tientallen MB's te groot om de moeite waard te cachen. */
+/* Twee winkels: "png" voor het gekleurde reliëfbeeld, "rivieren" voor de
+   berekende rivierlopen (paden + de punten waar riviernamen op vastklikken).
+   Beide krijgen dezelfde soort sleutel (zie reliefSleutel in bouwGrond), dus
+   wat hier gebeurt is gewoon een kleine sleutel/waarde-opslag per winkel. */
+const reliefCache=(()=>{
+  const NAAM="gj-reliefcache", WINKELS=["png","rivieren"];
+  let dbp=null;
+  const open=()=>dbp||(dbp=new Promise((res,rej)=>{
+    const r=indexedDB.open(NAAM,1);
+    r.onupgradeneeded=()=>{ for(const w of WINKELS)r.result.createObjectStore(w); };
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  }));
+  return{
+    async get(winkel,sleutel){
+      try{
+        const db=await open();
+        return await new Promise((res,rej)=>{
+          const tx=db.transaction(winkel,"readonly").objectStore(winkel).get(sleutel);
+          tx.onsuccess=()=>res(tx.result!==undefined?tx.result:null);
+          tx.onerror=()=>rej(tx.error);
+        });
+      }catch(e){ return null; }
+    },
+    async set(winkel,sleutel,waarde){
+      try{
+        const db=await open();
+        /* Licht en donker apart bewaren — wisselen van thema blijft dan aan
+           beide kanten snel. De sleutel begint met "v1-dark-" of "v1-light-"
+           (zie reliefSleutel), dus per kleurstelling ruimen we hier alles op
+           wat niet de zojuist gezette sleutel is; anders groeit dit bij elke
+           wijziging aan de kaart gewoon door. */
+        const voorvoegsel=sleutel.replace(/^(v1-(?:dark|light)).*$/,"$1");
+        await new Promise((res,rej)=>{
+          const s=db.transaction(winkel,"readwrite").objectStore(winkel);
+          const rq=s.getAllKeys();
+          rq.onsuccess=()=>{
+            for(const oud of rq.result)
+              if(typeof oud==="string"&&oud.startsWith(voorvoegsel)&&oud!==sleutel)s.delete(oud);
+            const tx=s.put(waarde,sleutel);
+            tx.onsuccess=res; tx.onerror=()=>rej(tx.error);
+          };
+          rq.onerror=()=>rej(rq.error);
+        });
+      }catch(e){ /* vol, geblokkeerd of niet beschikbaar: dan maar geen cache */ }
+    }
+  };
+})();
+/* Snelle, niet-cryptografische hash (FNV-1a): hoeft alleen wijzigingen te
+   herkennen, niet bestand tegen expres geknoei. */
+function hashTekst(s){
+  let h=0x811c9dc5;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); }
+  return (h>>>0).toString(36);
+}
+
+/* De opbouw van het reliëf gebeurt in stappen, met tussendoor een adempauze
+   waarin de browser het scherm mag bijwerken. Zonder die pauzes is het één
+   blok van seconden waarin niets te zien is — de laadbalk zou dan pas aan het
+   eind in één klap vooruitspringen. `meld` geeft na elke stap door hoe ver we
+   zijn; wie geen melding wil geeft niets mee. */
+async function bouwGrond(meld){
+  const pauze=meld?(deel,sleutel)=>meld(deel,sleutel):()=>{};
+  const wortel=document.documentElement, stijl=getComputedStyle(wortel);
+  const css=n=>stijl.getPropertyValue(n).trim();
+  const donker=+css("--donker")>0;
+  const kleurVan=t=>hexRGB(donker?t.donker:t.licht);
+  const ROTS=hexRGB(css("--rots")), SNEEUW=hexRGB(css("--sneeuw")),
+        GRENS=hexRGB(css("--coast"));
+  const ids=Object.keys(GEO.vormen);
+
+  /* Sleutel voor beide caches: verandert er iets aan de landvormen, het
+     terrein of de kleurstelling, dan verandert de sleutel mee en treft een
+     oudere cache-regel vanzelf niet meer. Beide caches vroeg checken, vóór
+     al het rekenwerk hieronder: staan ze er allebei al, dan hoeft ook het
+     hoogteveld — nodig voor zowel de kleuring als de rivieren — niet meer
+     berekend te worden. */
+  const reliefSleutel="v1-"+(donker?"dark":"light")+"-"+hashTekst(svgTekst)+"-"+hashTekst(JSON.stringify(DATA));
+  const [gecached,gecachedRivieren]=await Promise.all([
+    reliefCache.get("png",reliefSleutel),
+    reliefCache.get("rivieren",reliefSleutel),
+  ]);
+  if(gecached&&gecachedRivieren){
+    await pauze(.60,"laadLicht");
+    gLand.textContent="";
+    el("image",{class:"reliefbeeld",href:gecached,
+      x:0,y:0,width:W,height:H,preserveAspectRatio:"none"},gLand);
+    await pauze(.85,"laadRivieren");
+    tekenRivieren(gecachedRivieren);
+    zetRivierNamen();
+    document.body.classList.add("relief");
+    bouwRoutes();
+    pas();
+    return;
+  }
+
+  /* --- welk gebied ligt waar --- */
+  RW=Math.round(W*RES); RH=Math.round(H*RES);
+  const N=RW*RH;
+  const cv=document.createElement("canvas"); cv.width=RW; cv.height=RH;
+  const ctx=cv.getContext("2d",{willReadFrequently:true});
+  ctx.setTransform(RES,0,0,RES,0,0);
+  ids.forEach((id,i)=>{
+    ctx.fillStyle=`rgb(${i+1},0,0)`;
+    for(const d of GEO.vormen[id])ctx.fill(new Path2D(d));
+  });
+  const beeld=ctx.getImageData(0,0,RW,RH), rd=beeld.data;
+  const reg=new Uint8Array(N), land=new Uint8Array(N);
+  let landpunten=0;
+  for(let p=0,q=0;p<N;p++,q+=4){
+    reg[p]=rd[q];
+    if(rd[q+3]>120){land[p]=1;landpunten++;}
+  }
+  if(!landpunten)throw new Error("geen land gevonden");
+  landvlak=land;
+
+  /* --- terrein per punt, zacht over de landsgrenzen heen ---
+     Dit gaat op een grover rooster: het zijn vloeiende velden, en na de
+     vervaging is er van dat grovere rooster niets meer van te zien. */
+  /* PS is het aantal punten per kaarteenheid van dit rooster. Het hoeft niet
+     zo fijn te zijn als het reliëf zelf — het zijn vervaagde velden, en ze
+     worden met een zachte overgang uitgelezen (zie tussen()). Eén punt per
+     kaarteenheid is ruim genoeg en scheelt negen keer zoveel geheugen als het
+     reliëfrooster. */
+  const PS=1, PW=Math.round(W*PS), PH2=Math.round(H*PS);
+  const pc=document.createElement("canvas"); pc.width=PW; pc.height=PH2;
+  const pctx=pc.getContext("2d",{willReadFrequently:true});
+  pctx.setTransform(PS,0,0,PS,0,0);
+  ids.forEach((id,i)=>{
+    pctx.fillStyle=`rgb(${i+1},0,0)`;
+    for(const d of GEO.vormen[id])pctx.fill(new Path2D(d));
+  });
+  const pd=pctx.getImageData(0,0,PW,PH2).data;
+  const M=PW*PH2;
+  const fAmp=new Float32Array(M), fRug=new Float32Array(M), fKoud=new Float32Array(M);
+  const fR=new Float32Array(M), fG=new Float32Array(M), fB=new Float32Array(M);
+  const fKorrel=new Float32Array(M), fVlek=new Float32Array(M);
+  /* Buiten het land een middenwaarde in plaats van niets: anders trekt de
+     vervaging de kust naar zwart toe en krijgt elk strand een vuile rand. */
+  const middel=kleurVan(GROEI.grasland);
+  fAmp.fill(.4); fRug.fill(.3); fR.fill(middel[0]); fG.fill(middel[1]); fB.fill(middel[2]);
+  fKorrel.fill(GROEI.grasland.korrel); fVlek.fill(GROEI.grasland.vlek);
+  const info={};   /* per gebied: het terrein, opgezocht en klaargezet */
+  ids.forEach((id,i)=>{
+    const t=terreinVan(id);
+    const meta=GEBIEDEN[id]||PLAATSEN.find(p=>p.vorm===id);
+    const r=RELIEF[t.relief]||RELIEF.heuvels;
+    const soorten=[].concat(t.begroeiing||"grasland").map(s=>GROEI[s]||GROEI.grasland);
+    info[i+1]={t,r,soorten,kleuren:soorten.map(kleurVan),koud:t.koud?1:0,id,
+      toon:hexRGB(css("--tone-"+((meta&&meta.tint)||"a")))};
+  });
+  /* Hoe ver een terrein over de landsgrens heen doorloopt. Een bergketen
+     houdt niet op bij een grenspaal: de Oostelijke Steppen lopen bij Alpina en
+     Skandia in de bergen over, en het reliëf hoort dat te laten zien. Dit is
+     ruim genomen — een kleine straal gaf een vlakte die pal tegen een gebergte
+     aan lag. Kleur en korrel houden een kortere straal aan: begroeiing volgt
+     eerder het klimaat dan de hoogte, en die mag scherper wisselen. */
+  const vrHoogte=Math.round(30*PS), vr=Math.round(22*PS);
+  const fKust=new Float32Array(M), fFijn=new Float32Array(M);
+
+  await pauze(.22,"laadKust");
+  /* --- afstand tot de kust, het land in ---
+     Dit moet de échte afstand zijn en geen schatting. De voor de hand liggende
+     manier — twee vegen over het rooster waarbij elk punt bij zijn buurman één
+     stap optelt, of 1,41 schuin — kost weinig maar meet scheef: recht en
+     schuin worden verschillend afgerond, en het veld valt uiteen in diagonale
+     facetten. Zolang je alleen naar de afstand kijkt zie je dat niet, maar het
+     land loopt hier vanaf de kust omhoog en de schaduw meet de hélling; dan
+     worden die facetten een streepjespatroon van hier tot ginder over het hele
+     land. Wat hieronder staat is de exacte methode van Felzenszwalb: per
+     kolom, en daarna per rij, de onderste omhullende van een rij parabolen.
+     Even snel, en zonder voorkeursrichting.
+
+     Het gaat over hetzelfde fijne rooster als het reliëf zelf. Op een grover
+     rooster uitrekenen en er tussenin aflezen leek genoeg — het is tenslotte
+     een traag veld — maar dat is het niet: tussen twee roosterpunten in een
+     rechte lijn trekken laat de hélling op elke roosterlijn verspringen, en
+     ook dát ziet de schaduw meteen. De afstand komt dus in hetzelfde vak
+     terecht als waar straks de hoogte in gaat; elk punt heeft alleen zijn
+     eigen waarde nodig, dus dat kan in één vak.                          */
+  const h32=new Float32Array(N);
+  {
+    const VER=1e20, mx=Math.max(RW,RH);
+    for(let p=0;p<N;p++)h32[p]=land[p]?VER:0;
+    const f=new Float64Array(mx), dd=new Float64Array(mx);
+    const v=new Int32Array(mx), z=new Float64Array(mx+1);
+    const langs=n=>{
+      let k=0; v[0]=0; z[0]=-VER; z[1]=VER;
+      for(let q=1;q<n;q++){
+        let s;
+        for(;;){
+          s=((f[q]+q*q)-(f[v[k]]+v[k]*v[k]))/(2*q-2*v[k]);
+          if(s<=z[k])k--; else break;
+        }
+        k++; v[k]=q; z[k]=s; z[k+1]=VER;
+      }
+      k=0;
+      for(let q=0;q<n;q++){
+        while(z[k+1]<q)k++;
+        dd[q]=(q-v[k])*(q-v[k])+f[v[k]];
+      }
+    };
+    for(let x=0;x<RW;x++){
+      for(let y=0;y<RH;y++)f[y]=h32[y*RW+x];
+      langs(RH);
+      for(let y=0;y<RH;y++)h32[y*RW+x]=dd[y];
+    }
+    for(let y=0;y<RH;y++){
+      const o=y*RW;
+      for(let x=0;x<RW;x++)f[x]=h32[o+x];
+      langs(RW);
+      for(let x=0;x<RW;x++)h32[o+x]=Math.sqrt(dd[x])/RES;
+    }
+  }
+
+  /* Hoe breed het binnenland van elk gebied is: de grootste afstand tot de
+     kust die er in voorkomt. Daar hangen twee dingen van af.
+
+     De aanloop. Het land klimt vanaf de kust omhoog, en dat moet ergens klaar
+     zijn. Een vaste aanloop van pakweg 26 eenheden werkt op de Oostelijke
+     Steppen prima, maar Araluen is zesenvijftig eenheden breed: dan is het
+     hele eiland aanloop en komt er nergens land van hoogte. Vandaar dat de
+     aanloop meegroeit met het gebied waar hij in ligt.
+
+     De fijnheid van de ruis. Op een werelddeel van duizend eenheden zijn
+     bergketens van veertig eenheden precies goed; op Araluen passen er dan
+     anderhalf en blijft er een vage veeg over. Kleine landen krijgen daarom
+     fijnere ruis. Beide lopen via het vervaagde rooster, zodat er op een
+     landsgrens geen sprong in het landschap ontstaat.                     */
+  await pauze(.28,"laadGrenzen");
+  /* --- de landsgrenzen ---
+     Een punt ligt op de grens als een buurpunt bij een ander land hoort. Dat
+     levert een streep van twee punten breed op, één aan elke kant, en precies
+     één streep per grens: waar twee vormen uit world.svg elkaar overlappen is
+     er per punt maar één land, dus valt er niets dubbel te tekenen. */
+  const grensmerk=new Uint8Array(N);
+  for(let y=1;y<RH-1;y++)for(let x=1;x<RW-1;x++){
+    const p=y*RW+x;
+    if(!land[p])continue;
+    const r0=reg[p];
+    if((land[p-1]&&reg[p-1]!==r0)||(land[p+1]&&reg[p+1]!==r0)||
+       (land[p-RW]&&reg[p-RW]!==r0)||(land[p+RW]&&reg[p+RW]!==r0))grensmerk[p]=1;
+  }
+
+  const dmax=new Float32Array(256);
+  for(let p=0;p<N;p++)if(land[p]&&h32[p]>dmax[reg[p]])dmax[reg[p]]=h32[p];
+  const klem=(v,a,b)=>v<a?a:v>b?b:v;
+  for(let p=0;p<M;p++){
+    const d=dmax[pd[p*4]]||30;
+    fKust[p]=klem(d*.55,5,26);
+    fFijn[p]=klem(48/Math.max(8,d),.75,2.6);
+  }
+  veeg(fKust,PW,PH2,vr); veeg(fFijn,PW,PH2,vr);
+
+  await pauze(.34,"laadBegroeiing");
+  /* --- terrein per punt, zacht over de landsgrenzen heen ---
+     Hoeveel het eigen kleurtje van een land van zijn begroeiing wint staat in
+     TOON. Nul geeft een natuurkundig kloppende kaart waarop je geen land meer
+     uit elkaar houdt; één geeft de egale vlakken van vroeger terug. Sinds de
+     begroeiing zelf zichtbaar is als kleur en korrel mag dit lager staan dan
+     eerst: de landen worden nu vooral uit elkaar gehouden door hun grenslijn,
+     niet door hun tint. */
+  const TOON=.30;
+  /* Landschappen die in de boeken een naam hebben — het Grimsdell Woud, de
+     Vlakte der Eenzamen, de Veenlanden — staan in data.json als plaats met een
+     begroeiing en een straal. Die leggen hier een vlek van dat landschap om
+     hun punt heen, over de begroeiing van het land heen. Zo staat het bos waar
+     het in de boeken staat, in plaats van waar de ruis het toevallig legt. */
+  const vlekken=[];
+  for(const p of PLAATSEN){
+    const b=GROEI[p.begroeiing]; const m=markerEls[p.id];
+    if(!b||!m)continue;
+    /* de vlek krijgt hetzelfde tintje van zijn land mee als de rest van dat
+       land, anders springt een bos eruit als een andere kaart */
+    const meta=GEBIEDEN[p.gebied];
+    const o=hexRGB(css("--tone-"+((meta&&meta.tint)||"a"))), kl=kleurVan(b);
+    vlekken.push({x:m.pos[0],y:m.pos[1],r:p.straal||14,rr:(p.straal||14)*1.75,b,
+      k:[kl[0]+(o[0]-kl[0])*TOON, kl[1]+(o[1]-kl[1])*TOON, kl[2]+(o[2]-kl[2])*TOON]});
+  }
+  for(let y=0;y<PH2;y++)for(let x=0;x<PW;x++){
+    const p=y*PW+x;
+    if(pd[p*4+3]<=120)continue;
+    const g=info[pd[p*4]]; if(!g)continue;
+    const wx=x/PS, wy=y/PS;
+    fAmp[p]=g.r.amp; fRug[p]=g.r.rug; fKoud[p]=g.koud;
+    /* Meer dan één begroeiing in een gebied: welke van de twee het wordt hangt
+       af van een trage ruis, met een zachte overgang ertussen. Zo krijgt
+       Araluen akkerland met bossen ertussen in plaats van één egale kleur. De
+       vlekken zijn even fijn als het reliëf, dus op een klein land zijn ze
+       kleiner — anders valt een heel eiland onder één vlek.               */
+    let k=g.kleuren[0], b0=g.soorten[0], b1=b0, mf=0;
+    if(g.kleuren.length>1){
+      const n=landruis(wx,wy,fFijn[p],.011,1,0)*(g.kleuren.length-1);
+      const i0=Math.min(g.kleuren.length-2,Math.floor(n));
+      mf=soep(Math.min(1,Math.max(0,(n-i0-.28)/.44)));
+      const a=g.kleuren[i0], b=g.kleuren[i0+1];
+      k=[a[0]+(b[0]-a[0])*mf, a[1]+(b[1]-a[1])*mf, a[2]+(b[2]-a[2])*mf];
+      b0=g.soorten[i0]; b1=g.soorten[i0+1];
+    }
+    /* de korrel volgt dezelfde overgang als de kleur: waar het bosgroen wordt,
+       wordt het oppervlak ook ruiger */
+    fKorrel[p]=b0.korrel+(b1.korrel-b0.korrel)*mf;
+    fVlek[p]=b0.vlek+(b1.vlek-b0.vlek)*mf;
+    const o=g.toon;
+    fR[p]=k[0]+(o[0]-k[0])*TOON; fG[p]=k[1]+(o[1]-k[1])*TOON; fB[p]=k[2]+(o[2]-k[2])*TOON;
+  }
+  veeg(fAmp,PW,PH2,vrHoogte); veeg(fRug,PW,PH2,vrHoogte); veeg(fKoud,PW,PH2,vrHoogte);
+  veeg(fR,PW,PH2,vr); veeg(fG,PW,PH2,vr); veeg(fB,PW,PH2,vr);
+  veeg(fKorrel,PW,PH2,vr); veeg(fVlek,PW,PH2,vr);
+
+  /* De landschappen met een naam komen ná de vervaging, niet ervoor. Ze zijn
+     ongeveer even groot als de vervaging breed is — het Doornbos meet negen
+     eenheden, de vervaging dertien — dus ervoor gezet worden ze eenvoudigweg
+     uitgesmeerd tot ze niet meer te zien zijn. Hun eigen rand is zacht en
+     grillig, dus vervagen hoeven ze niet. */
+  for(const v of vlekken){
+    const x0=Math.max(0,Math.floor(v.x-v.rr)), x1=Math.min(PW-1,Math.ceil(v.x+v.rr));
+    const y0=Math.max(0,Math.floor(v.y-v.rr)), y1=Math.min(PH2-1,Math.ceil(v.y+v.rr));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+      const p=y*PW+x;
+      if(pd[p*4+3]<=120)continue;
+      const dx=x/PS-v.x, dy=y/PS-v.y;
+      /* de rand golft: een bos met een cirkel eromheen is geen bos maar een schijf */
+      const golf=v.r*(.72+.56*ruis(x/PS*.10+91,y/PS*.10-53));
+      const w=soep(Math.min(1,Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/golf)));
+      if(w<=0)continue;
+      fR[p]+=(v.k[0]-fR[p])*w; fG[p]+=(v.k[1]-fG[p])*w; fB[p]+=(v.k[2]-fB[p])*w;
+      fKorrel[p]+=(v.b.korrel-fKorrel[p])*w;
+      fVlek[p]+=(v.b.vlek-fVlek[p])*w;
+    }
+  }
+
+  const kust=new Uint8Array(N);
+  for(let y=0;y<RH;y++)for(let x=0;x<RW;x++){
+    const p=y*RW+x;
+    if(!land[p]){h32[p]=0;continue;}
+    const wx=x/RES, wy=y/RES;
+    /* de vier omliggende punten van het terreinrooster, met hun gewichten */
+    let ix=Math.floor(wx-.5), iy=Math.floor(wy-.5);
+    if(ix<0)ix=0; else if(ix>PW-2)ix=PW-2;
+    if(iy<0)iy=0; else if(iy>PH2-2)iy=PH2-2;
+    let tx=wx-.5-ix, ty=wy-.5-iy;
+    tx=tx<0?0:tx>1?1:tx; ty=ty<0?0:ty>1?1:ty;
+    const ia=iy*PW+ix, ib=ia+1, ic=ia+PW, id=ic+1;
+    const w0=(1-tx)*(1-ty), w1=tx*(1-ty), w2=(1-tx)*ty, w3=tx*ty;
+
+    const k=soep(Math.min(1,h32[p]/tussen(fKust,ia,ib,ic,id,w0,w1,w2,w3)));
+    kust[p]=k*255;
+    const n=landruis(wx,wy,tussen(fFijn,ia,ib,ic,id,w0,w1,w2,w3),.026,6,
+                     tussen(fRug,ia,ib,ic,id,w0,w1,w2,w3));
+    const basis=k*tussen(fAmp,ia,ib,ic,id,w0,w1,w2,w3)*(.24+.76*n);
+    /* de bergketen van Skandia naar Alpina trekt zijn eigen rug over de
+       gebiedsgrenzen heen, los van de kust-aanloop van elk land apart. De
+       overgang naar het gewone reliëf loopt breed en zacht uit (soep, niet
+       lineair), zodat de rand niet als een harde witte vlek afsnijdt maar
+       geleidelijk in het bestaande gebergte van bijvoorbeeld Alpina overloopt. */
+    const dKeten=afstandTotKeten(wx,wy);
+    const UITLOOP=70;
+    const ketenRaw=Math.max(0,Math.min(1,1-dKeten/UITLOOP));
+    const ketenT=ketenRaw*ketenRaw*ketenRaw*(10-15*ketenRaw+6*ketenRaw*ketenRaw);
+    /* eigen, grovere ruis voor de keten: pieken en zadels langs de hele rug,
+       los van de fijne begroeiingsruis, anders oogt de sneeuw als één vlak
+       wit tapijt in plaats van als een reeks toppen met dalen ertussen */
+    const kn=fbm(wx*.048,wy*.048,4,.55);
+    const ketenHoogte=ketenT*(.42+.55*kn);
+    /* lineair mengen, niet kwadratisch: een kwadraat drukt de overgangszone
+       samen tot een paar rasterpunten, en dat geeft een te steile helling
+       (een donkere slagschaduwband) waar de keten het gewone land raakt */
+    h32[p]=Math.min(1,basis+(ketenHoogte-basis)*ketenT);
+  }
+  hoogte=h32;
+
+  /* reliefSleutel en gecached (het PNG-plaatje) zijn al vroeg in de functie
+     bepaald — hier komen we alleen terecht als dát een miss was (anders was
+     de functie al klaar via de vroege return hierboven), maar de rivieren
+     kunnen intussen nog steeds een aparte hit of miss zijn. */
+  await pauze(.40,"laadLicht");
+  let reliefUrl;
+  if(gecached){
+    reliefUrl=gecached;
+  }else{
+    /* --- licht, hoogtekleur en sneeuw ---
+       Het licht komt uit het noordwesten: dat is op kaarten de gewoonte, en het
+       is ook de enige richting waarbij een dal als een dal leest en niet als een
+       rug. Wat de helling van de zon af staat wordt donker, wat er naartoe
+       helt licht. */
+    const LX=-.55, LY=-.55, LZ=.63;
+    /* De helling wordt in kaarteenheden gemeten en niet in rasterpunten, zodat
+       het reliëf er hetzelfde uitziet als je RES verandert. */
+    const STEIL=16*RES/2;
+    const strand=donker?[.86,.88,.82]:[1.10,1.08,.98];
+    for(let y=0;y<RH;y++)for(let x=0;x<RW;x++){
+      const p=y*RW+x, q=p*4;
+      if(!land[p]){rd[q+3]=0;continue;}
+      const wx=x/RES, wy=y/RES;
+      let ix=Math.floor(wx-.5), iy=Math.floor(wy-.5);
+      if(ix<0)ix=0; else if(ix>PW-2)ix=PW-2;
+      if(iy<0)iy=0; else if(iy>PH2-2)iy=PH2-2;
+      let tx=wx-.5-ix, ty=wy-.5-iy;
+      tx=tx<0?0:tx>1?1:tx; ty=ty<0?0:ty>1?1:ty;
+      const ia=iy*PW+ix, ib=ia+1, ic=ia+PW, id=ic+1;
+      const w0=(1-tx)*(1-ty), w1=tx*(1-ty), w2=(1-tx)*ty, w3=tx*ty;
+
+      const hh=h32[p];
+      let r=tussen(fR,ia,ib,ic,id,w0,w1,w2,w3),
+          g=tussen(fG,ia,ib,ic,id,w0,w1,w2,w3),
+          b=tussen(fB,ia,ib,ic,id,w0,w1,w2,w3);
+      /* hoe hoger, hoe meer rots; en op de toppen van de koude landen sneeuw */
+      if(hh>.40){
+        const t=Math.min(1,(hh-.40)/.42);
+        r+=(ROTS[0]-r)*t; g+=(ROTS[1]-g)*t; b+=(ROTS[2]-b)*t;
+      }
+      const ketenKoud=soep(Math.max(0,Math.min(1,1-afstandTotKeten(wx,wy)/30)));
+      const koudheid=Math.max(tussen(fKoud,ia,ib,ic,id,w0,w1,w2,w3),ketenKoud);
+      const grens=.90-.48*koudheid;
+      if(hh>grens){
+        const t=Math.min(1,(hh-grens)/.32);
+        r+=(SNEEUW[0]-r)*t; g+=(SNEEUW[1]-g)*t; b+=(SNEEUW[2]-b)*t;
+      }
+      /* de helling, uit het hoogteverschil met de buren */
+      const gx=((x>0?h32[p-1]:hh)-(x<RW-1?h32[p+1]:hh))*STEIL;
+      const gy=((y>0?h32[p-RW]:hh)-(y<RH-1?h32[p+RW]:hh))*STEIL;
+      const len=Math.sqrt(gx*gx+gy*gy+1);
+      const sh=Math.max(0,(gx*LX+gy*LY+LZ)/len);
+      let m=.55+.71*sh;
+      /* --- de begroeiing zelf ---
+         Hier stonden eerst getekende boompjes en bergjes op de kaart. Die zijn
+         eruit: van bovenaf zie je geen boom maar een dek van kruinen, en dat is
+         een korrel, geen tekentje. Twee schalen bij elkaar doen het werk.
+
+         De korrel, op ongeveer drie eenheden en fijner: de kruinen zelf, met de
+         schaduw ertussen. Hoe grover de begroeiing, hoe sterker — een naaldwoud
+         is ruig, een akker glad. Dit is wat een vlak groen tot bos maakt.
+
+         De vlek, op een eenheid of twaalf: open plekken in een woud, droge
+         stukken op de steppe, een streek die net wat anders kleurt. Zonder die
+         tweede schaal blijft het een egale vacht.
+
+         Gestapelde ruis, geen enkele laag: één laag waardenruis is per definitie
+         een rooster van vlekken, en dat rooster is met het blote oog te zien. */
+      m*=1+(fbm(wx*.17,wy*.17,2,0)-.5)*tussen(fKorrel,ia,ib,ic,id,w0,w1,w2,w3)
+          +(ruis(wx*.085+311,wy*.085-127)-.5)*tussen(fVlek,ia,ib,ic,id,w0,w1,w2,w3);
+      /* de laatste meters voor de kust lopen naar het strand toe op */
+      if(kust[p]<41){
+        const t=1-kust[p]/41;
+        r+=(r*strand[0]-r)*t; g+=(g*strand[1]-g)*t; b+=(b*strand[2]-b)*t;
+      }
+      /* De landsgrens komt na het licht, niet ervoor: een grens die meegaat met
+         de schaduw verdwijnt op de donkere flank van een bergrug en licht op de
+         zonkant juist op. Hij moet overal even zwaar zijn. */
+      if(grensmerk[p]){
+        r=r*m+(GRENS[0]-r*m)*.5; g=g*m+(GRENS[1]-g*m)*.5; b=b*m+(GRENS[2]-b*m)*.5;
+        m=1;
+      }
+      /* Een bitmap heeft maar 256 stappen per kleur. Op een flauwe helling loopt
+         de schaduw zo langzaam op dat elke stap over een strook van een paar
+         punten breed wordt uitgesmeerd, en dan liggen er ineens terrassen over
+         het land — precies het soort streepjespatroon dat een kaart er digitaal
+         uit laat zien. Een half stapje ruis bij het afronden breekt die grens:
+         de punten vlak bij de overgang vallen dan de ene keer omhoog en de
+         andere keer omlaag, en het oog ziet weer een verloop. */
+      const dith=hash2(x,y)-.5;
+      rd[q]=Math.max(0,Math.min(255,r*m+dith));
+      rd[q+1]=Math.max(0,Math.min(255,g*m+dith));
+      rd[q+2]=Math.max(0,Math.min(255,b*m+dith));
+      rd[q+3]=rd[q+3]>250?255:rd[q+3];   /* de rafelrand van de kust blijft zacht */
+    }
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.putImageData(beeld,0,0);
+    reliefUrl=cv.toDataURL("image/png");
+    reliefCache.set("png",reliefSleutel,reliefUrl);   /* niet afgewacht: mag op de achtergrond */
+  }
+  gLand.textContent="";
+  el("image",{class:"reliefbeeld",href:reliefUrl,
+    x:0,y:0,width:W,height:H,preserveAspectRatio:"none"},gLand);
+
+  await pauze(.74,"laadRivieren");
+  if(gecachedRivieren){
+    tekenRivieren(gecachedRivieren);
+  }else{
+    reliefCache.set("rivieren",reliefSleutel,bouwRivieren(info,reg));
+  }
+  zetRivierNamen();
+  document.body.classList.add("relief");
+  bouwRoutes();               /* een verschoven riviernaam kan in een route zitten */
+  pas();
+}
+
+/* ---- rivieren ----
+   Bergaf lopen vanaf een hoog punt lijkt de voor de hand liggende manier, maar
+   dat werkt niet: op een vlakte is er geen laagste buur, en dan trekt zo'n
+   loop een kaarsrechte streep dwars over de Oostelijke Steppen. Rivieren komen
+   hier daarom uit de afwatering van het hele land, in drie stappen.
+
+     kommen vullen   Het hoogteveld zit vol kuiltjes waar water in blijft
+                     staan. Die worden opgevuld tot de rand, zodat er van elk
+                     punt op het land een weg naar zee bestaat. Dat gebeurt van
+                     de zee uit naar binnen toe, telkens vanaf het laagste punt
+                     dat nog aan de beurt is.
+     afvoer          Elk punt wijst naar zijn laagste buur. Zo ontstaat er een
+                     boom die overal in zee eindigt.
+     water tellen    Van hoog naar laag telt elk punt zijn water bij dat van
+                     zijn buurman op. Wat er dan doorheen komt is precies het
+                     stroomgebied, en waar dat groot genoeg wordt is het een
+                     rivier — met zijtakken die vanzelf op de juiste plek
+                     samenkomen, en een bedding die naar de monding toe breder
+                     wordt.
+
+   Het gebeurt op een grover rooster dan het reliëf: twee eenheden per punt is
+   ruim genoeg voor rivieren en scheelt een factor zesendertig aan rekenwerk.
+   Wat er in data.json onder terrein staat telt mee — een woestijn watert
+   nauwelijks af, en rivieren:0 bij een gebied houdt het er helemaal droog. */
+let rivierpunten=[];
+/* Zet de paden en riviernaam-punten van bouwRivieren() op het scherm — hetzij
+   net berekend, hetzij rechtstreeks uit de cache. Los van bouwRivieren zelf,
+   zodat een cache-hit dit tekenwerk kan doen zonder ook het rekenwerk te
+   herhalen. */
+function tekenRivieren(data){
+  gWater.textContent="";
+  for(const p of data.paden)el("path",{class:p.klasse,d:p.d},gWater);
+  rivierpunten=data.punten;
+}
+function bouwRivieren(info,reg){
+  const paden=[];
+  rivierpunten=[];
+  const GS=2, GW=Math.round(W/GS), GH=Math.round(H/GS), G=GW*GH;
+  const h=new Float32Array(G), zee=new Uint8Array(G), vak=new Uint8Array(G);
+  for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){
+    const x=Math.min(RW-1,Math.round((i+.5)*GS*RES));
+    const y=Math.min(RH-1,Math.round((j+.5)*GS*RES));
+    const p=y*RW+x, c=j*GW+i;
+    if(landvlak[p]){h[c]=hoogte[p]; vak[c]=reg[p];} else zee[c]=1;
+  }
+
+  /* --- kommen vullen ---
+     Een hoop op volgorde: telkens komt het laagste punt dat al aan zee hangt
+     naar boven, en zijn buren worden opgetild tot minstens die hoogte. Wat
+     eenmaal behandeld is ligt vast, dus elk punt komt één keer langs. */
+  const hoopH=new Float64Array(G+1), hoopI=new Int32Array(G+1); let hn=0;
+  function erin(c){
+    let k=++hn; hoopH[k]=h[c]; hoopI[k]=c;
+    while(k>1){
+      const o=k>>1; if(hoopH[o]<=hoopH[k])break;
+      const e=hoopH[o],i=hoopI[o]; hoopH[o]=hoopH[k];hoopI[o]=hoopI[k];hoopH[k]=e;hoopI[k]=i;
+      k=o;
+    }
+  }
+  function eruit(){
+    const uit=hoopI[1];
+    hoopH[1]=hoopH[hn]; hoopI[1]=hoopI[hn]; hn--;
+    let k=1;
+    for(;;){
+      const l=k<<1, r=l+1; let m=k;
+      if(l<=hn&&hoopH[l]<hoopH[m])m=l;
+      if(r<=hn&&hoopH[r]<hoopH[m])m=r;
+      if(m===k)break;
+      const e=hoopH[m],i=hoopI[m]; hoopH[m]=hoopH[k];hoopI[m]=hoopI[k];hoopH[k]=e;hoopI[k]=i;
+      k=m;
+    }
+    return uit;
+  }
+  const gezien=new Uint8Array(G);
+  for(let c=0;c<G;c++){
+    const i=c%GW, j=(c/GW)|0;
+    if(zee[c]||!i||!j||i===GW-1||j===GH-1){gezien[c]=1;erin(c);}
+  }
+  const stap=[-1,1,-GW,GW,-GW-1,-GW+1,GW-1,GW+1];
+  /* Een haartje verval in een opgevuld kuiltje, anders staat het water stil.
+     Dat haartje krijgt een willekeurige maat mee: met overal precies hetzelfde
+     verval loopt een opgevulde vlakte kaarsrecht af, en dan trekt de rivier
+     daar een liniaalrechte streep doorheen. Met een grillig haartje kronkelt
+     hij, zoals een rivier op een vlakte hoort te doen. */
+  const HAAR=1e-5;
+  while(hn){
+    const c=eruit(), i=c%GW;
+    for(const d of stap){
+      const n=c+d;
+      if(n<0||n>=G||gezien[n])continue;
+      if(Math.abs(n%GW-i)>1)continue;      /* niet over de rand heen wikkelen */
+      gezien[n]=1;
+      if(h[n]<=h[c])h[n]=h[c]+HAAR*(.2+1.8*hash2(n,c));
+      erin(n);
+    }
+  }
+
+  /* --- waar elk punt heen afwatert, en hoeveel er langskomt --- */
+  const naar=new Int32Array(G).fill(-1), orde=[];
+  for(let c=0;c<G;c++){
+    if(zee[c])continue;
+    orde.push(c);
+    const i=c%GW; let laag=h[c], best=-1;
+    for(const d of stap){
+      const n=c+d;
+      if(n<0||n>=G||Math.abs(n%GW-i)>1)continue;
+      if(h[n]<laag){laag=h[n];best=n;}
+    }
+    naar[c]=best;
+  }
+  orde.sort((a,b)=>h[b]-h[a]);   /* van hoog naar laag: stroomopwaarts eerst */
+  const water=new Float32Array(G);
+  for(const c of orde)water[c]=1;
+  for(const c of orde){const r=naar[c]; if(r>=0)water[r]+=water[c];}
+
+  /* --- welk gebied hoeveel afwatering nodig heeft voor een rivier ---
+     Twee dingen tellen mee. Het klimaat: een woestijn watert nauwelijks af, en
+     rivieren:0 bij een gebied houdt het er helemaal droog. En de maat van het
+     land: een drempel die op de Oostelijke Steppen de grote stromen overhoudt,
+     is voor Araluen — zesenvijftig eenheden breed — hoger dan het hele eiland
+     ooit bij elkaar kan brengen, en dan blijft daar geen druppel over. De
+     drempel schaalt daarom mee met hoeveel land er te vergeven is. */
+  const opp={};
+  for(let c=0;c<G;c++)if(!zee[c])opp[vak[c]]=(opp[vak[c]]||0)+1;
+  const dorst={};
+  for(const k in info){
+    const t=info[k].t, soorten=[].concat(t.begroeiing||"");
+    let m=1;
+    if(soorten.indexOf("woestijn")>=0)m=8;
+    else if(soorten.indexOf("steppe")>=0)m=3;
+    if(t.rivieren===0)m=Infinity;
+    else if(t.rivieren>0)m=1/t.rivieren;
+    const a=opp[k]||1;
+    dorst[k]=m*Math.min(1,Math.max(.10,a/2600));
+  }
+  /* Vanaf hoeveel afwatering het een rivier heet. Lager geeft een fijner net
+     van beken en maakt de kaart druk; hoger houdt alleen de grote stromen
+     over. Dit is per gebied nog eens vermenigvuldigd met dorst hierboven. */
+  const T=165;
+  const water_genoeg=c=>!zee[c]&&water[c]>=T*(dorst[vak[c]]||1);
+
+  /* --- de lopen uittekenen ---
+     Begonnen wordt bij een bovenloop: een punt dat net rivier is en waar geen
+     rivier in uitkomt. Van daar volgt de loop de afvoer tot in zee of tot hij
+     op een al getekende loop stuit — daar is het een zijtak die uitmondt. */
+  const getekend=new Uint8Array(G);
+  const bronnen=[];
+  for(let c=0;c<G;c++){
+    if(!water_genoeg(c))continue;
+    const i=c%GW; let boven=false;
+    for(const d of stap){
+      const n=c+d;
+      if(n<0||n>=G||Math.abs(n%GW-i)>1)continue;
+      if(naar[n]===c&&water_genoeg(n)){boven=true;break;}
+    }
+    if(!boven)bronnen.push(c);
+  }
+  bronnen.sort((a,b)=>water[b]-water[a]);   /* de grootste stroom eerst */
+
+  /* Een loop over acht richtingen zigzagt in stapjes van vijfenveertig graden.
+     Twee keer uitmiddelen haalt die hoek eraf; de kromme door de punten doet
+     de rest. */
+  function strijk(p){
+    for(let ronde=0;ronde<2;ronde++){
+      const uit=p.slice();
+      for(let i=1;i<p.length-1;i++)
+        uit[i]=[(p[i-1][0]+p[i][0]*2+p[i+1][0])/4,(p[i-1][1]+p[i][1]*2+p[i+1][1])/4];
+      p=uit;
+    }
+    return p;
+  }
+  const klasse=w=>w>=T*11?"r3":w>=T*3.4?"r2":"r1";
+  for(const start of bronnen){
+    const punten=[], stromen=[];
+    let c=start;
+    for(let n=0;n<6000;n++){
+      punten.push([((c%GW)+.5)*GS,(((c/GW)|0)+.5)*GS]);
+      stromen.push(water[c]);
+      if(zee[c])break;
+      const al=getekend[c]; getekend[c]=1;
+      if(al&&punten.length>1)break;
+      const r=naar[c]; if(r<0)break;
+      c=r;
+    }
+    if(punten.length<5)continue;
+    const glad=strijk(punten);
+    /* de lopen worden bewaard, zodat de rivieren die in de boeken een naam
+       hebben straks op het water komen te liggen in plaats van ernaast */
+    for(const q of glad)rivierpunten.push(q);
+    /* Het pad in stukken knippen op hoeveel water er langskomt: bovenin een
+       haarlijn, bij de monding een echte stroom. De stukken overlappen één
+       punt, anders valt er een gaatje op de overgang. */
+    let i0=0;
+    for(let i=1;i<=glad.length;i++){
+      const nu=klasse(stromen[Math.min(i,glad.length-1)]);
+      if(i===glad.length||nu!==klasse(stromen[i0])){
+        const deel=glad.slice(i0,Math.min(glad.length,i+1));
+        if(deel.length>1)paden.push({klasse:"rivier "+klasse(stromen[i0]),d:vloeiend(deel)});
+        i0=i;
+      }
+    }
+  }
+  const data={paden,punten:rivierpunten};
+  tekenRivieren(data);
+  return data;
+}
+
+/* ---- de rivieren die een naam hebben ----
+   In de boeken heten een paar rivieren bij naam: de Slijpsteenrivier, de
+   Zalmrivier, de Tarbusrivier. Die staan in data.json als plaats met een punt,
+   en dat punt is een schatting — het lag naast het water in plaats van erop.
+   Hier wordt zo'n naam naar de dichtstbijzijnde echte loop geschoven, zodat de
+   naam bij een rivier staat en niet ergens in een weiland.
+
+   Het is dezelfde soort correctie als opLand() hierboven, die een stad die in
+   zee belandde het land op schuift. En net als daar telt geenSnap: heb jij de
+   markering in de bewerkstand zelf neergezet, dan blijft hij staan waar jij
+   hem hebt gelegd.                                                        */
+function zetRivierNamen(){
+  if(!rivierpunten.length)return;
+  const BEREIK=30;
+  for(const p of PLAATSEN){
+    if(p.soort!=="rivier"||p.geenSnap)continue;
+    const m=markerEls[p.id]; if(!m)continue;
+    let best=null, bd=BEREIK*BEREIK;
+    for(const q of rivierpunten){
+      const dx=q[0]-m.pos[0], dy=q[1]-m.pos[1], d=dx*dx+dy*dy;
+      if(d<bd){bd=d;best=q;}
+    }
+    if(!best)continue;
+    m.pos=[+best[0].toFixed(2),+best[1].toFixed(2)];
+    plekCache[p.id]=m.pos;
+    m.g.setAttribute("transform",`translate(${m.pos[0]},${m.pos[1]})`);
+  }
+}
+
+/* ======================= zoomen en schuiven ======================= */
+let view={x:0,y:0,k:1}; const minK=.85, maxK=26;
+function begrens(){
+  view.k=Math.max(minK,Math.min(maxK,view.k));
+  view.x=Math.min(W/2+.15*view.k*W,Math.max(W/2-1.15*view.k*W,view.x));
+  view.y=Math.min(H/2+.15*view.k*H,Math.max(H/2-1.15*view.k*H,view.y));
+}
+function naarUser(cx,cy){
+  const m=svg.getScreenCTM().inverse(), p=new DOMPoint(cx,cy).matrixTransform(m);
+  return {x:p.x,y:p.y};
+}
+/* Op het overzicht is dit een kaart van landen, geen kaart van plaatsen: een
+   eiland ter grootte van een duim met dertig kasteeltjes erop leest niet. Ver
+   uitgezoomd verdwijnen de markeringen daarom en blijven alleen de land- en
+   zeenamen staan; één zoomstap (1,5×) verder zijn ze er weer. Wat je zelf hebt
+   aangewezen blijft wel staan — de gekozen plaats, de plaatsen van een gekozen
+   reisroute, en alles in de bewerkstand — anders kijk je naar een lege kaart
+   of naar een routelijn zonder begin en eind. */
+const STIL_TOT=1.35;              /* maal het overzicht: daaronder geen markeringen */
+let routePlekken=new Set();       /* de plaatsen van de gekozen reisroute */
+const stilNu=()=>view.k<kBasis*STIL_TOT&&!zetten;
+
+function pas(){
+  world.setAttribute("transform",`translate(${view.x},${view.y}) scale(${view.k})`);
+  const s=1/view.k;
+  for(const it of zeeLabels)it.t.setAttribute("transform",`scale(${s*(it.d.maat||1)})`);
+  const stil=stilNu();
+  for(const p of PLAATSEN){
+    const m=markerEls[p.id]; if(!m)continue;
+    m.inner.setAttribute("transform",`scale(${s})`);
+    /* namen verschijnen ten opzichte van het overzicht, niet op een vaste
+       zoomwaarde: zo blijft het kloppen als er land bij komt en het
+       overzicht verder uitzoomt */
+    m.g.classList.toggle("showlabel",view.k>=kBasis*(p.z||3)/2.4);
+    m.g.classList.toggle("stil",stil&&p.id!==state.sel&&!routePlekken.has(p.id));
+  }
+  ontwarGebieden();
+  ontwar();
+}
+
+/* Namen die over elkaar heen vallen zijn onleesbaar. De belangrijkste plaatsen
+   krijgen voorrang; wie daarna nog botst, laat zijn naam weg tot je verder
+   inzoomt en er ruimte is. De markering zelf blijft altijd staan. */
+/* Een landnaam die breder is dan zijn eigen land loopt over de buren heen.
+   Zolang hij niet past blijft hij weg; zoom je in, dan wordt de beschikbare
+   ruimte in beeld groter en verschijnt hij alsnog. */
+const MIN_LAND_PX=5;   /* daaronder is een landnaam een veeg; dan liever niets */
+function ontwarGebieden(){
+  for(const gl of gebiedLabels){
+    if(!gl.breedte){
+      try{gl.breedte=gl.t.getComputedTextLength();}catch(e){gl.breedte=40;}
+    }
+    /* Twee wensen: de naam houdt bij voorkeur een vaste maat op het scherm,
+       en hij moet binnen zijn eigen land blijven. De kleinste van de twee
+       wint. Bij uitzoomen krimpt de naam dus mee met het land in plaats van
+       te verdwijnen — alleen als hij echt onleesbaar klein zou worden gaat
+       hij weg. Zoom je in op een klein land, dan groeit zijn naam door tot
+       dezelfde maat als die van de grote landen: klein op de kaart betekent
+       niet dat je de naam niet hoeft te kunnen lezen. */
+    const wens=1/view.k;
+    const past=gl.breed*.95/gl.breedte;
+    /* maat is jouw eigen keuze en gaat boven het inpassen heen: zet je een
+       landnaam groter, dan wordt hij groter, ook als hij daarmee zijn kust
+       een eind over gaat. */
+    const s=gl.s=(gl.d.maat||1)*Math.min(wens,past);
+    gl.t.setAttribute("transform",`scale(${s})`);
+    gl.t.style.display = s*13*view.k < MIN_LAND_PX ? "none" : "";
+  }
+}
+
+const breedteCache={};
+function ontwar(){
+  /* de landnamen zijn er eerst: hun vak wordt gereserveerd, zodat geen enkele
+     plaatsnaam er dwars overheen komt te staan */
+  const genomen=[];
+  for(const gl of gebiedLabels){
+    if(gl.t.style.display==="none"||!gl.breedte)continue;
+    const s=gl.s;   /* dezelfde maat als getekend; ontwarGebieden() ging voor */
+    const w=gl.breedte*s+4/view.k, h=13*s+3/view.k;
+    genomen.push({x:gl.x-w/2, y:gl.y-h*.78, w, h});
+  }
+  const raakt=(a)=>genomen.some(r=>a.x<r.x+r.w&&a.x+a.w>r.x&&a.y<r.y+r.h&&a.y+a.h>r.y);
+  const kandidaten=PLAATSEN.filter(p=>markerEls[p.id])
+    .sort((a,b)=>(a.z||3)-(b.z||3)||a.naam.length-b.naam.length);
+
+  /* Eerst de tekentjes zelf. Bij ver uitzoomen krimpt het land wel maar de
+     markeringen niet, en dan wordt Araluen één zwarte klont. Wie niet meer
+     past valt weg tot je verder inzoomt; de belangrijkste plaatsen zijn het
+     eerst aan de beurt en blijven dus staan. */
+  const glyf=11/view.k;
+  for(const p of kandidaten){
+    const m=markerEls[p.id];
+    /* wat je niet ziet hoeft ook geen plek op te eisen: anders duwt een
+       weggevaagde markering op het overzicht nog altijd een routeplaats weg */
+    if(m.g.classList.contains("hidden")||m.g.classList.contains("stil")){m.g.classList.remove("weg");continue;}
+    if(zetten||m.g.classList.contains("sel")){
+      m.g.classList.remove("weg");
+      genomen.push({x:m.pos[0]-glyf/2,y:m.pos[1]-glyf/2,w:glyf,h:glyf});
+      continue;
+    }
+    const vak={x:m.pos[0]-glyf/2,y:m.pos[1]-glyf/2,w:glyf,h:glyf};
+    if(raakt(vak))m.g.classList.add("weg");
+    else {m.g.classList.remove("weg");genomen.push(vak);}
+  }
+
+  /* daarna de namen, in dezelfde volgorde */
+  for(const p of kandidaten){
+    const m=markerEls[p.id];
+    if(!m.g.classList.contains("showlabel")||m.g.classList.contains("hidden")
+      ||m.g.classList.contains("weg"))continue;
+    if(breedteCache[p.id]===undefined){
+      try{breedteCache[p.id]=m.t.getComputedTextLength();}catch(e){breedteCache[p.id]=p.naam.length*5;}
+    }
+    /* het vak volgt het bordje: eigen maat, en verschoven zoals jij het hebt
+       neergelegd. Een gedraaid bordje wordt hier als rechtop gerekend; dat is
+       ruim genoeg om namen uit elkaar te houden. */
+    const mt=p.maat||1;
+    const w=(breedteCache[p.id]*mt+4)/view.k, h=13*mt/view.k;
+    const vak={x:m.pos[0]+(p.lx||0)/view.k-w/2, y:m.pos[1]+((p.ly||0)-10)/view.k-h, w, h};
+    if(raakt(vak)&&!m.g.classList.contains("sel"))m.g.classList.remove("showlabel");
+    else genomen.push(vak);
+  }
+}
+let anim=null;
+function zetView(x,y,k,animeer){
+  if(anim)cancelAnimationFrame(anim),anim=null;
+  const van={...view}, naar={x,y,k};
+  if(!animeer||matchMedia("(prefers-reduced-motion:reduce)").matches){
+    view=naar; begrens(); pas(); return;
+  }
+  const t0=performance.now(), duur=560;
+  (function stap(nu){
+    const t=Math.min(1,(nu-t0)/duur), e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    view={x:van.x+(naar.x-van.x)*e,y:van.y+(naar.y-van.y)*e,k:van.k+(naar.k-van.k)*e};
+    begrens(); pas();
+    anim = t<1 ? requestAnimationFrame(stap) : null;
+  })(t0);
+}
+/* Het kader van world.svg is veel groter dan het getekende land, dus "alles
+   tonen" past op de landvormen zelf. Komt er land bij, dan schuift dat mee. */
+const inhoud=gVlak.getBBox();
+let kBasis=1;
+const heel=a=>vliegVak(inhoud,1.1,maxK,a);
+function paneelSchuif(){
+  if(innerWidth<=900||!detail.classList.contains("open"))return 0;
+  const r=svg.getBoundingClientRect();
+  const perEenheid=Math.min(r.width/W,r.height/H);
+  return perEenheid?detail.getBoundingClientRect().width/2/perEenheid:0;
+}
+const vliegNaar=(mx,my,k=8,a=true)=>zetView(W/2-mx*k-paneelSchuif(),H/2-my*k,k,a);
+function vliegVak(b,marge=1.5,maxk=14,animeer=true){
+  const k=Math.max(minK,Math.min(maxk,Math.min(W/(b.width*marge),H/(b.height*marge))));
+  zetView(W/2-(b.x+b.width/2)*k-paneelSchuif(),H/2-(b.y+b.height/2)*k,k,animeer);
+}
+function zoomOp(ux,uy,factor){
+  const k=Math.max(minK,Math.min(maxK,view.k*factor));
+  view.x=ux-(ux-view.x)*(k/view.k);
+  view.y=uy-(uy-view.y)*(k/view.k);
+  view.k=k; begrens(); pas();
+}
+svg.addEventListener("wheel",e=>{
+  e.preventDefault();
+  const p=naarUser(e.clientX,e.clientY);
+  zoomOp(p.x,p.y,Math.exp(-e.deltaY*(e.deltaMode===1?.03:.0016)));
+},{passive:false});
+/* Hoe ver de muis onderweg is gekomen, in schermpunten. Dat moet in
+   schermpunten en niet in kaarteenheden: ingezoomd is een flinke sleep maar
+   een halve eenheid ver, en dan zou hij als een klik tellen — precies de
+   reden dat een sleep over het land dat land selecteerde. */
+const ptrs=new Map(); let laatste=null, knijp=0, bewogen=0, vorigePt=null;
+/* Na een sleep hoort het loslaten niets aan te wijzen. Elke klik op de kaart
+   vraagt dit eerst; het klik-event komt na pointerup, dus de telling van de
+   sleep die er net was staat er dan nog. */
+function gesleept(){ return bewogen>5; }
+const knijpAfstand=()=>{const[a,b]=[...ptrs.values()];return Math.hypot(a.x-b.x,a.y-b.y);};
+const knijpMidden=()=>{const[a,b]=[...ptrs.values()];return naarUser((a.x+b.x)/2,(a.y+b.y)/2);};
+/* Geen setPointerCapture op de kaart: dat stuurt het daaropvolgende click-event
+   naar de svg zelf in plaats van naar het land of de markering waarop je drukt,
+   waardoor het zijpaneel niet opengaat. Slepen luistert daarom op het venster. */
+svg.addEventListener("pointerdown",e=>{
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){
+    laatste=naarUser(e.clientX,e.clientY);
+    bewogen=0; vorigePt={x:e.clientX,y:e.clientY};
+    svg.classList.add("drag");
+  }
+  if(ptrs.size===2)knijp=knijpAfstand();
+});
+addEventListener("pointermove",e=>{
+  if(!ptrs.has(e.pointerId))return;
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){
+    const d=knijpAfstand(); if(knijp>0){const m=knijpMidden();zoomOp(m.x,m.y,d/knijp);} knijp=d; return;
+  }
+  if(!laatste)return;
+  if(vorigePt){
+    bewogen+=Math.abs(e.clientX-vorigePt.x)+Math.abs(e.clientY-vorigePt.y);
+    vorigePt={x:e.clientX,y:e.clientY};
+  }
+  const p=naarUser(e.clientX,e.clientY);
+  view.x+=p.x-laatste.x; view.y+=p.y-laatste.y; begrens(); pas();
+  laatste=naarUser(e.clientX,e.clientY);
+},{passive:true});
+function eindePtr(e){
+  ptrs.delete(e.pointerId);
+  if(ptrs.size<2)knijp=0;
+  if(ptrs.size===0){laatste=null;svg.classList.remove("drag");}
+}
+addEventListener("pointerup",eindePtr); addEventListener("pointercancel",eindePtr);
+svg.addEventListener("click",()=>{if(!gesleept())kies(null);});
+
+/* ========================= zijpaneel ========================= */
+const SOORT_NL={kasteel:"Kasteel",ruine:"Ruïne",stad:"Stad",haven:"Havenstad",slagveld:"Slagveld",
+  natuur:"Landschap",rivier:"Rivier",koninkrijk:"Koninkrijk",buurland:"Buurland",eiland:"Eiland",
+  land:"Land",gebergte:"Gebergte",zee:"Zee",oceaan:"Oceaan"};
+const SOORT_EN={kasteel:"Castle",ruine:"Ruin",stad:"Town",haven:"Port town",slagveld:"Battlefield",
+  natuur:"Landscape",rivier:"River",koninkrijk:"Kingdom",buurland:"Neighboring land",eiland:"Island",
+  land:"Country",gebergte:"Mountains",zee:"Sea",oceaan:"Ocean"};
+const SOORT=TAAL==="nl"?SOORT_NL:SOORT_EN;
+/* Namen komen zoveel mogelijk uit GEBIEDEN[id].naam — die is al in de juiste
+   taal dankzij vertaal(DATA). Groepen zonder eigen gebied (zeeën, verzamel-
+   groepen) vallen terug op GROEP_EXTRA. */
+const GROEP_EXTRA_NL={skorghijl:"Skorghijl","constante-zee":"Constante Zee",
+  magyara:"Magyara",westen:"Verre westen",zee:"Zeeën en oceanen"};
+const GROEP_EXTRA_EN={skorghijl:"Skorghijl","constante-zee":"Constant Sea",
+  magyara:"Magyara",westen:"Far west",zee:"Seas and oceans"};
+const GROEP_EXTRA=TAAL==="nl"?GROEP_EXTRA_NL:GROEP_EXTRA_EN;
+const GROEP_IDS=["araluen","mountains-of-rain-and-night","celtica","picta","hibernia","skandia",
+  "skorghijl","sonderland","gallica","teutlandt","alpina","toscana","iberion","arrida","nihon-ja",
+  "constante-zee","aslava","eastern-steps","ursali","helleno","middle-kingdoms","baralat","indus",
+  "magyara","westen","zee"];
+const GROEPEN=GROEP_IDS.map(id=>[id,(GEBIEDEN[id]&&GEBIEDEN[id].naam)||GROEP_EXTRA[id]||id]);
+
+const ALLES=[
+  ...Object.keys(GEO.vormen).filter(id=>GEBIEDEN[id]).map(id=>({...GEBIEDEN[id],id:"gebied:"+id,
+    vorm:id,isGebied:true,gebied:id})),
+  /* zeeën staan net als landen in de lijst en zijn aan te klikken */
+  ...ZEEEN.filter(z=>z.id).map(z=>({...z,id:"zee:"+z.id,isZee:true,gebied:"zee",zee:z})),
+  ...PLAATSEN
+];
+const byId={}; for(const e of ALLES)byId[e.id]=e;
+/* Zonder serie hoort iets bij geen van beide reeksen — zoals de zeeën, en
+   zoals een land waarvan nog niet is opgeschreven in welke boeken het
+   voorkomt. Dat wordt niet weggefilterd. */
+const past=e=>{
+  if(e.serie&&!e.serie.some(s=>state.series[s]))return false;
+  if(!state.q)return true;
+  const q=state.q.toLowerCase();
+  return e.naam.toLowerCase().includes(q)||(e.tekst||"").toLowerCase().includes(q);
+};
+
+/* filters */
+const seriesBox=$("#series"), routesBox=$("#routes"), rcap=$("#rcap");
+for(const [k,naam] of [["GJ",RGRP.GJ.label],["BB",RGRP.BB.label]]){
+  const b=document.createElement("button");
+  b.className="chip"; b.type="button"; b.setAttribute("aria-pressed","true"); b.textContent=naam;
+  b.onclick=()=>{state.series[k]=!state.series[k];b.setAttribute("aria-pressed",state.series[k]);teken();};
+  seriesBox.appendChild(b);
+}
+const routeBtns={};
+for(const grp in RGRP){
+  const leden=ROUTES.filter(r=>r.grp===grp); if(!leden.length)continue;
+  const rij=document.createElement("div"); rij.className="rrow";
+  const lab=document.createElement("span"); lab.className="rgl"; lab.textContent=RGRP[grp].label;
+  const box=document.createElement("div"); box.className="chips";
+  for(const r of leden){
+    const b=document.createElement("button");
+    b.className="chip mini"; b.type="button"; b.setAttribute("aria-pressed","false");
+    b.textContent=r.nr;
+    b.title=(BOEKEN[r.id]?BOEKEN[r.id][0]:r.id)+(r.kanNiet?t("wachtOpLand"):"");
+    b.disabled=r.kanNiet;
+    b.setAttribute("aria-label",`${t("reisrouteAria")}${BOEKEN[r.id]?BOEKEN[r.id][0]:r.id}`);
+    b.onclick=()=>zetRoute(r.id);
+    routeBtns[r.id]=b; box.appendChild(b);
+  }
+  rij.append(lab,box); routesBox.appendChild(rij);
+}
+function zetRoute(id){
+  state.route = state.route===id ? null : id;
+  for(const r of ROUTES){
+    const aan=r.id===state.route;
+    routeEls[r.id].classList.toggle("on",aan);
+    routeBtns[r.id].setAttribute("aria-pressed",String(aan));
+  }
+  const r=ROUTES.find(x=>x.id===state.route);
+  bouwRoutepunten();
+  /* de plaatsen van deze route blijven zichtbaar, ook op het overzicht: een
+     route die het halve werelddeel overspant past niet in één zoomstap */
+  routePlekken=new Set(r?r.benen.flat().filter(s=>typeof s==="string"):[]);
+  if(!r){rcap.hidden=true;pas();return;}
+  const b=BOEKEN[r.id];
+  rcap.innerHTML=`<b>${b?b[1]+" · "+b[0]:r.id}</b>${r.tekst}`;
+  rcap.hidden=false;
+  const el2=routeEls[r.id];
+  if(el2.getBBox().width)vliegVak(el2.getBBox(),1.8,10);
+}
+
+/* lijst */
+const listBox=$("#list");
+function teken(){
+  listBox.innerHTML="";
+  let n=0;
+  for(const [gid,gnaam] of GROEPEN){
+    const items=ALLES.filter(e=>(e.isGebied?e.vorm:e.gebied)===gid&&past(e))
+      .sort((a,b)=>(b.isGebied?1:0)-(a.isGebied?1:0)||a.naam.localeCompare(b.naam,"nl"));
+    if(!items.length)continue;
+    const h=document.createElement("p"); h.className="grp"; h.textContent=gnaam; listBox.appendChild(h);
+    for(const e of items){
+      n++;
+      const b=document.createElement("button");
+      b.className="item"+(e.wacht?" wacht":""); b.type="button"; b.dataset.id=e.id;
+      b.setAttribute("aria-current",String(state.sel===e.id));
+      const soort=e.isGebied?SOORTNAAM.gebied.toLowerCase():(SOORT[e.soort]||t("plaatsFallback")).toLowerCase();
+      b.innerHTML=`<b>${e.naam}</b><span>${e.wacht?t("nogGeenKaart"):soort}</span>`;
+      b.onclick=()=>kies(e.id);
+      listBox.appendChild(b);
+    }
+  }
+  if(!n)listBox.innerHTML=`<p class="empty">${t("nietsGevonden")}</p>`;
+  for(const p of PLAATSEN){
+    const m=markerEls[p.id]; if(!m)continue;
+    const zichtbaar=p.serie.some(s=>state.series[s]);
+    m.g.classList.toggle("hidden",!zichtbaar);
+    m.g.classList.toggle("dim",zichtbaar&&!!state.q&&!past(p));
+  }
+}
+$("#q").addEventListener("input",e=>{state.q=e.target.value.trim();teken();});
+
+/* detailpaneel */
+const detail=$("#detail"), dbody=$("#dbody"), dtitle=$("#dtitle"), dkind=$("#dkind");
+function open(kind,titel,html){
+  dkind.textContent=kind; dtitle.textContent=titel; dbody.innerHTML=html;
+  dbody.scrollTop=0; detail.classList.add("open");
+}
+$("#dclose").onclick=()=>{detail.classList.remove("open");kies(null);};
+
+function kies(id,vlieg=true){
+  state.sel=id;
+  for(const p of PLAATSEN){const m=markerEls[p.id];if(m)m.g.classList.toggle("sel",p.id===id);}
+  for(const gid in gebiedEls)gebiedEls[gid].classList.toggle("sel",
+    id==="gebied:"+gid || !!(byId[id]&&byId[id].vorm===gid));
+  for(const zid in zeeById)zeeById[zid].t.classList.toggle("sel",id==="zee:"+zid);
+  /* het gekozen land vooraan zetten, anders dekt een buurland de accentrand af */
+  if(id&&id.startsWith("gebied:")&&gebiedEls[id.slice(7)])
+    gVlak.appendChild(gebiedEls[id.slice(7)]);
+  for(const b of listBox.querySelectorAll(".item"))
+    b.setAttribute("aria-current",String(b.dataset.id===id));
+  if(!id){detail.classList.remove("open");pas();return;}
+  const e=byId[id]; if(!e)return;
+  const boeken=(e.boeken||[]).map(c=>{
+    const b=BOEKEN[c]; return b?`<span class="book"><i>${b[1]}</i>${b[0]}</span>`:"";
+  }).join("");
+  const feiten=(e.feiten||[]).map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+  const gnaam=(GROEPEN.find(g=>g[0]===(e.isGebied?e.vorm:e.gebied))||[])[1]||"";
+  const eigen=e.isGebied||e.isZee;   /* die staan op zichzelf, niet in een gebied */
+  const beeld="";
+  open(`${SOORT[e.soort]||t("plaatsFallback")}${eigen?"":" · "+gnaam}`, e.naam, beeld+
+    (e.wacht?`<p class="note"><span>◌</span><span>${t("nogGeenKaartLang")}
+       ${e.wacht} ${t("ontbreektNog")} <code>world.svg</code>. ${t("zodraLandErbij")}</span></p>`:"")
+    + (e.approx&&!e.wacht?`<p class="note"><span>◌</span><span>${t("positieBenadering")}</span></p>`:"")
+    + (e.tekst?`<p>${e.tekst}</p>`
+       :`<p class="note"><span>◌</span><span>${t("hierHoortBeschrijving")}
+          <code>tekst</code> (en eventueel <code>feiten</code>) aan bij dit onderdeel
+          in <code>data.json</code>.</span></p>`)
+    + (feiten?`<dl class="facts">${feiten}</dl>`:"")
+    + (boeken?`<p class="lbl">${t("bekendUit")}</p><div class="books">${boeken}</div>`:""));
+  const b=listBox.querySelector(`.item[data-id="${id}"]`);
+  if(b)b.scrollIntoView({block:"nearest"});
+  if(vlieg&&!e.wacht){
+    if(e.isGebied)vliegVak(gebiedEls[e.vorm].getBBox(),1.7,12);
+    /* een zee heeft geen vorm om op in te passen, alleen een naam met een plek */
+    else if(e.isZee)vliegNaar(e.zee.x,e.zee.y,3.2);
+    else {const p=plek(e); if(p)vliegNaar(p[0],p[1],Math.max(6,(e.z||3)*2.6));}
+  }
+  if(innerWidth<=900)$("#rail").classList.remove("open");
+}
+
+/* over en legenda */
+const gl=k=>`<svg viewBox="-9 -9 18 18" aria-hidden="true"><g class="glyph"
+  style="stroke:var(--ink);fill:var(--halo);stroke-width:1.3">${GLYPH[k]}</g></svg>`;
+/* De begroeiing staat als kleur op de kaart, dus in de legenda ook. Welke van
+   de twee kleuren het wordt hangt af van het thema dat op dit moment geldt. */
+const tl=k=>{
+  const g=GROEI[k], donker=+getComputedStyle(document.documentElement)
+    .getPropertyValue("--donker")>0;
+  return `<svg viewBox="0 0 30 22" aria-hidden="true"><rect x=".5" y=".5" width="29" height="21"
+    rx="2.5" fill="${donker?g.donker:g.licht}" stroke="var(--edge)"/></svg>`;
+};
+$("#legendBtn").onclick=()=>{kies(null);open(t("legendaKaart"),t("legenda"),`
+  <div class="legend">
+    <div class="lrow">${gl("kasteel")}<span>${t("legKasteel")}</span></div>
+    <div class="lrow">${gl("ruine")}<span>${t("legRuine")}</span></div>
+    <div class="lrow">${gl("stad")}<span>${t("legStad")}</span></div>
+    <div class="lrow">${gl("haven")}<span>${t("legHaven")}</span></div>
+    <div class="lrow">${gl("slagveld")}<span>${t("legSlagveld")}</span></div>
+    <div class="lrow">${gl("natuur")}<span>${t("legLandschap")}</span></div>
+    <div class="lrow">${gl("rivier")}<span>${t("legRivier")}</span></div>
+    <div class="lrow"><svg viewBox="-9 -9 18 18" aria-hidden="true"><circle r="5" fill="none"
+      stroke="var(--ink)" stroke-width="1.3" stroke-dasharray="2.4 2"/></svg><span>${t("legStippellijn")}</span></div>
+  </div>
+  <p class="lbl" style="margin:22px 0 8px">${t("legLandschapKop")}</p>
+  <div class="legend">
+    <div class="lrow">${tl("loofbos")}<span>${t("legLoofbos")}</span></div>
+    <div class="lrow">${tl("naaldbos")}<span>${t("legNaaldbos")}</span></div>
+    <div class="lrow">${tl("jungle")}<span>${t("legJungle")}</span></div>
+    <div class="lrow">${tl("akker")}<span>${t("legAkker")}</span></div>
+    <div class="lrow">${tl("grasland")}<span>${t("legGrasland")}</span></div>
+    <div class="lrow">${tl("steppe")}<span>${t("legSteppe")}</span></div>
+    <div class="lrow">${tl("heide")}<span>${t("legHeide")}</span></div>
+    <div class="lrow">${tl("woestijn")}<span>${t("legWoestijn")}</span></div>
+    <div class="lrow">${tl("kaal")}<span>${t("legKaal")}</span></div>
+    <div class="lrow"><svg viewBox="0 0 30 22" aria-hidden="true"><rect x=".5" y=".5" width="29"
+      height="21" rx="2.5" fill="var(--sneeuw)" stroke="var(--edge)"/></svg><span>${t("legSneeuw")}</span></div>
+    <div class="lrow"><svg viewBox="-9 -5 18 10" aria-hidden="true"
+      ><path class="rivier" d="M-8 3q4.5-.5 6-2.5t8-2.5" style="vector-effect:none;stroke-width:.7"/
+      ><path class="rivier" d="M-2 .5q1.5-2 8-2.5" style="vector-effect:none;stroke-width:1.5"
+      /></svg><span>${t("legRivierUitleg")}</span></div>
+  </div>
+  <p class="lbl" style="margin:22px 0 8px">${t("legBediening")}</p>
+  <dl class="facts">
+    <div><dt>${t("bedSlepen")}</dt><dd>${t("bedSlepenUitleg")}</dd></div>
+    <div><dt>${t("bedScrollen")}</dt><dd>${t("bedScrollenUitleg")}</dd></div>
+    <div><dt>${t("bedZoom")}</dt><dd>${t("bedZoomUitleg")}</dd></div>
+    <div><dt>${t("bedPijltjes")}</dt><dd>${t("bedPijltjesUitleg")}</dd></div>
+    <div><dt>${t("bedEsc")}</dt><dd>${t("bedEscUitleg")}</dd></div>
+  </dl>`);};
+$("#about").onclick=()=>{
+  kies(null);open(t("verantwoording"),t("overDezeKaart"),`
+  <div class="legalbox">
+    <p>${t("aboutDisclaimer")}</p>
+    <p>${t("aboutIntro")}</p>
+    <p>${t("aboutApprox")}</p>
+  </div>`);};
+
+/* ========================== bewerken ==========================
+   Jij ziet de kaart, ik zie alleen een afbeelding. In de bewerkstand pak je
+   alles wat erop staat beet: een markering sleep je naar de goede plek, en
+   een naam — van een plaats, een zee of een land — sleep je, draai je en
+   maak je groter of kleiner. Alles verandert DATA zelf en komt er als een
+   volledige data.json weer uit, die je in de map opslaat.               */
+const zetbalk=$("#zetbalk"), zetstand=$("#zetstand"), zetsel=$("#zetsel");
+let zetten=false, sleep=null, keuze=null;
+
+/* ---- de stand bewaren en wegschrijven ---- */
+/* bouwRoutes() hangt berekende paden aan de routes; die zijn rekenwerk en
+   horen niet in het bestand. Verder gaat er niets in wat toch al de
+   standaard is: een verschuiving van nul en een maat van één zijn precies
+   wat er staat als je het weglaat. Voor de rest is DATA de inhoud. */
+function schoon(o){
+  const s={};
+  for(const k in o){
+    if(k==="paden"||k==="kanNiet")continue;
+    if((k==="lx"||k==="ly"||k==="rot")&&!o[k])continue;
+    if(k==="maat"&&o[k]===1)continue;
+    s[k]=o[k];
+  }
+  return s;
+}
+/* Velden die in data.json altijd als {nl,en} voorkomen. Bij een gloednieuw
+   item (net aangemaakt in de bewerkstand) bestaat er nog geen RUWDATA-kant
+   om tegen te sychroniseren, dus moet terugvertaal() op de sleutelnaam
+   afgaan om te weten dat zo'n veld een taalobject hoort te worden. */
+const TAALVELDEN=new Set(["naam","tekst","label","bijschrift"]);
+/* Verwerkt wat er in de bewerkstand aan de vertaalde DATA is veranderd
+   (posities, been-coördinaten, een nieuwe plaats, ...) terug in RUWDATA,
+   waar naam/tekst nog tweetalig staan. Zo blijft de niet-actieve taal
+   intact ook al bewerk je de kaart in maar één taal tegelijk. ruw is een
+   losse waarde uit RUWDATA, v de overeenkomende waarde uit de live DATA. */
+function terugvertaal(ruw,v,taalveld){
+  if(isTaalObject(ruw)){
+    ruw[TAAL]=v;
+    return ruw;
+  }
+  if(typeof v==="string"&&taalveld){
+    /* nieuw veld zonder RUWDATA-tegenhanger: allebei de talen op deze
+       waarde zetten totdat iemand de andere taal apart intypt */
+    return {nl:v,en:v};
+  }
+  if(Array.isArray(v)){
+    return v.map((item,i)=>terugvertaal(
+      Array.isArray(ruw)&&ruw[i]!==undefined?ruw[i]:undefined,item));
+  }
+  if(v&&typeof v==="object"){
+    const out=(ruw&&typeof ruw==="object"&&!Array.isArray(ruw))?ruw:{};
+    for(const k in v)out[k]=terugvertaal(out[k],v[k],TAALVELDEN.has(k));
+    /* een sleutel die in de vertaalde kant is verdwenen (bv. delete d.rot)
+       hoort ook in RUWDATA te verdwijnen */
+    for(const k in out)if(!(k in v))delete out[k];
+    return out;
+  }
+  return v;
+}
+function schoneData(){
+  terugvertaal(RUWDATA,DATA);
+  const bron=RUWDATA;
+  const uit={};
+  for(const k of ["_uitleg","boeken","gebieden","zeeen","detail","plaatsen","routegroepen","routes"])
+    if(bron[k]!==undefined)uit[k]=bron[k];
+  uit.gebieden=Object.fromEntries(Object.entries(uit.gebieden).map(([k,v])=>[k,schoon(v)]));
+  uit.zeeen=uit.zeeen.map(schoon);
+  uit.plaatsen=uit.plaatsen.map(schoon);
+  uit.routes=uit.routes.map(schoon);
+  return uit;
+}
+/* Dezelfde opmaak als data.json in de map: alles op een eigen regel, maar wat
+   op één regel past blijft op één regel. Anders is het bestand daarna niet
+   meer met de hand te bewerken. */
+const BREED=108;
+const plat=v=>JSON.stringify(v).replace(/","/g,'", "').replace(/\],\[/g,"], [");
+function netjes(v,diep){
+  const sp=" ".repeat(diep);
+  if(v===null||typeof v!=="object")return JSON.stringify(v);
+  const kort=plat(v);
+  if(diep+kort.length<=BREED)return kort;
+  if(Array.isArray(v))
+    return "[\n"+v.map(x=>sp+" "+netjes(x,diep+1)).join(",\n")+"\n"+sp+"]";
+  return "{\n"+Object.entries(v)
+    .map(([k,x])=>sp+" "+JSON.stringify(k)+": "+netjes(x,diep+1)).join(",\n")+"\n"+sp+"}";
+}
+const dataTekst=()=>netjes(schoneData(),0)+"\n";
+
+function toonZetstand(){
+  zetstand.textContent = bewerkt
+    ? `${bewerkt} ${bewerkt===1?t("veranderingEnkel"):t("veranderingMeervoud")} ${t("nogNietOpgeslagen")}`
+    : t("sleepHint");
+  $("#zetkopie").disabled=$("#zetbestand").disabled=$("#zetterug").disabled=!bewerkt;
+}
+function bewaar(){
+  bewerkt++;
+  try{localStorage.setItem("gj-data",JSON.stringify({data:schoneData(),bewerkt}));}catch(e){}
+  toonZetstand();
+}
+function opgeslagen(bericht){
+  bewerkt=0;
+  try{localStorage.removeItem("gj-data");}catch(e){}
+  toonZetstand(); zetstand.textContent=bericht;
+}
+
+/* ---- wat er nu onder handen is ---- */
+const SOORTNAAM=TAAL==="nl"
+  ?{zee:"Zee",gebied:"Land",plaats:"Naam",punt:"Markering"}
+  :{zee:"Sea",gebied:"Country",plaats:"Name",punt:"Marker"};
+function toonKeuze(){
+  zetsel.hidden=!keuze; if(!keuze)return;
+  $("#zetselnaam").textContent=`${SOORTNAAM[keuze.soort]}: ${keuze.d.naam}`;
+  /* een markering is een punt: die valt niet te draaien of te vergroten */
+  const naam=keuze.soort!=="punt";
+  $("#zetdraai").hidden=$("#zetmaat").hidden=$("#zetstd").hidden=!naam;
+  $("#zetrot").textContent=(keuze.d.rot||0)+"°";
+  /* in procenten, niet in tienden: een stap van 10% zou anders twee keer
+     achter elkaar hetzelfde getal opleveren */
+  $("#zetmt").textContent=Math.round((keuze.d.maat||1)*100)+"%";
+}
+function kiesDeel(it){
+  for(const n of NAMEN)n.t.classList.remove("naamsel");
+  for(const id in markerEls)markerEls[id].g.classList.remove("puntsel");
+  keuze=it;
+  if(!it){zetsel.hidden=true;return;}
+  if(it.soort==="punt")it.m.g.classList.add("puntsel");
+  else it.t.classList.add("naamsel");
+  toonKeuze();
+}
+/* een naam opnieuw neerzetten na een verandering */
+function pasNaamAan(it){
+  if(it.soort==="plaats")zetPlaatsNaam(it.m,it.d); else zetNaamPlek(it);
+}
+
+/* ---- draaien en vergroten ---- */
+zetsel.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b||!keuze||keuze.soort==="punt")return;
+  const d=keuze.d;
+  if(b.dataset.draai){
+    let r=(d.rot||0)+ +b.dataset.draai;
+    r=((r+180)%360+360)%360-180;          /* netjes tussen -180 en 180 graden */
+    if(r)d.rot=r; else delete d.rot;
+  } else if(b.dataset.maat){
+    const mt=Math.round(Math.min(3,Math.max(.4,(d.maat||1)*(+b.dataset.maat>0?1.1:1/1.1)))*100)/100;
+    if(Math.abs(mt-1)<.01)delete d.maat; else d.maat=mt;
+  } else return;
+  pasNaamAan(keuze); pas(); toonKeuze(); bewaar();
+});
+$("#zetstd").onclick=()=>{
+  if(!keuze||keuze.soort==="punt")return;
+  const d=keuze.d;
+  delete d.rot; delete d.maat;
+  /* een zee heeft geen berekende plek om naar terug te vallen, dus daar
+     blijft x/y staan; een plaats- of landnaam gaat terug naar zijn eigen punt */
+  if(keuze.soort!=="zee"){delete d.lx; delete d.ly;}
+  pasNaamAan(keuze); pas(); toonKeuze(); bewaar();
+};
+$("#zetlos").onclick=()=>kiesDeel(null);
+
+/* ---- slepen ---- */
+const wereldPunt=e=>{
+  const u=naarUser(e.clientX,e.clientY);
+  return {x:(u.x-view.x)/view.k, y:(u.y-view.y)/view.k};
+};
+/* Elke naam is op te pakken. Het oppakken van een markering zit in
+   maakMarker, zodat ook een plaats die je zelf toevoegt meteen meedoet. */
+function hangNaamOp(it){
+  it.g.addEventListener("pointerdown",e=>{
+    if(!zetten)return;
+    e.stopPropagation(); e.preventDefault();
+    kiesDeel(it);
+    const w=wereldPunt(e);
+    const zee=it.soort==="zee";
+    sleep={soort:"naam",it,bewogen:0,sx:w.x,sy:w.y,
+      ax:zee?it.d.x:(it.d.lx||0), ay:zee?it.d.y:(it.d.ly||0)};
+    it.g.classList.add("pak");
+    try{it.g.setPointerCapture(e.pointerId);}catch(err){}
+  });
+}
+for(const it of NAMEN)hangNaamOp(it);
+
+addEventListener("pointermove",e=>{
+  if(!sleep)return;
+  const w=wereldPunt(e);
+  sleep.bewogen++;
+  if(sleep.soort==="routepunt"){
+    const x=+w.x.toFixed(2), y=+w.y.toFixed(2);
+    sleep.been[sleep.stapIdx]=[x,y];
+    sleep.c.setAttribute("cx",x); sleep.c.setAttribute("cy",y);
+    bouwRoutes();
+    return;
+  }
+  if(sleep.soort==="punt"){
+    const x=+w.x.toFixed(2), y=+w.y.toFixed(2);
+    sleep.m.pos=[x,y];
+    sleep.m.g.setAttribute("transform",`translate(${x},${y})`);
+    return;
+  }
+  /* Een plaatsnaam zit in de laag die met de zoom mee terugschaalt, dus daar
+     telt de verschuiving in schermpunten; een zee- of landnaam staat gewoon
+     in wereldmaat. */
+  const it=sleep.it, f=it.soort==="plaats"?view.k:1;
+  const nx=+(sleep.ax+(w.x-sleep.sx)*f).toFixed(2);
+  const ny=+(sleep.ay+(w.y-sleep.sy)*f).toFixed(2);
+  if(it.soort==="zee"){it.d.x=nx; it.d.y=ny;} else {it.d.lx=nx; it.d.ly=ny;}
+  pasNaamAan(it);
+},{passive:true});
+
+addEventListener("pointerup",()=>{
+  if(!sleep)return;
+  const s=sleep; sleep=null;
+  if(s.soort==="routepunt"){
+    s.c.classList.remove("pak");
+    if(s.bewogen>=2)bewaar();
+    bouwRoutepunten();
+    return;
+  }
+  if(s.soort==="naam"){
+    s.it.g.classList.remove("pak");
+    if(s.bewogen>=2){
+      /* een verschuiving van niets hoeft niet in het bestand te staan */
+      const d=s.it.d;
+      if(s.it.soort!=="zee"){if(!d.lx)delete d.lx; if(!d.ly)delete d.ly;}
+      bewaar();
+    }
+    pas(); return;
+  }
+  s.m.g.classList.remove("pak");
+  if(s.bewogen>=2){
+    /* De plek wordt nu de plek in data.json. rel en detail zijn daarmee van
+       de baan — die rekenden hem uit — en geenSnap houdt hem precies waar jij
+       hem neerlegt in plaats van hem het dichtstbijzijnde land in te schuiven. */
+    const p=s.p;
+    delete p.rel; delete p.detail;
+    p.x=s.m.pos[0]; p.y=s.m.pos[1]; p.geenSnap=1;
+    delete plekCache[p.id];
+    bewaar(); verversNaZet();
+  }
+  kiesDeel({soort:"punt",d:s.p,m:s.m});
+});
+
+/* ---- een plaats erbij ---- */
+/* in welk gebied ligt dit punt? daarmee komt een nieuwe plaats vanzelf in de
+   juiste groep in de zijbalk terecht */
+function gebiedOp(x,y){
+  for(const id in gebiedEls) if(GEBIEDEN[id]&&inGebied(id,x,y))return id;
+  return null;
+}
+let nieuwAan=false;
+$("#zetnieuw").onclick=()=>{
+  nieuwAan=!nieuwAan;
+  $("#zetnieuw").textContent = nieuwAan ? t("klikOpKaart") : t("nieuwePlaats");
+};
+svg.addEventListener("click",e=>{
+  if(!zetten||!nieuwAan||gesleept())return;
+  const w=wereldPunt(e);
+  const x=+w.x.toFixed(2), y=+w.y.toFixed(2);
+  const naam=prompt(t("vraagNaamPlaats"));
+  if(!naam){nieuwAan=false;$("#zetnieuw").textContent=t("nieuwePlaats");return;}
+  let id=naam.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"plaats";
+  while(byId[id])id+="-2";
+  const p={id,naam:naam.trim(),soort:$("#zetsoort").value,gebied:gebiedOp(x,y)||"araluen",
+    x,y,geenSnap:1,serie:["GJ"],boeken:[],feiten:[],z:4,
+    tekst:t("zelfToegevoegd")};
+  PLAATSEN.push(p); plaatsById[p.id]=p; byId[p.id]=p; ALLES.push(p);
+  const m=maakMarker(p);
+  if(m)hangNaamOp(NAMEN[NAMEN.length-1]);
+  bewaar(); verversNaZet(); teken();
+  nieuwAan=false; $("#zetnieuw").textContent=t("nieuwePlaats");
+});
+
+/* ---- de stand aan- en uitzetten ---- */
+function verversNaZet(){ bouwRoutes(); bouwRoutepunten(); pas(); }
+function zetModus(aan){
+  zetten=aan;
+  document.body.classList.toggle("zetten",aan);
+  $("#zetaan").textContent = aan ? t("bewerkenAfsluiten") : t("bewerken");
+  if(aan){kies(null);toonZetstand();} else kiesDeel(null);
+  verversNaZet();   /* ook bij afsluiten: de markeringen mogen weer weg */
+}
+$("#zetaan").onclick=()=>zetModus(!zetten);
+$("#zetklaar").onclick=()=>zetModus(false);
+$("#zetterug").onclick=()=>{
+  if(!confirm(t("bevestigTerug")))return;
+  try{localStorage.removeItem("gj-data");}catch(e){}
+  location.reload();
+};
+$("#zetkopie").onclick=async()=>{
+  const tekst=dataTekst();
+  try{await navigator.clipboard.writeText(tekst);opgeslagen(t("gekopieerd"));}
+  catch(e){open(t("bewerkteKaart"),"data.json",
+    `<p>${t("kopieerUitleg")}</p>
+     <pre style="white-space:pre-wrap;font-size:12px;background:var(--paper-2);padding:10px;border-radius:4px">${
+       tekst.replace(/</g,"&lt;")}</pre>`);}
+};
+$("#zetbestand").onclick=()=>{
+  const blob=new Blob([dataTekst()],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="data.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  opgeslagen(t("opgeslagenAls"));
+};
+
+/* knoppen en toetsen */
+$("#zin").onclick=()=>zoomOp(W/2,H/2,1.5);
+$("#zout").onclick=()=>zoomOp(W/2,H/2,1/1.5);
+$("#zfit").onclick=()=>{kies(null);heel(true);};
+$("#railtoggle").onclick=()=>$("#rail").classList.toggle("open");
+
+(()=>{
+  const root=document.documentElement, btn=$("#themetoggle");
+  const opgeslagen=(()=>{try{return localStorage.getItem("gj-thema")}catch(e){return null}})();
+  if(opgeslagen==="dark"||opgeslagen==="light") root.dataset.theme=opgeslagen;
+  const isDonker=()=>root.dataset.theme
+    ? root.dataset.theme==="dark"
+    : matchMedia("(prefers-color-scheme:dark)").matches;
+  btn.setAttribute("aria-pressed",String(isDonker()));
+  btn.onclick=()=>{
+    const nieuw=isDonker()?"light":"dark";
+    root.dataset.theme=nieuw;
+    btn.setAttribute("aria-pressed",String(nieuw==="dark"));
+    try{localStorage.setItem("gj-thema",nieuw)}catch(e){}
+    /* De kleuren zitten in het reliëfbeeld gebakken, dus dat moet opnieuw. Dat
+       kost seconden; herbouw() toont zolang het laadscherm weer, met de kaart
+       er vaag doorheen zichtbaar. */
+    setTimeout(()=>herbouw("bezigThema"),80);
+  };
+})();
+(()=>{
+  /* Taal wisselen raakt vrijwel elke naam en tekst op de kaart tegelijk; in
+     plaats van dat overal los te herberekenen, herlaadt de pagina gewoon met
+     de nieuwe taal in localStorage — TAAL leest dat aan het begin opnieuw in. */
+  const btn=$("#langtoggle");
+  btn.textContent=TAAL==="nl"?"EN":"NL";
+  btn.setAttribute("aria-label",TAAL==="nl"?"Switch to English":"Overschakelen naar Nederlands");
+  btn.onclick=()=>{
+    try{
+      localStorage.setItem("gj-taal",TAAL==="nl"?"en":"nl");
+      /* Zodat de pagina na herladen weet dat dit een taalwissel is en niet
+         een eerste bezoek — alleen relevant voor het tekstje onder de titel. */
+      sessionStorage.setItem("gj-wissel","taal");
+    }catch(e){}
+    location.reload();
+  };
+})();
+addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT")return;
+  const stap=60/view.k;
+  if(e.key==="Escape"){kies(null);kiesDeel(null);$("#rail").classList.remove("open");}
+  else if(e.key==="+"||e.key==="=")zoomOp(W/2,H/2,1.4);
+  else if(e.key==="-")zoomOp(W/2,H/2,1/1.4);
+  else if(e.key==="ArrowLeft"){view.x+=stap;begrens();pas();}
+  else if(e.key==="ArrowRight"){view.x-=stap;begrens();pas();}
+  else if(e.key==="ArrowUp"){view.y+=stap;begrens();pas();}
+  else if(e.key==="ArrowDown"){view.y-=stap;begrens();pas();}
+  else return;
+  e.preventDefault();
+});
+
+/* ---- laadscherm ----
+   Het opbouwen van de kaart gebeurt in stappen die de browser stuk voor stuk
+   bezet houden. Tussen die stappen door moet het scherm even teruggegeven
+   worden, anders is er van de voortgang niets te zien.
+
+   Hetzelfde scherm dient twee doelen: bij het eerste bezoek staat het al in
+   de HTML (er is nog geen kaart om doorheen te zien); wisselt iemand later
+   van taal of kleurstelling, dan wordt het opnieuw ingeschakeld terwijl de
+   kaart die er al stond er vaag doorheen blijft schemeren. */
+const laadScherm={
+  el:$("#laad"), sub:$("#laadsub"),
+  aan(subSleutel){
+    this.sub.textContent=t(subSleutel);
+    this.el.hidden=false;
+  },
+  weg(){
+    this.el.hidden=true;
+  }
+};
+
+/* Geeft het scherm terug aan de browser en komt pas terug als er ook echt
+   geschilderd is. Twee beeldjes, want in het eerste wordt de nieuwe stand pas
+   berekend en in het tweede staat hij op het scherm. */
+const adem=()=>new Promise(r=>
+  requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(r,0))));
+
+/* Het reliëf opbouwen. Gaat er onderweg iets mis, dan blijft de kaart staan
+   zoals hij zonder reliëf was — vandaar dat alles in een vangnet zit. */
+async function startGrond(){
+  try{
+    const t0=performance.now();
+    await bouwGrond(async()=>{ await adem(); });
+    console.log(`reliëf gebouwd in ${Math.round(performance.now()-t0)} ms`);
+  }catch(e){
+    document.body.classList.remove("relief");
+    console.warn("reliëf overgeslagen:",e);
+  }
+}
+
+/* --- de opbouw bij het laden van de pagina ---
+   Komt de pagina van een taalwissel, dan is het tekstje onder de titel
+   anders dan bij een eerste bezoek — verder precies hetzelfde scherm. */
+let taalwisselNet=false;
+try{
+  if(sessionStorage.getItem("gj-wissel")==="taal"){
+    sessionStorage.removeItem("gj-wissel");
+    taalwisselNet=true;
+  }
+}catch(e){}
+laadScherm.aan(taalwisselNet?"bezigTaal":"laadEerst");
+(async()=>{
+  await adem();
+  teken(); heel(false); kBasis=view.k; pas();
+  await adem();
+  await startGrond();
+  laadScherm.weg();
+})();
+
+/* --- opnieuw opbouwen, als de kaart er al staat --- */
+async function herbouw(sleutel){
+  laadScherm.aan(sleutel);
+  await adem();
+  await startGrond();
+  laadScherm.weg();
+}
+/* De kleuren zitten in de bitmap gebakken, dus als het stelsel van licht naar
+   donker gaat moet het reliëf opnieuw. */
+try{
+  matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>setTimeout(startGrond,80));
+}catch(e){}
+</script>
+</body>
+</html>

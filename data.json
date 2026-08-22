@@ -1,0 +1,2077 @@
+{
+ "_uitleg": {
+  "gebieden": "Sleutel = het id van het pad in world.svg. Komt er een land bij, dan hoeft hier alleen een regel bij; de kaart tekent het vanzelf. Laat je serie weg, dan staat het gebied altijd in de lijst. lx/ly verschuiven de landnaam, rot draait hem, maat maakt hem groter of kleiner.",
+  "zeeen": "Namen van zeeen met hun plek in world.svg-maat. rot = draaiing in graden, maat = grootte ten opzichte van de standaard (1). Een zee is net als een land aan te klikken; tekst en feiten vullen dan het zijpaneel.",
+  "detail": "De detailkaart van Araluen (assets/araluen.png). bron = het vak van dat plaatje waar het eiland in ligt, in pixels (477 bij 633); punten staan in diezelfde maat en worden bij het tekenen ingepast in de omtrek uit world.svg.",
+  "plaatsen": "detail = punt uit de Araluen-detailkaart; anders x,y in world.svg-maat, of rel = [gebied, breedte-deel, hoogte-deel]. geenSnap houdt de plaats precies op x,y in plaats van hem het land in te schuiven. lx/ly/rot/maat gelden voor het naambordje. wacht = het land waarop deze plaats hoort ontbreekt nog in world.svg. z = vanaf welke zoomstap het label verschijnt. begroeiing bij een plaats legt een vlek van dat landschap om die plaats heen — zo staan de bossen en vlakten uit de boeken ook echt op de kaart. straal is hoe ver die vlek reikt, in world.svg-maat; de rand ervan is grillig en loopt zacht uit.",
+  "routes": "Punten in benen zijn plaats-ids of vaste coordinaten in world.svg. Een route verschijnt alleen als al haar plaatsen op de kaart staan.",
+  "bewerken": "Alles hierin is in de kaart zelf te bewerken: knop Bewerken linksonder, dan slepen, draaien en vergroten. Die stand sla je op als dit bestand; de kaart leest het bij de volgende herlaadbeurt meteen weer in.",
+  "terrein": "terrein bij een gebied bepaalt het reliëf en de begroeiing op de kaart. relief = vlak | heuvels | hoogland | bergen: hoe hoog en hoe grillig het land wordt. begroeiing = akker | grasland | steppe | heide | loofbos | naaldbos | jungle | woestijn | moeras | toendra | kaal, of een lijstje daarvan; die worden dan over het gebied verdeeld. koud: 1 geeft sneeuw op de toppen. rivieren: aantal rivieren (standaard volgt uit het reliëf; 0 is geen)."
+ },
+ "boeken": {
+  "GJ1": [
+   {"nl":"De ruïnes van Gorlan", "en":"The Ruins of Gorlan"},
+   {"nl":"De Grijze Jager 1", "en":"Ranger's Apprentice 1"}
+  ],
+  "GJ2": [
+   {"nl":"De brandende brug", "en":"The Burning Bridge"},
+   {"nl":"De Grijze Jager 2", "en":"Ranger's Apprentice 2"}
+  ],
+  "GJ3": [
+   {"nl":"Het ijzige land", "en":"The Icebound Land"},
+   {"nl":"De Grijze Jager 3", "en":"Ranger's Apprentice 3"}
+  ],
+  "GJ4": [
+   {"nl":"De strijd om Skandia", "en":"The Battle for Skandia"},
+   {"nl":"De Grijze Jager 4", "en":"Ranger's Apprentice 4"}
+  ],
+  "GJ5": [
+   {"nl":"De magiër van Macindaw", "en":"The Sorcerer of the North"},
+   {"nl":"De Grijze Jager 5", "en":"Ranger's Apprentice 5"}
+  ],
+  "GJ6": [
+   {"nl":"Het beleg van Macindaw", "en":"The Siege of Macindaw"},
+   {"nl":"De Grijze Jager 6", "en":"Ranger's Apprentice 6"}
+  ],
+  "GJ7": [
+   {"nl":"Losgeld voor Erak", "en":"Erak's Ransom"},
+   {"nl":"De Grijze Jager 7", "en":"Ranger's Apprentice 7"}
+  ],
+  "GJ8": [
+   {"nl":"De koning van Clonmel", "en":"The Kings of Clonmel"},
+   {"nl":"De Grijze Jager 8", "en":"Ranger's Apprentice 8"}
+  ],
+  "GJ9": [{"nl":"Halt in gevaar", "en":"Halt's Peril"},{"nl":"De Grijze Jager 9", "en":"Ranger's Apprentice 9"}],
+  "GJ10": [
+   {"nl":"De keizer van Nihon-Ja", "en":"The Emperor of Nihon-Ja"},
+   {"nl":"De Grijze Jager 10", "en":"Ranger's Apprentice 10"}
+  ],
+  "GJ11": [
+   {"nl":"De verloren verhalen", "en":"The Lost Stories"},
+   {"nl":"De Grijze Jager 11", "en":"Ranger's Apprentice 11"}
+  ],
+  "GJ12": [
+   {"nl":"De koninklijke leerling", "en":"The Royal Ranger"},
+   {"nl":"De Grijze Jager 12", "en":"Ranger's Apprentice 12"}
+  ],
+  "VJ1": [
+   {"nl":"The Tournament at Gorlan", "en":"The Tournament at Gorlan"},
+   {"nl":"Vroege Jaren 1", "en":"Early Years 1"}
+  ],
+  "VJ2": [
+   {"nl":"The Battle of Hackham Heath", "en":"The Battle of Hackham Heath"},
+   {"nl":"Vroege Jaren 2", "en":"Early Years 2"}
+  ],
+  "GJ13": [
+   {"nl":"De Clan van de Rode Vos", "en":"The Red Fox Clan"},
+   {"nl":"De Grijze Jager 13", "en":"Ranger's Apprentice 13"}
+  ],
+  "GJ14": [
+   {"nl":"Het duel bij Araluen", "en":"Duel at Araluen"},
+   {"nl":"De Grijze Jager 14", "en":"Ranger's Apprentice 14"}
+  ],
+  "GJ15": [
+   {"nl":"De vermiste prins", "en":"The Missing Prince"},
+   {"nl":"De Grijze Jager 15", "en":"Ranger's Apprentice 15"}
+  ],
+  "GJ16": [
+   {"nl":"De vlucht uit Falaise", "en":"Escape from Falaise"},
+   {"nl":"De Grijze Jager 16", "en":"Ranger's Apprentice 16"}
+  ],
+  "GJ17": [
+   {"nl":"De wolven van Arazan", "en":"Arazan's Wolves"},
+   {"nl":"De Grijze Jager 17", "en":"Ranger's Apprentice 17"}
+  ],
+  "GJ18": [
+   {"nl":"De hinderlaag bij Sorato", "en":"Ambush at Sorato"},
+   {"nl":"De Grijze Jager 18", "en":"Ranger's Apprentice 18"}
+  ],
+  "BB1": [{"nl":"De verschoppelingen", "en":"The Outcasts"},{"nl":"Broederband 1", "en":"Brotherband 1"}],
+  "BB2": [{"nl":"De indringers", "en":"The Invaders"},{"nl":"Broederband 2", "en":"Brotherband 2"}],
+  "BB3": [{"nl":"De jagers", "en":"The Hunters"},{"nl":"Broederband 3", "en":"Brotherband 3"}],
+  "BB4": [{"nl":"Slaven van Socorro", "en":"Slaves of Socorro"},{"nl":"Broederband 4", "en":"Brotherband 4"}],
+  "BB5": [{"nl":"Scorpion Mountain", "en":"Scorpion Mountain"},{"nl":"Broederband 5", "en":"Brotherband 5"}],
+  "BB6": [{"nl":"The Ghostfaces", "en":"The Ghostfaces"},{"nl":"Broederband 6", "en":"Brotherband 6"}],
+  "BB7": [{"nl":"The Caldera", "en":"The Caldera"},{"nl":"Broederband 7", "en":"Brotherband 7"}],
+  "BB8": [
+   {"nl":"De terugkeer van de Temujai", "en":"Return of the Temujai"},
+   {"nl":"Broederband 8", "en":"Brotherband 8"}
+  ],
+  "BB9": [{"nl":"De jacht op de Wolfswind", "en":"The Stern Chase"},{"nl":"Broederband 9", "en":"Brotherband 9"}]
+ },
+ "gebieden": {
+  "picta": {
+   "naam": {"nl":"Picta", "en":"Picta"},
+   "soort": "buurland",
+   "tint": "b",
+   "terrein": {"relief":"hoogland", "begroeiing":["heide", "naaldbos"],"koud":1},
+   "serie": ["GJ"],
+   "boeken": ["GJ5", "GJ6", "GJ9"],
+   "tekst": {
+    "nl": "Ruig hoogland in het noorden van het eiland, het land van de Scotti-clans. Zij vallen de noordelijke lenen aan zodra de grensvestingen verzwakken — vandaar de gordel van kastelen waarvan Macindaw er één is.",
+    "en": "Rugged highlands in the north of the island, the land of the Scotti clans. They raid the northern fiefs whenever the border strongholds weaken — hence the ring of castles of which Macindaw is one."
+   },
+   "feiten": [
+    [{"nl":"Volk", "en":"People"},{"nl":"De Scotti-clans", "en":"The Scotti clans"}],
+    [{"nl":"Grenswacht", "en":"Border watch"},{"nl":"Kasteel Macindaw", "en":"Castle Macindaw"}]
+   ]
+  },
+  "araluen": {
+   "naam": {"nl":"Araluen", "en":"Araluen"},
+   "soort": "koninkrijk",
+   "tint": "a",
+   "terrein": {"relief":"heuvels", "begroeiing":["akker", "loofbos"]},
+   "serie": ["GJ", "BB"],
+   "boeken": ["GJ1", "GJ12", "BB4"],
+   "tekst": {
+    "nl": "Het koninkrijk van koning Duncan, verdeeld in vijftig lenen die elk door een baron worden bestuurd. De verdediging rust op drie zuilen: het leger van de barons, de Krijgsscholen die ridders opleiden, en het Korps van de Grijze Jagers — vijftig verkenners met een grijsgroene mantel, een dubbele pijlenkoker en een reputatie die veel groter is dan hun aantal.",
+    "en": "The kingdom of King Duncan, divided into fifty fiefs each ruled by a baron. Its defense rests on three pillars: the barons' armies, the Battleschools that train knights, and the Ranger Corps — fifty scouts with a mottled cloak, a double quiver, and a reputation far bigger than their numbers."
+   },
+   "feiten": [
+    [{"nl":"Koning", "en":"King"},{"nl":"Duncan", "en":"Duncan"}],
+    [{"nl":"Lenen", "en":"Fiefs"},{"nl":"Vijftig", "en":"Fifty"}],
+    [{"nl":"Korps", "en":"Corps"},{"nl":"50 Grijze Jagers", "en":"50 Rangers"}]
+   ]
+  },
+  "celtica": {
+   "naam": {"nl":"Celtica", "en":"Celtica"},
+   "soort": "buurland",
+   "tint": "c",
+   "terrein": {"relief":"bergen", "begroeiing":["grasland", "naaldbos"]},
+   "ly": -0.08,
+   "beeld": "Celtica.jpg",
+   "serie": ["GJ"],
+   "boeken": ["GJ2"],
+   "tekst": {
+    "nl": "Het bergachtige zuidwesten van het eiland, met een verdrag van wederzijdse bijstand met Araluen. De Celten zijn mijnwerkers en steenhouwers, geen soldaten — toen Morgarath hun dorpen leeghaalde om zijn brug te bouwen, konden ze weinig terugdoen.",
+    "en": "The mountainous southwest of the island, bound to Araluen by a mutual defense treaty. The Celts are miners and stonemasons, not soldiers — when Morgarath emptied their villages to build his bridge, they could do little to stop him."
+   },
+   "feiten": [
+    [{"nl":"Bekend om", "en":"Known for"},{"nl":"Mijnbouw en steenhouwwerk", "en":"Mining and stonework"}],
+    [{"nl":"In GJ 2", "en":"In RA 2"},{"nl":"De dorpen zijn ontvolkt", "en":"The villages are emptied"}]
+   ]
+  },
+  "mountains-of-rain-and-night": {
+   "naam": {"nl":"Bergen van Nacht en Ontij", "en":"Mountains of Rain and Night"},
+   "soort": "gebergte",
+   "tint": "d",
+   "terrein": {"relief":"bergen", "begroeiing":["heide", "kaal"],"koud":1},
+   "ly": 9,
+   "serie": ["GJ"],
+   "boeken": ["GJ1", "GJ2"],
+   "tekst": {
+    "nl": "Het onherbergzame gebergte in het zuiden, achter Morgaraths Hoogvlakte. Hierheen trok Morgarath zich terug na zijn nederlaag, met zijn leger van Wargals — beestachtige krijgers die zijn wil rechtstreeks uit zijn gedachten ontvangen. Het gebied is van Araluen gescheiden door De Spleet; de enige doorgang is de Driestappas.",
+    "en": "The inhospitable mountain range in the south, behind Morgarath's Plateau. Morgarath withdrew here after his defeat, with his army of Wargals — beast-like warriors who receive his will directly from his thoughts. The region is cut off from Araluen by the Fissure; the only way through is Three Step Pass."
+   },
+   "feiten": [
+    [
+     {"nl":"Heerser", "en":"Ruler"},
+     {"nl":"Morgarath, Heer van Regen en Nacht", "en":"Morgarath, Lord of Rain and Night"}
+    ],
+    [{"nl":"Leger", "en":"Army"},{"nl":"Wargals", "en":"Wargals"}],
+    [{"nl":"Toegang", "en":"Access"},{"nl":"De Driestappas", "en":"Three Step Pass"}]
+   ]
+  },
+  "hibernia": {
+   "naam": {"nl":"Hibernia", "en":"Hibernia"},
+   "soort": "eiland",
+   "tint": "f",
+   "terrein": {"relief":"heuvels", "begroeiing":["grasland", "loofbos"]},
+   "serie": ["GJ"],
+   "boeken": ["GJ8", "GJ9"],
+   "tekst": {
+    "nl": "Het eiland ten westen van Araluen, verdeeld over zes koninkrijken die elkaar liever wantrouwen dan samenwerken. Precies die verdeeldheid buitte de sekte van de Buitenstaanders uit, koninkrijk na koninkrijk. Halt werd hier geboren, in Clonmel.",
+    "en": "The island west of Araluen, split into six kingdoms that would rather distrust each other than cooperate. That very division is what the Outsiders cult exploited, kingdom after kingdom. Halt was born here, in Clonmel."
+   },
+   "feiten": [
+    [{"nl":"Koninkrijken", "en":"Kingdoms"},{"nl":"Zes", "en":"Six"}],
+    [{"nl":"Geboorteland van", "en":"Birthplace of"},{"nl":"Halt", "en":"Halt"}]
+   ]
+  },
+  "skandia": {
+   "naam": {"nl":"Skandia", "en":"Skandia"},
+   "soort": "land",
+   "tint": "c",
+   "terrein": {"relief":"bergen", "begroeiing":"naaldbos", "koud":1},
+   "beeld": "Skandia.jpg",
+   "serie": ["GJ", "BB"],
+   "boeken": ["GJ3", "GJ4", "BB1", "BB8"],
+   "tekst": {
+    "nl": "Het noordelijke zeevaardersland aan de Stormwitte Zee. Skandiërs varen op wolfschepen, vechten met de zware bijl en leefden lang van rooftochten — tot het verdrag met Araluen, gesloten na de gezamenlijke strijd tegen de Temujai, hen tot bondgenoten maakte. Aan het hoofd staat de Oberjarl.",
+    "en": "The northern seafaring land on the Stormwhite Sea. Skandians sail wolfships, fight with the heavy battleaxe, and long lived off raiding — until the treaty with Araluen, forged after the joint fight against the Temujai, made them allies. The Oberjarl stands at their head."
+   },
+   "feiten": [
+    [
+     {"nl":"Leider", "en":"Leader"},
+     {"nl":"De Oberjarl (Ragnak, later Erak)", "en":"The Oberjarl (Ragnak, later Erak)"}
+    ],
+    [{"nl":"Schepen", "en":"Ships"},{"nl":"Wolfschepen", "en":"Wolfships"}],
+    [{"nl":"Traditie", "en":"Tradition"},{"nl":"De Broederbandtraining", "en":"Brotherband training"}]
+   ],
+   "lx": 9.83,
+   "ly": 1.32
+  },
+  "sonderland": {
+   "naam": {"nl":"Sonderland", "en":"Sonderland"},
+   "soort": "land",
+   "tint": "b",
+   "terrein": {"relief":"heuvels", "begroeiing":"naaldbos", "koud":1},
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Het beboste land ten westen van Skandia, aan de doorvaart tussen de open oceaan en de Stormwitte Zee. Wie van Araluen naar Hallasholm vaart, komt hier langs.",
+    "en": "The forested land west of Skandia, on the passage between the open ocean and the Stormwhite Sea. Anyone sailing from Araluen to Hallasholm passes this way."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Tussen de oceaan en de Stormwitte Zee", "en":"Between the ocean and the Stormwhite Sea"}
+    ]
+   ]
+  },
+  "gallica": {
+   "naam": {"nl":"Gallica", "en":"Gallica"},
+   "soort": "land",
+   "tint": "b",
+   "terrein": {"relief":"heuvels", "begroeiing":["akker", "loofbos"]},
+   "beeld": "Gallica.jpg",
+   "serie": ["GJ"],
+   "boeken": ["GJ3", "GJ8", "GJ9"],
+   "tekst": {
+    "nl": "Ten zuiden van de Stormwitte Zee. Er is een koning in naam, maar de macht ligt bij krijgsheren die elk hun eigen kasteel, weg en tol hebben. Voor reizigers is Gallica daarmee het gevaarlijkste land van het westen — en de vaste vluchtroute voor iedereen die Araluen ontvlucht.",
+    "en": "South of the Stormwhite Sea. There is a king in name, but power lies with warlords who each hold their own castle, road, and toll. For travelers, Gallica is therefore the most dangerous land in the west — and the standard escape route for anyone fleeing Araluen."
+   },
+   "feiten": [
+    [{"nl":"Bestuur", "en":"Government"},{"nl":"Rivaliserende krijgsheren", "en":"Rival warlords"}],
+    [
+     {"nl":"Berucht", "en":"Notorious"},
+     {"nl":"Genovezen: huurmoordenaars", "en":"Genovesans: hired killers"}
+    ]
+   ],
+   "lx": -21.71,
+   "ly": 2.25
+  },
+  "iberion": {
+   "naam": {"nl":"Iberion", "en":"Iberion"},
+   "soort": "land",
+   "tint": "c",
+   "terrein": {"relief":"heuvels", "begroeiing":["grasland", "kaal"]},
+   "serie": ["GJ", "BB"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Het schiereiland in het zuidwesten. Wie vanuit het noorden naar Arrida of de Constante Zee vaart, rondt eerst deze kust.",
+    "en": "The peninsula in the southwest. Anyone sailing south from the north toward Arrida or the Constant Sea rounds this coast first."
+   },
+   "feiten": [[{"nl":"Ligging", "en":"Location"},{"nl":"Zuidwestelijk schiereiland", "en":"Southwestern peninsula"}]],
+   "maat": 0.91,
+   "lx": -5.68,
+   "ly": -3.95
+  },
+  "aslava": {
+   "naam": {"nl":"Aslava", "en":"Aslava"},
+   "soort": "land",
+   "tint": "b",
+   "terrein": {"relief":"vlak", "begroeiing":["grasland", "naaldbos"],"koud":1},
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Uitgestrekt land ten oosten van Teutland en Alpina, dat overloopt in de vlakten waar de Temujai vandaan komen. Wie over land naar het oosten reist, komt hier doorheen.",
+    "en": "A vast land east of Teutlandt and Alpina, merging into the plains the Temujai come from. Anyone traveling east by land passes through here."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Tussen Alpina en de oostelijke steppen", "en":"Between Alpina and the eastern steppes"}
+    ]
+   ],
+   "ly": 11.23
+  },
+  "arrida": {
+   "naam": {"nl":"Arrida", "en":"Arrida"},
+   "soort": "land",
+   "tint": "e",
+   "terrein": {"relief":"vlak", "begroeiing":"woestijn"},
+   "serie": ["GJ", "BB"],
+   "boeken": ["GJ7", "BB4", "BB5"],
+   "beeld": "Al Shabah.webp",
+   "bijschrift": {"nl":"Al Shabah, de stad van wakir Selethen", "en":"Al Shabah, the city of Wakir Selethen"},
+   "tekst": {
+    "nl": "Het woestijnland ten zuiden van de Constante Zee, geregeerd door een emir met wakirs als gouverneurs. In de steden heerst orde en handel; daarbuiten hebben de Bedullin-nomaden en de gevreesde Tualaghi het voor het zeggen. Wie de woestijn in gaat zonder gids of gastvriend, komt er niet uit.",
+    "en": "The desert land south of the Constant Sea, ruled by an emir with wakirs as governors. Order and trade rule in the cities; beyond them the Bedullin nomads and the feared Tualaghi hold sway. Anyone who enters the desert without a guide or a sworn friend does not come out."
+   },
+   "feiten": [
+    [{"nl":"Heerser", "en":"Ruler"},{"nl":"De emir", "en":"The emir"}],
+    [{"nl":"Volken", "en":"Peoples"},{"nl":"Arridi, Bedullin, Tualaghi", "en":"Arridi, Bedullin, Tualaghi"}],
+    [{"nl":"Klimaat", "en":"Climate"},{"nl":"Woestijn", "en":"Desert"}]
+   ],
+   "lx": -44.91,
+   "ly": -32.19
+  },
+  "alpina": {
+   "naam": {"nl":"Alpina", "en":"Alpina"},
+   "soort": "gebergte",
+   "tint": "d",
+   "terrein": {"relief":"bergen", "begroeiing":["naaldbos", "kaal"],"koud":1},
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "De hoge bergketen die het noorden van het zuiden scheidt. De passen vriezen in de winter dicht; wie dan van Gallica naar het zuiden wil, moet wachten tot het voorjaar of omvaren.",
+    "en": "The high mountain range that separates the north from the south. The passes freeze shut in winter; anyone wanting to go south from Gallica then must wait for spring or sail around."
+   },
+   "feiten": [
+    [{"nl":"Type", "en":"Type"},{"nl":"Hooggebergte", "en":"High mountains"}],
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Tussen Gallica, Teutland en het zuiden", "en":"Between Gallica, Teutlandt and the south"}
+    ]
+   ],
+   "lx": 4.49,
+   "ly": 6.74
+  },
+  "toscana": {
+   "naam": {"nl":"Toscana", "en":"Toscana"},
+   "soort": "land",
+   "tint": "c",
+   "terrein": {"relief":"heuvels", "begroeiing":["akker", "kaal"]},
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een zuidelijk land van stadstaten, handelaren en marmer, beroemd om zijn legioenen: beroepssoldaten die schild aan schild in gesloten formatie vechten. Die manier van vechten geldt in de hele bekende wereld als voorbeeld.",
+    "en": "A southern land of city-states, traders and marble, famous for its legions: professional soldiers who fight shield to shield in close formation. That style of fighting is held up as the standard across the known world."
+   },
+   "feiten": [
+    [
+     {"nl":"Leger", "en":"Army"},
+     {"nl":"Legioenen in gesloten formatie", "en":"Legions fighting in close formation"}
+    ],
+    [{"nl":"Bekend om", "en":"Known for"},{"nl":"Handel en steenhouwwerk", "en":"Trade and stonework"}]
+   ]
+  },
+  "teutlandt": {
+   "naam": {"nl":"Teutland", "en":"Teutlandt"},
+   "soort": "land",
+   "tint": "a",
+   "terrein": {"relief":"heuvels", "begroeiing":["loofbos", "akker"],"koud":1},
+   "serie": ["GJ"],
+   "boeken": ["GJ3"],
+   "tekst": {
+    "nl": "Het land ten oosten van de Stormwitte Zee, dat Halt en Arnaut doorkruisten op weg naar de Skandische kust.",
+    "en": "The land east of the Stormwhite Sea, which Halt and Horace crossed on their way to the Skandian coast."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Oostkant van de Stormwitte Zee", "en":"East side of the Stormwhite Sea"}
+    ]
+   ]
+  },
+  "eastern-steps": {
+   "naam": {"nl":"Oostelijke Steppen", "en":"Eastern Steppes"},
+   "soort": "land",
+   "tint": "f",
+   "terrein": {"relief":"vlak", "begroeiing":"steppe"},
+   "serie": ["GJ", "BB"],
+   "boeken": ["GJ4", "BB8"],
+   "tekst": {
+    "nl": "De vlakten in het verre oosten, voorbij Aslava: het land van de Temujai. Zij vechten te paard en met de boog, en trokken van hieruit naar het westen tot ze in Skandia werden gestuit.",
+    "en": "The plains in the far east, beyond Aslava: the land of the Temujai. They fight on horseback and with the bow, and swept west from here until they were stopped in Skandia."
+   },
+   "feiten": [
+    [{"nl":"Volk", "en":"People"},{"nl":"De Temujai", "en":"The Temujai"}],
+    [{"nl":"Vechtwijze", "en":"Fighting style"},{"nl":"Bereden boogschutters", "en":"Mounted archers"}]
+   ]
+  },
+  "ursali": {
+   "naam": {"nl":"Ursali", "en":"Ursali"},
+   "soort": "land",
+   "tint": "a",
+   "terrein": {"relief":"heuvels", "begroeiing":["grasland", "loofbos"]},
+   "lx": -11.73,
+   "ly": 13.4,
+   "maat": 0.91,
+   "serie": ["GJ"],
+   "boeken": ["GJ4"],
+   "tekst": {
+    "nl": "Het land midden op het continent, tussen Aslava en Alpina in het westen en de Oostelijke Steppen in het oosten. De Ursali hielden er maar een klein leger op na, en toen de Temujai naar het westen trokken was hun land een van de eerste die viel — samen met de Middenrijken. Wat er van hun nederlaag werd verteld, ging de Temujai vooruit.",
+    "en": "The land at the center of the continent, between Aslava and Alpina in the west and the Eastern Steppes in the east. The Ursali kept only a small army, and when the Temujai swept west their land was one of the first to fall — together with the Middle Kingdoms. What was told of their defeat traveled ahead of the Temujai."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Tussen Aslava en de Oostelijke Steppen", "en":"Between Aslava and the Eastern Steppes"}
+    ],
+    [{"nl":"Leger", "en":"Army"},{"nl":"Zwak", "en":"Weak"}],
+    [
+     {"nl":"Lot", "en":"Fate"},
+     {"nl":"Vroeg onder de voet gelopen door de Temujai", "en":"Overrun early by the Temujai"}
+    ]
+   ]
+  },
+  "helleno": {
+   "naam": {"nl":"Helleno", "en":"Helleno"},
+   "soort": "land",
+   "tint": "f",
+   "terrein": {"relief":"heuvels", "begroeiing":"kaal"},
+   "ly": 3.12,
+   "lx": -0.3,
+   "serie": ["BB"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Het land in het noordoosten van de Constante Zee. In de boeken is het geen aaneengesloten kust maar een afgelegen eilandengroep. Veel Hellenen leven van de zeeroverij; ze vallen op door felgekleurde kleren en sieraden die nergens bij elkaar passen. Ze vereren de godin Ariadne.",
+    "en": "The land in the northeast of the Constant Sea. In the books it isn't a continuous coastline but a remote island group. Many Hellenics live by piracy; they stand out with brightly colored clothes and jewelry that clashes wildly. They worship the goddess Ariadne."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Noordoosten van de Constante Zee", "en":"Northeast of the Constant Sea"}
+    ],
+    [{"nl":"Vorm", "en":"Shape"},{"nl":"Een afgelegen eilandengroep", "en":"A remote island group"}],
+    [{"nl":"Bekend om", "en":"Known for"},{"nl":"Zeeroverij", "en":"Piracy"}],
+    [{"nl":"Godin", "en":"Goddess"},{"nl":"Ariadne", "en":"Ariadne"}]
+   ]
+  },
+  "nihon-ja": {
+   "naam": {"nl":"Nihon-Ja", "en":"Nihon-Ja"},
+   "soort": "land",
+   "tint": "c",
+   "terrein": {"relief":"bergen", "begroeiing":"loofbos"},
+   "serie": ["GJ"],
+   "boeken": ["GJ10"],
+   "tekst": {
+    "nl": "Het eilandenrijk in het verre oosten, een half jaar varen van Araluen. Het land wordt geregeerd door keizer Shigeru en verdedigd door de Senshi, een krijgersklasse die vecht met het lange zwaard en zich aan een strenge erecode houdt. Als de Senshi-heer Arisaka de macht grijpt, vlucht de keizer het bergland in, naar het verscholen fort Ran-Koshi — en daar leren de Kikori, houthakkers zonder enige krijgservaring, vechten in gesloten formatie.",
+    "en": "The island empire in the far east, half a year's sailing from Araluen. The land is ruled by Emperor Shigeru and defended by the Senshi, a warrior class that fights with the long sword and holds to a strict code of honor. When the Senshi lord Arisaka seizes power, the emperor flees into the mountains, to the hidden fortress of Ran-Koshi — where the Kikori, woodcutters with no fighting experience, learn to fight in close formation."
+   },
+   "feiten": [
+    [{"nl":"Keizer", "en":"Emperor"},{"nl":"Shigeru", "en":"Shigeru"}],
+    [{"nl":"Krijgersklasse", "en":"Warrior class"},{"nl":"De Senshi", "en":"The Senshi"}],
+    [{"nl":"Bergvolk", "en":"Mountain people"},{"nl":"De Kikori", "en":"The Kikori"}],
+    [{"nl":"Opstandeling", "en":"Rebel"},{"nl":"Heer Arisaka", "en":"Lord Arisaka"}]
+   ]
+  },
+  "middle-kingdoms": {
+   "naam": {"nl":"Middenrijken", "en":"Middle Kingdoms"},
+   "soort": "land",
+   "tint": "a",
+   "terrein": {"relief":"heuvels", "begroeiing":["grasland", "akker"]},
+   "serie": ["GJ"],
+   "boeken": ["GJ4"],
+   "tekst": {
+    "nl": "De rijken tussen Ursali en het oosten. Toen de Temujai voor het eerst naar het westen trokken, werden zij samen met Ursali als eerste onder de voet gelopen.",
+    "en": "The kingdoms between Ursali and the east. When the Temujai first swept west, they were overrun early, together with Ursali."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Tussen Ursali en het oosten", "en":"Between Ursali and the east"}
+    ],
+    [{"nl":"Lot", "en":"Fate"},{"nl":"Vroeg gevallen voor de Temujai", "en":"Fell early to the Temujai"}]
+   ]
+  },
+  "indus": {
+   "naam": {"nl":"Indus", "en":"Indus"},
+   "soort": "land",
+   "tint": "a",
+   "terrein": {"relief":"heuvels", "begroeiing":"jungle"},
+   "tekst": {
+    "nl": "Het land in het verre oosten, tussen de westelijke koninkrijken en Nihon-Ja. Wie over zee naar het oosten reist, komt langs deze kust.",
+    "en": "The land in the far east, between the western kingdoms and Nihon-Ja. Anyone sailing east passes this coast."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Tussen het westen en Nihon-Ja", "en":"Between the west and Nihon-Ja"}
+    ]
+   ]
+  },
+  "baralat": {
+   "naam": {"nl":"Baralat", "en":"Baralat"},
+   "soort": "land",
+   "tint": "a",
+   "terrein": {"relief":"vlak", "begroeiing":["woestijn", "grasland"]},
+   "tekst": {
+    "nl": "Het land aan het oostelijke uiteinde van de Constante Zee, met een grens aan Arrida. Vlak binnen die grens ligt het Amrashin-massief, dicht bij de ingang van het Assaranyaanse kanaal.",
+    "en": "The land at the eastern end of the Constant Sea, bordering Arrida. Just inside that border lies the Amrashin massif, close to the mouth of the Assaranyan Canal."
+   },
+   "feiten": [
+    [{"nl":"Grenst aan", "en":"Borders"},{"nl":"Arrida", "en":"Arrida"}],
+    [{"nl":"Gebergte", "en":"Mountains"},{"nl":"Het Amrashin-massief", "en":"The Amrashin massif"}]
+   ]
+  }
+ },
+ "zeeen": [
+  {
+   "id": "westelijke-oceaan",
+   "naam": {"nl":"Westelijke Oceaan", "en":"Western Ocean"},
+   "soort": "oceaan",
+   "x": -65.68,
+   "y": 205.28,
+   "tekst": {
+    "nl": "De open oceaan ten noorden en westen van de bekende wereld. Geen van de reizen op deze kaart voert er verder op dan de kust.",
+    "en": "The open ocean north and west of the known world. None of the journeys on this map venture farther than the coast."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Noordwesten, voorbij Sonderland", "en":"Northwest, beyond Sonderland"}
+    ]
+   ]
+  },
+  {
+   "id": "oostelijke-oceaan",
+   "naam": {"nl":"Oostelijke Oceaan", "en":"Eastern Ocean"},
+   "soort": "oceaan",
+   "x": 1111.85,
+   "y": 422.29,
+   "tekst": {
+    "nl": "De open oceaan ten oosten van Nihon-Ja. Geen van de reizen op deze kaart voert er verder op dan de kust.",
+    "en": "The open ocean east of Nihon-Ja. None of the journeys on this map venture farther than the coast."
+   },
+   "feiten": [[{"nl":"Ligging", "en":"Location"},{"nl":"Oosten, voorbij Nihon-Ja", "en":"East, beyond Nihon-Ja"}]]
+  },
+  {
+   "id": "ijszee",
+   "naam": {"nl":"IJszee", "en":"Frozen Sea"},
+   "soort": "zee",
+   "x": 235.41,
+   "y": 99.95,
+   "maat": 0.9,
+   "tekst": {
+    "nl": "De ijszee ten noorden van Skandia. Er drijft pakijs en het water is het grootste deel van het jaar dichtgevroren; alleen in de zomer is er kortstondig open vaarwater.",
+    "en": "The ice sea north of Skandia. Pack ice drifts here and the water is frozen solid for most of the year; only in summer is there briefly open water."
+   },
+   "feiten": [
+    [{"nl":"Ligging", "en":"Location"},{"nl":"Ten noorden van Skandia", "en":"North of Skandia"}],
+    [
+     {"nl":"Klimaat", "en":"Climate"},
+     {"nl":"Grotendeels het jaar dichtgevroren", "en":"Frozen for most of the year"}
+    ]
+   ]
+  },
+  {
+   "id": "eindeloze-oceaan",
+   "naam": {"nl":"Eindeloze Oceaan", "en":"Endless Ocean"},
+   "soort": "oceaan",
+   "x": -54.83,
+   "y": 576.69,
+   "tekst": {
+    "nl": "De oceaan ten westen van Araluen en Iberion. In Broederband 6 drijft een storm de Reiger hier de oceaan op, weg van elke bekende kust.",
+    "en": "The ocean west of Araluen and Iberion. In Brotherband 6 a storm drives the Heron out onto this ocean, away from any known coast."
+   },
+   "feiten": [
+    [{"nl":"Ligging", "en":"Location"},{"nl":"Westen", "en":"West"}],
+    [
+     {"nl":"In Broederband 6", "en":"In Brotherband 6"},
+     {"nl":"De Reiger raakt uit de koers", "en":"The Heron is blown off course"}
+    ]
+   ]
+  },
+  {
+   "id": "stormwitte-zee",
+   "naam": {"nl":"Stormwitte Zee", "en":"Stormwhite Sea"},
+   "soort": "zee",
+   "x": 202.73,
+   "y": 315.99,
+   "tekst": {
+    "nl": "De binnenzee tussen Sonderland, Skandia, Teutland en Gallica. Hallasholm ligt aan deze zee; wie er vanuit Araluen heen vaart, gaat onderweg voor anker bij Skorghijl.",
+    "en": "The inland sea between Sonderland, Skandia, Teutlandt and Gallica. Hallasholm lies on this sea; anyone sailing here from Araluen anchors at Skorghijl along the way."
+   },
+   "feiten": [
+    [
+     {"nl":"Grenst aan", "en":"Borders"},
+     {"nl":"Sonderland, Skandia, Teutland, Gallica", "en":"Sonderland, Skandia, Teutlandt, Gallica"}
+    ],
+    [{"nl":"Haven", "en":"Harbor"},{"nl":"Hallasholm", "en":"Hallasholm"}]
+   ],
+   "maat": 0.62
+  },
+  {
+   "id": "nauwe-zee",
+   "naam": {"nl":"Nauwe Zee", "en":"Narrow Sea"},
+   "soort": "zee",
+   "x": 132.28,
+   "y": 401.22,
+   "rot": -82,
+   "maat": 0.6,
+   "tekst": {
+    "nl": "De zeestraat tussen Araluen en het vasteland van Gallica en Iberion. Wie van het eiland naar het zuiden vaart, steekt hem als eerste over.",
+    "en": "The strait between Araluen and the mainland of Gallica and Iberion. Anyone sailing south from the island crosses it first."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Tussen Araluen en het vasteland", "en":"Between Araluen and the mainland"}
+    ]
+   ]
+  },
+  {
+   "id": "constante-zee-water",
+   "naam": {"nl":"Constante Zee", "en":"Constant Sea"},
+   "soort": "zee",
+   "x": 183.01,
+   "y": 522.49,
+   "rot": 22,
+   "maat": 0.6,
+   "tekst": {
+    "nl": "De zee in het zuiden, tussen Iberion, Toscana en de kust van Arrida. Aan deze kust liggen Limmat en Santorillos.",
+    "en": "The sea in the south, between Iberion, Toscana and the coast of Arrida. Limmat and Santorillos lie on this coast."
+   },
+   "feiten": [
+    [{"nl":"Grenst aan", "en":"Borders"},{"nl":"Iberion, Toscana, Arrida", "en":"Iberion, Toscana, Arrida"}],
+    [{"nl":"Plaatsen", "en":"Places"},{"nl":"Limmat, Santorillos", "en":"Limmat, Santorillos"}]
+   ]
+  },
+  {
+   "id": "zee-van-rostov",
+   "naam": {"nl":"Zee van Rostov", "en":"Sea of Rostov"},
+   "soort": "zee",
+   "x": 372.46,
+   "y": 541.19,
+   "maat": 0.7,
+   "tekst": {
+    "nl": "De binnenzee in het oosten, met Toscana, Aslava, Baralat en de Middenrijken aan zijn oevers. Volgens de overlevering staat hij via het Assaranyaanse kanaal in verbinding met de Bloedzee.",
+    "en": "The inland sea in the east, with Toscana, Aslava, Baralat and the Middle Kingdoms on its shores. According to tradition it connects to the Blood Sea via the Assaranyan Canal."
+   },
+   "feiten": [
+    [
+     {"nl":"Grenst aan", "en":"Borders"},
+     {
+      "nl": "Toscana, Aslava, Baralat, de Middenrijken",
+      "en": "Toscana, Aslava, Baralat, the Middle Kingdoms"
+     }
+    ],
+    [{"nl":"Verbinding", "en":"Connection"},{"nl":"Het Assaranyaanse kanaal", "en":"The Assaranyan Canal"}]
+   ]
+  },
+  {
+   "id": "bloedzee",
+   "naam": {"nl":"Bloedzee", "en":"Blood Sea"},
+   "soort": "zee",
+   "x": 480,
+   "y": 658,
+   "maat": 0.8,
+   "tekst": {
+    "nl": "De zee in het zuidoosten, ten oosten van Arrida en het gebied van de Tualaghi, ten zuiden van dat van de Temujai. Het Assaranyaanse kanaal — in oude tijden gegraven door de Assaraniërs — verbindt hem met de Constante Zee. Wie naar Nihon-Ja vaart gaat hier doorheen en dan de Oostelijke Oceaan op.",
+    "en": "The sea in the southeast, east of Arrida and the territory of the Tualaghi, south of that of the Temujai. The Assaranyan Canal — dug in ancient times by the Assaranyans — connects it to the Constant Sea. Anyone sailing to Nihon-Ja passes through here and then out onto the Eastern Ocean."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Zuidoosten, ten oosten van Arrida", "en":"Southeast, east of Arrida"}
+    ],
+    [{"nl":"Verbinding", "en":"Connection"},{"nl":"Het Assaranyaanse kanaal", "en":"The Assaranyan Canal"}],
+    [{"nl":"Op de route naar", "en":"On the route to"},{"nl":"Nihon-Ja", "en":"Nihon-Ja"}]
+   ]
+  }
+ ],
+ "detail": {
+  "bron": [39,9,429.5,619],
+  "gebieden": ["picta", "araluen", "celtica", "mountains-of-rain-and-night"],
+  "punten": {
+   "macindaw": [237,146],
+   "noordam": [203,172],
+   "karwij": [304,196],
+   "kasteel-araluen": [280,246],
+   "redmont": [125,316],
+   "gorlan": [247,298],
+   "zeeklif": [412,340],
+   "heckingse": [350,255],
+   "doornbos": [318,348],
+   "uthal": [316,407],
+   "westwoud": [114,415],
+   "veenlanden": [394,434],
+   "driestappas": [360,472],
+   "hoogvlakte": [320,487],
+   "spleet": [196,520],
+   "tarbus": [142,344],
+   "zalm": [148,372],
+   "slijpsteen": [245,235],
+   "eenzamen": [194,449],
+   "zuidkliffen": [296,558],
+   "westkliffen": [218,524],
+   "wensley": [122,330],
+   "grimsdell": [222,140],
+   "cresthaven": [392,302]
+  }
+ },
+ "plaatsen": [
+  {
+   "id": "redmont",
+   "naam": {"nl":"Kasteel Redmont", "en":"Castle Redmont"},
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3,
+   "serie": ["GJ"],
+   "beeld": "Halts Cabin.jpg",
+   "bijschrift": {
+    "nl": "De hut van Halt, aan de rand van het bos bij Redmont",
+    "en": "Halt's cabin, at the edge of the forest by Redmont"
+   },
+   "boeken": ["GJ1", "GJ2", "GJ7", "GJ9", "GJ11", "GJ12"],
+   "tekst": {
+    "nl": "Het rode kasteel van baron Arald, en het thuis van Will. Redmont heeft een Krijgsschool onder krijgsmeester Rodney, een keuken waar meester Chubb de scepter zwaait en een koeriersdienst onder vrouwe Pauline. Even buiten de muren, aan de rand van het bos, staat de hut van de Grijze Jager: hier neemt Halt de weesjongen Will als leerling aan.",
+    "en": "The red castle of Baron Arald, and Will's home. Redmont has a Battleschool under Battlemaster Rodney, a kitchen ruled by Master Chubb, and a courier service under Lady Pauline. Just outside the walls, at the edge of the forest, stands the Ranger's cabin: here Halt takes the orphan Will as his apprentice."
+   },
+   "feiten": [
+    [{"nl":"Heer", "en":"Lord"},{"nl":"Baron Arald", "en":"Baron Arald"}],
+    [{"nl":"Grijze Jager", "en":"Ranger"},{"nl":"Halt O'Carrick", "en":"Halt O'Carrick"}],
+    [{"nl":"Leerling", "en":"Apprentice"},{"nl":"Will", "en":"Will"}],
+    [{"nl":"Leen", "en":"Fief"},{"nl":"Redmont", "en":"Redmont"}]
+   ],
+   "x": 78.9,
+   "y": 394.86,
+   "geenSnap": 1
+  },
+  {
+   "id": "kasteel-araluen",
+   "naam": {"nl":"Kasteel Araluen", "en":"Castle Araluen"},
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3,
+   "beeld": "Castle Araluen.jpg",
+   "serie": ["GJ"],
+   "boeken": ["GJ1", "GJ2", "GJ7", "GJ12", "GJ13", "GJ14"],
+   "tekst": {
+    "nl": "De koninklijke burcht: slanke witte torens, uitgestrekte tuinen en de zetel van koning Duncan. Hier groeit prinses Cassandra op — het meisje dat Will in Skandia als Evanlyn leerde kennen. In de Royal Ranger-boeken wordt het kasteel belegerd door de Rode Vossenclan.",
+    "en": "The royal stronghold: slender white towers, sprawling gardens, and the seat of King Duncan. Princess Cassandra grows up here — the girl Will knew in Skandia as Evanlyn. In the Royal Ranger books the castle is besieged by the Red Fox Clan."
+   },
+   "feiten": [
+    [{"nl":"Heerser", "en":"Ruler"},{"nl":"Koning Duncan", "en":"King Duncan"}],
+    [
+     {"nl":"Bewoners", "en":"Residents"},
+     {"nl":"Prinses Cassandra (Evanlyn)", "en":"Princess Cassandra (Evanlyn)"}
+    ],
+    [{"nl":"Rol", "en":"Role"},{"nl":"Hoofdstad van het koninkrijk", "en":"Capital of the kingdom"}]
+   ],
+   "x": 96.6,
+   "y": 380.59,
+   "geenSnap": 1
+  },
+  {
+   "id": "macindaw",
+   "naam": {"nl":"Kasteel Macindaw", "en":"Castle Macindaw"},
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ5", "GJ6"],
+   "tekst": {
+    "nl": "Grensvesting aan de rand van Picta, gebouwd om de Scotti buiten te houden. Toen de burcht door verraad in vijandelijke handen viel, infiltreerde Will er als de rondtrekkende jongleur Will Barton, en heroverde hem met hulp van Malcolm, Alyss en de Skandiër Gundar.",
+    "en": "A border stronghold on the edge of Picta, built to keep the Scotti out. When the castle fell into enemy hands through treachery, Will infiltrated it as the traveling juggler Will Barton, and recaptured it with the help of Malcolm, Alyss and the Skandian Gundar."
+   },
+   "feiten": [
+    [{"nl":"Leen", "en":"Fief"},{"nl":"Noordam", "en":"Norgate"}],
+    [{"nl":"Bewaakt", "en":"Guards"},{"nl":"De grens met Picta", "en":"The border with Picta"}],
+    [{"nl":"Dekmantel", "en":"Cover"},{"nl":"Will als jongleur", "en":"Will as a juggler"}]
+   ],
+   "x": 88.33,
+   "y": 365.73,
+   "geenSnap": 1
+  },
+  {
+   "id": "noordam",
+   "naam": {"nl":"Noordam", "en":"Norgate"},
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["GJ5", "GJ6"],
+   "tekst": {
+    "nl": "Het noordelijke leen waaronder Macindaw valt, en het kasteel dat de doorgang naar Picta bewaakt. In de oorspronkelijke boeken heet dit leen Norgate.",
+    "en": "The northern fief that Macindaw belongs to, and the castle that guards the way into Picta."
+   },
+   "feiten": [[{"nl":"Ligging", "en":"Location"},{"nl":"Noordgrens van Araluen", "en":"Northern border of Araluen"}]],
+   "x": 80.55,
+   "y": 370.7,
+   "geenSnap": 1
+  },
+  {
+   "id": "karwij",
+   "naam": {"nl":"Karwij", "en":"Caraway"},
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "detail": "karwij",
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["GJ12", "GJ14"],
+   "tekst": {
+    "nl": "Leen in het noordoosten, met een eigen Krijgsschool. In de oorspronkelijke boeken heet het Caraway.",
+    "en": "A fief in the northeast, with its own Battleschool."
+   },
+   "feiten": [[{"nl":"Bekend om", "en":"Known for"},{"nl":"De Krijgsschool", "en":"The Battleschool"}]]
+  },
+  {
+   "id": "gorlan",
+   "naam": {"nl":"Gorlan", "en":"Gorlan"},
+   "soort": "ruine",
+   "gebied": "araluen",
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ1", "VJ1"],
+   "tekst": {
+    "nl": "Ooit het leen van Morgarath, tot hij in opstand kwam tegen de kroon. Sinds zijn nederlaag ligt het kasteel in puin en mijden de boeren de streek. Op het toernooiveld van Gorlan begon, vijftien jaar eerder, ook Morgaraths eerste greep naar de macht.",
+    "en": "Once Morgarath's fief, until he rose in rebellion against the crown. Since his defeat the castle lies in ruins and the local farmers avoid the area. Fifteen years earlier, Morgarath's first bid for power also began on the tournament field at Gorlan."
+   },
+   "feiten": [
+    [{"nl":"Voormalig heer", "en":"Former lord"},{"nl":"Morgarath", "en":"Morgarath"}],
+    [{"nl":"Staat", "en":"State"},{"nl":"Verwoest", "en":"Destroyed"}]
+   ],
+   "x": 91.94,
+   "y": 389.94,
+   "geenSnap": 1
+  },
+  {
+   "id": "zeeklif",
+   "naam": {"nl":"Zeeklif", "en":"Seacliff"},
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.4,
+   "serie": ["GJ"],
+   "beeld": "Seacliff.jpg",
+   "boeken": ["GJ5"],
+   "tekst": {
+    "nl": "Een klein eilandleen voor de oostkust: Wills eerste standplaats als volwaardig Grijze Jager. Rustig, afgelegen en — tot zijn frustratie — vrijwel zonder werk voor een Jager. In de oorspronkelijke boeken heet het Seacliff.",
+    "en": "A small island fief off the east coast: Will's first posting as a fully-fledged Ranger. Quiet, remote and — to his frustration — with almost no work for a Ranger."
+   },
+   "feiten": [[{"nl":"Grijze Jager", "en":"Ranger"},{"nl":"Will", "en":"Will"}]],
+   "x": 122.51,
+   "y": 393.31,
+   "geenSnap": 1
+  },
+  {
+   "id": "uthal",
+   "naam": {"nl":"Vlakte van Uthal", "en":"Plains of Uthal"},
+   "soort": "slagveld",
+   "begroeiing": "grasland",
+   "straal": 10,
+   "gebied": "araluen",
+   "z": 3,
+   "serie": ["GJ"],
+   "beeld": "The Plains of Uthal.jpg",
+   "boeken": ["GJ2"],
+   "tekst": {
+    "nl": "Het open veld waar het leger van Araluen de Wargals opving die uit de bergen kwamen. Toen Morgarath een tweegevecht eiste, nam Arnaut de uitdaging aan — en doodde hem.",
+    "en": "The open field where the Araluen army met the Wargals pouring down from the mountains. When Morgarath demanded single combat, Horace took up the challenge — and killed him."
+   },
+   "feiten": [
+    [{"nl":"Uitkomst", "en":"Outcome"},{"nl":"Morgarath verslagen", "en":"Morgarath defeated"}],
+    [{"nl":"Kampioen", "en":"Champion"},{"nl":"Arnaut", "en":"Horace"}]
+   ],
+   "x": 101.66,
+   "y": 410.14,
+   "geenSnap": 1
+  },
+  {
+   "id": "heckingse",
+   "naam": {"nl":"Heckingse Heide", "en":"Hackham Heath"},
+   "soort": "slagveld",
+   "begroeiing": "heide",
+   "straal": 9,
+   "gebied": "araluen",
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["VJ2"],
+   "tekst": {
+    "nl": "Het slagveld van de eerste oorlog tegen Morgarath, vijftien jaar voor Wills leertijd. Hier sneuvelde Wills vader Daniel bij een aanval waarmee hij Halts leven redde — de reden dat Halt de weesjongen later in het oog hield. In de oorspronkelijke boeken heet het Hackham Heath.",
+    "en": "The battlefield of the first war against Morgarath, fifteen years before Will's apprenticeship. Will's father Daniel died here in an attack that saved Halt's life — the reason Halt later kept an eye on the orphaned boy."
+   },
+   "feiten": [[{"nl":"Gesneuveld", "en":"Fallen"},{"nl":"Daniel, Wills vader", "en":"Daniel, Will's father"}]],
+   "x": 104.03,
+   "y": 387.54,
+   "geenSnap": 1
+  },
+  {
+   "id": "grimsdell",
+   "naam": {"nl":"Grimsdell Woud", "en":"Grimsdell Wood"},
+   "soort": "natuur",
+   "begroeiing": "naaldbos",
+   "straal": 11,
+   "gebied": "araluen",
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["GJ5", "GJ6", "GJ9"],
+   "tekst": {
+    "nl": "Een mistig, verwrongen woud bij Macindaw, waar de dorpelingen de tovenaar Malkallam vrezen. In werkelijkheid is dat Malcolm: een geniale geneesheer die met licht, rook en geluid indruk maakt om met rust gelaten te worden. Zijn kennis van kruiden en gif redt later Halts leven.",
+    "en": "A misty, twisted wood near Macindaw, where the villagers fear the sorcerer Malkallam. In truth that's Malcolm: a brilliant healer who uses light, smoke and sound to impress people into leaving him alone. His knowledge of herbs and poison later saves Halt's life."
+   },
+   "feiten": [
+    [
+     {"nl":"Bewoner", "en":"Resident"},
+     {"nl":"Malcolm, de 'tovenaar' Malkallam", "en":"Malcolm, the 'sorcerer' Malkallam"}
+    ],
+    [{"nl":"Reputatie", "en":"Reputation"},{"nl":"Vervloekt", "en":"Cursed"}]
+   ],
+   "approx": 1,
+   "x": 91.44,
+   "y": 367.6,
+   "geenSnap": 1
+  },
+  {
+   "id": "wensley",
+   "naam": {"nl":"Wensley", "en":"Wensley"},
+   "soort": "stad",
+   "gebied": "araluen",
+   "detail": "wensley",
+   "z": 4.6,
+   "serie": ["GJ"],
+   "boeken": ["GJ1", "GJ2"],
+   "tekst": {
+    "nl": "Het dorp onder aan de heuvel van Redmont, met een herberg, een markt en de akkers waar de mensen van het leen wonen. Voor Will is dit de eerste bewoonde wereld buiten het kasteel.",
+    "en": "The village at the foot of Redmont's hill, with an inn, a market, and the fields where the fief's people live. For Will, this is the first inhabited world outside the castle."
+   },
+   "feiten": [[{"nl":"Ligt bij", "en":"Located near"},{"nl":"Kasteel Redmont", "en":"Castle Redmont"}]],
+   "approx": 1
+  },
+  {
+   "id": "cresthaven",
+   "naam": {"nl":"Cresthaven", "en":"Cresthaven"},
+   "soort": "haven",
+   "gebied": "araluen",
+   "z": 3.6,
+   "serie": ["BB"],
+   "boeken": ["BB4"],
+   "approx": 1,
+   "tekst": {
+    "nl": "De baai die Hal Mikkelson en de bemanning van de Reiger als thuishaven kregen toen zij als 'plichtschip' naar Araluen werden gestuurd — een Skandisch schip dat op grond van het verdrag een jaar lang de Araluaanse kust bewaakt.",
+    "en": "The bay given to Hal Mikkelson and the crew of the Heron as their home port when they were sent to Araluen as a 'duty ship' — a Skandian vessel that, under the treaty, patrols the Araluen coast for a year."
+   },
+   "feiten": [
+    [{"nl":"Schip", "en":"Ship"},{"nl":"De Reiger (Heron)", "en":"The Heron"}],
+    [{"nl":"Schipper", "en":"Skirl"},{"nl":"Hal Mikkelson", "en":"Hal Mikkelson"}]
+   ],
+   "x": 111.66,
+   "y": 383.35,
+   "geenSnap": 1
+  },
+  {
+   "id": "doornbos",
+   "naam": {"nl":"Doornbos", "en":"Thorntree Forest"},
+   "soort": "natuur",
+   "begroeiing": "loofbos",
+   "straal": 9,
+   "gebied": "araluen",
+   "z": 5,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Het dichte bos ten oosten van Gorlan, tussen de Heckingse Heide en de Vlakte van Uthal.",
+    "en": "The dense forest east of Gorlan, between Hackham Heath and the Plains of Uthal."
+   },
+   "feiten": [],
+   "x": 102.78,
+   "y": 400.12,
+   "geenSnap": 1
+  },
+  {
+   "id": "westwoud",
+   "naam": {"nl":"Westwoud", "en":"Western Woodlands"},
+   "soort": "natuur",
+   "begroeiing": "loofbos",
+   "straal": 13,
+   "gebied": "araluen",
+   "z": 5,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Uitgestrekt bosgebied in het westen van Araluen, tussen Redmont en de Celtische grens.",
+    "en": "A vast wooded area in the west of Araluen, between Redmont and the Celtic border."
+   },
+   "feiten": [],
+   "x": 73.26,
+   "y": 406.39,
+   "geenSnap": 1
+  },
+  {
+   "id": "veenlanden",
+   "naam": {"nl":"Veenlanden", "en":"The Fens"},
+   "soort": "natuur",
+   "begroeiing": "moeras",
+   "straal": 10,
+   "gebied": "araluen",
+   "z": 5,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Drassig laagland langs de oostkust; slecht begaanbaar en dun bevolkt.",
+    "en": "Boggy lowland along the east coast; hard to cross and sparsely settled."
+   },
+   "feiten": [],
+   "x": 114.41,
+   "y": 407.98,
+   "geenSnap": 1
+  },
+  {
+   "id": "eenzamen",
+   "naam": {"nl":"Vlakte der Eenzamen", "en":"Solitary Plains"},
+   "soort": "natuur",
+   "begroeiing": "grasland",
+   "straal": 12,
+   "gebied": "araluen",
+   "z": 5.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een leeg, moerassig gebied in het zuidwesten van Araluen.",
+    "en": "An empty, marshy area in the southwest of Araluen."
+   },
+   "feiten": [],
+   "x": 90.4,
+   "y": 415.93,
+   "geenSnap": 1
+  },
+  {
+   "id": "driestappas",
+   "naam": {"nl":"Driestappas", "en":"Three Step Pass"},
+   "soort": "natuur",
+   "begroeiing": "kaal",
+   "straal": 7,
+   "gebied": "mountains-of-rain-and-night",
+   "z": 3.6,
+   "serie": ["GJ"],
+   "beeld": "Three Step Pass.webp",
+   "boeken": ["GJ1", "GJ2"],
+   "tekst": {
+    "nl": "De enige doorgang tussen Araluen en Morgaraths Hoogvlakte: drie opeenvolgende steile treden in de rots. Wie hem bezet houdt, sluit het gebergte af.",
+    "en": "The only way through between Araluen and Morgarath's Plateau: three successive steep steps cut into the rock. Whoever holds it seals off the mountains."
+   },
+   "feiten": [],
+   "x": 111.89,
+   "y": 414.2,
+   "geenSnap": 1
+  },
+  {
+   "id": "hoogvlakte",
+   "naam": {"nl":"Morgaraths Hoogvlakte", "en":"Morgarath's Plateau"},
+   "soort": "natuur",
+   "begroeiing": "heide",
+   "straal": 12,
+   "gebied": "mountains-of-rain-and-night",
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["GJ1", "GJ2"],
+   "tekst": {
+    "nl": "Het kale plateau voor de Bergen van Nacht en Ontij, waar Morgarath zijn Wargals verzamelde.",
+    "en": "The bare plateau before the Mountains of Rain and Night, where Morgarath massed his Wargals."
+   },
+   "feiten": [[{"nl":"Heerser", "en":"Ruler"},{"nl":"Morgarath", "en":"Morgarath"}]],
+   "x": 104.44,
+   "y": 423.98,
+   "geenSnap": 1
+  },
+  {
+   "id": "spleet",
+   "naam": {"nl":"De Spleet", "en":"The Fissure"},
+   "soort": "slagveld",
+   "gebied": "araluen",
+   "geenSnap": 1,
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["GJ2"],
+   "tekst": {
+    "nl": "De diepe kloof die Araluen van Morgaraths gebied scheidt. Hier liet Morgarath in het geheim een brug bouwen om zijn Wargals in de rug van het Araluaanse leger te laten opduiken. Will en Arnaut staken de brug in brand — waarna ze door Skandische raiders gevangen werden genomen.",
+    "en": "The deep chasm that separates Araluen from Morgarath's territory. Here Morgarath secretly had a bridge built to bring his Wargals up behind the Araluen army. Will and Horace burned the bridge down — and were then captured by Skandian raiders."
+   },
+   "feiten": [
+    [{"nl":"Gebeurtenis", "en":"Event"},{"nl":"De brandende brug", "en":"The burning bridge"}],
+    [
+     {"nl":"Gevolg", "en":"Consequence"},
+     {"nl":"Will en Evanlyn gevangen", "en":"Will and Evanlyn captured"}
+    ]
+   ],
+   "x": 87.67,
+   "y": 425.79
+  },
+  {
+   "id": "tarbus",
+   "naam": {"nl":"Tarbusrivier", "en":"Tarbus River"},
+   "soort": "rivier",
+   "gebied": "araluen",
+   "z": 4.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "De rivier die langs Redmont stroomt en verderop in zee uitmondt.",
+    "en": "The river that flows past Redmont and empties into the sea further on."
+   },
+   "feiten": [],
+   "x": 80.53,
+   "y": 397.08,
+   "geenSnap": 1
+  },
+  {
+   "id": "zalm",
+   "naam": {"nl":"Zalmrivier", "en":"Salmon River"},
+   "soort": "rivier",
+   "gebied": "araluen",
+   "detail": "zalm",
+   "z": 4.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "Rivier in het westen van Araluen, langs het Westwoud.",
+    "en": "A river in the west of Araluen, running past the Western Woodlands."
+   },
+   "feiten": []
+  },
+  {
+   "id": "slijpsteen",
+   "naam": {"nl":"Slijpsteenrivier", "en":"Whetstone River"},
+   "soort": "rivier",
+   "gebied": "araluen",
+   "detail": "slijpsteen",
+   "z": 4.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "De rivier die vanuit het noorden langs Karwij naar zee loopt.",
+    "en": "The river that runs from the north past Caraway to the sea."
+   },
+   "feiten": []
+  },
+  {
+   "id": "zuidkliffen",
+   "naam": {"nl":"Zuidelijke kliffen", "en":"South Cliffs"},
+   "soort": "natuur",
+   "gebied": "mountains-of-rain-and-night",
+   "rel": ["mountains-of-rain-and-night",0.52,0.9],
+   "z": 5.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {"nl":"De steile zuidkust onder het gebergte.", "en":"The steep southern coast below the mountains."},
+   "feiten": []
+  },
+  {
+   "id": "westkliffen",
+   "naam": {"nl":"Westelijke kliffen", "en":"West Cliffs"},
+   "soort": "natuur",
+   "gebied": "mountains-of-rain-and-night",
+   "z": 5.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "tekst": {
+    "nl": "De kliffen langs De Spleet, aan de westkant van het gebergte.",
+    "en": "The cliffs along the Fissure, on the west side of the mountains."
+   },
+   "feiten": [],
+   "x": 90.59,
+   "y": 425.89,
+   "geenSnap": 1
+  },
+  {
+   "id": "noordkliffen",
+   "naam": {"nl":"Noordelijke kliffen", "en":"North Cliffs"},
+   "soort": "natuur",
+   "gebied": "mountains-of-rain-and-night",
+   "z": 5.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "approx": 1,
+   "tekst": {
+    "nl": "De steile noordrand van Morgaraths gebied, waar het plateau naar Araluen afbreekt.",
+    "en": "The steep northern edge of Morgarath's territory, where the plateau drops away toward Araluen."
+   },
+   "feiten": [],
+   "x": 102.33,
+   "y": 415.77,
+   "geenSnap": 1
+  },
+  {
+   "id": "oostkliffen",
+   "naam": {"nl":"Oostelijke kliffen", "en":"East Cliffs"},
+   "soort": "natuur",
+   "gebied": "mountains-of-rain-and-night",
+   "rel": ["mountains-of-rain-and-night",0.93,0.5],
+   "z": 5.4,
+   "serie": ["GJ"],
+   "boeken": [],
+   "approx": 1,
+   "tekst": {
+    "nl": "De oostelijke kliffenrand van het gebergte, boven de zee.",
+    "en": "The eastern cliff edge of the mountains, above the sea."
+   },
+   "feiten": []
+  },
+  {
+   "id": "dunkilty",
+   "naam": {"nl":"Dun Kilty", "en":"Dun Kilty"},
+   "soort": "kasteel",
+   "gebied": "hibernia",
+   "beeld": "Dun Kilty.jpg",
+   "x": 58,
+   "y": 396,
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ8"],
+   "approx": 1,
+   "tekst": {
+    "nl": "De hoofdstad van Clonmel, een van de zes koninkrijken van Hibernia. Hier regeert koning Ferris — de tweelingbroer van Halt. Halt was de oudste en dus de troonopvolger, maar gaf zijn recht op nadat Ferris hem tweemaal probeerde te laten doden.",
+    "en": "The capital of Clonmel, one of the six kingdoms of Hibernia. King Ferris rules here — Halt's twin brother. Halt was the elder and thus heir to the throne, but gave up his claim after Ferris twice tried to have him killed."
+   },
+   "feiten": [
+    [{"nl":"Koninkrijk", "en":"Kingdom"},{"nl":"Clonmel", "en":"Clonmel"}],
+    [{"nl":"Koning", "en":"King"},{"nl":"Ferris, Halts tweelingbroer", "en":"Ferris, Halt's twin brother"}],
+    [{"nl":"Halts naam", "en":"Halt's name"},{"nl":"Halt O'Carrick", "en":"Halt O'Carrick"}]
+   ]
+  },
+  {
+   "id": "craikennis",
+   "naam": {"nl":"Craikennis", "en":"Craikennis"},
+   "soort": "stad",
+   "gebied": "hibernia",
+   "x": 58,
+   "y": 387,
+   "z": 3.6,
+   "serie": ["GJ"],
+   "boeken": ["GJ8"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Een dorp in Clonmel dat Halt, Will en Arnaut hielpen verdedigen tegen een roversbende. De aanval was in scène gezet door de sekte van de Buitenstaanders, die dorpen eerst laat terroriseren om ze daarna 'bescherming' te verkopen.",
+    "en": "A village in Clonmel that Halt, Will and Horace helped defend against a band of raiders. The attack had been staged by the Outsiders cult, who terrorize villages first so they can sell them 'protection' afterward."
+   },
+   "feiten": [
+    [{"nl":"Bedreiging", "en":"Threat"},{"nl":"De Buitenstaanders", "en":"The Outsiders"}],
+    [
+     {"nl":"Verdedigd door", "en":"Defended by"},
+     {"nl":"Halt, Will en Arnaut", "en":"Halt, Will and Horace"}
+    ]
+   ]
+  },
+  {
+   "id": "mountshannon",
+   "naam": {"nl":"Mountshannon", "en":"Mountshannon"},
+   "soort": "ruine",
+   "gebied": "hibernia",
+   "x": 57,
+   "y": 402,
+   "z": 3.6,
+   "serie": ["GJ"],
+   "boeken": ["GJ8"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Het dorp dat níet betaalde. De bandieten van de Buitenstaanders lieten er niets van heel — het bewijs dat achter de vrome praat van profeet Tennyson gewoon afpersing en moord schuilgaan.",
+    "en": "The village that didn't pay. The Outsiders' bandits left nothing standing — proof that behind Prophet Tennyson's pious talk lies plain extortion and murder."
+   },
+   "feiten": [
+    [{"nl":"Lot", "en":"Fate"},{"nl":"Uitgemoord", "en":"Massacred"}],
+    [{"nl":"Daders", "en":"Perpetrators"},{"nl":"De Buitenstaanders", "en":"The Outsiders"}]
+   ]
+  },
+  {
+   "id": "hallasholm",
+   "naam": {"nl":"Hallasholm", "en":"Hallasholm"},
+   "soort": "haven",
+   "gebied": "skandia",
+   "beeld": "Hallasholm.jpg",
+   "x": 215,
+   "y": 308,
+   "z": 2.4,
+   "serie": ["GJ", "BB"],
+   "boeken": ["GJ3", "GJ4", "BB1", "BB8"],
+   "approx": 1,
+   "tekst": {
+    "nl": "De hoofdstad van Skandia aan de Stormwitte Zee: een houten Grote Zaal, een haven vol wolfschepen en een strand waar elke zomer de Broederbandtraining begint — drie ploegen jongens die tegen elkaar strijden om het recht als krijger te varen. Hier komt de kleinste ploeg, de Reigers van Hal Mikkelson, tot bloei; hier zaten Will en Evanlyn eerder als slaven.",
+    "en": "The capital of Skandia on the Stormwhite Sea: a wooden Great Hall, a harbor full of wolfships, and a beach where Brotherband training begins every summer — three crews of boys competing for the right to sail as warriors. Here the smallest crew, Hal Mikkelson's Herons, comes into its own; here Will and Evanlyn were once held as slaves."
+   },
+   "feiten": [
+    [
+     {"nl":"Heerser", "en":"Ruler"},
+     {"nl":"Oberjarl Ragnak, later Erak", "en":"Oberjarl Ragnak, later Erak"}
+    ],
+    [
+     {"nl":"Broederband", "en":"Brotherband"},
+     {"nl":"De Reigers, de Wolven, de Haaien", "en":"The Herons, the Wolves, the Sharks"}
+    ]
+   ]
+  },
+  {
+   "id": "berghut",
+   "naam": {"nl":"De jachthut in het hoogland", "en":"The hunting cabin in the highlands"},
+   "soort": "natuur",
+   "begroeiing": "naaldbos",
+   "straal": 9,
+   "gebied": "skandia",
+   "x": 232,
+   "y": 282,
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["GJ3", "GJ4"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Hoog in de bergen boven Hallasholm vonden Will en Evanlyn een verlaten jachthut, waar ze de winter doorkwamen. Hier hielp Evanlyn Will afkicken van de verdovende drug die de Skandiërs de slaven in de jaarloods gaven.",
+    "en": "High in the mountains above Hallasholm, Will and Evanlyn found an abandoned hunting cabin where they spent the winter. Here Evanlyn helped Will get clean from the numbing drug the Skandians gave the slaves in the great shed."
+   },
+   "feiten": [
+    [{"nl":"Bewoners", "en":"Occupants"},{"nl":"Will en Evanlyn", "en":"Will and Evanlyn"}],
+    [{"nl":"Seizoen", "en":"Season"},{"nl":"De Skandische winter", "en":"The Skandian winter"}]
+   ],
+   "lx": 28,
+   "ly": 8.27
+  },
+  {
+   "id": "pas",
+   "naam": {"nl":"De bergpas boven Hallasholm", "en":"The mountain pass above Hallasholm"},
+   "soort": "slagveld",
+   "gebied": "skandia",
+   "x": 248,
+   "y": 266,
+   "z": 3.4,
+   "serie": ["GJ"],
+   "boeken": ["GJ4"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Toen het Temujai-ruiterleger Skandia binnenviel, moesten Skandiërs en Araluanen voor het eerst samen vechten. Halt en Will drilden een korps boogschutters en Erak koos het terrein: een pas waar de Temujai hun ruitertactiek niet konden uitspelen.",
+    "en": "When the Temujai horde invaded Skandia, Skandians and Araluens had to fight side by side for the first time. Halt and Will drilled a corps of archers and Erak chose the ground: a pass where the Temujai couldn't use their cavalry tactics."
+   },
+   "feiten": [
+    [{"nl":"Tegenstander", "en":"Opponent"},{"nl":"Het Temujai-leger", "en":"The Temujai army"}],
+    [{"nl":"Bondgenoten", "en":"Allies"},{"nl":"Skandiërs en Araluanen", "en":"Skandians and Araluens"}]
+   ]
+  },
+  {
+   "id": "skorghijl",
+   "naam": {"nl":"Skorghijl", "en":"Skorghijl"},
+   "soort": "natuur",
+   "gebied": "skorghijl",
+   "vorm": "skorghijl",
+   "terrein": {"relief":"bergen", "begroeiing":"kaal", "koud":1},
+   "tint": "f",
+   "beeld": "Skorghijl.webp",
+   "x": 230,
+   "y": 330,
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ3"],
+   "tekst": {
+    "nl": "Een kaal, mistig rotseiland met een beschutte kraterhaven, waar wolfschepen de najaarsstormen uitzitten. Will en Evanlyn brachten er weken door aan boord van Eraks schip Wolfwind.",
+    "en": "A bare, misty rocky island with a sheltered crater harbor, where wolfships ride out the autumn storms. Will and Evanlyn spent weeks here aboard Erak's ship Wolfwind."
+   },
+   "feiten": [
+    [{"nl":"Functie", "en":"Function"},{"nl":"Winterankerplaats", "en":"Winter anchorage"}],
+    [{"nl":"Schip", "en":"Ship"},{"nl":"Wolfwind, van Erak", "en":"Wolfwind, Erak's ship"}]
+   ]
+  },
+  {
+   "id": "larivage",
+   "naam": {"nl":"La Rivage", "en":"La Rivage"},
+   "soort": "haven",
+   "gebied": "gallica",
+   "x": 138.47,
+   "y": 351.59,
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ3"],
+   "approx": 1,
+   "tekst": {
+    "nl": "De Gallische havenstad waar Halt en Arnaut aan land gingen op hun tocht naar Skandia om Will te bevrijden. Gallica kent geen sterke koning: het land is verdeeld onder krijgsheren die elk hun eigen stuk weg en rivier belasten.",
+    "en": "The Gallican port town where Halt and Horace came ashore on their journey to Skandia to free Will. Gallica has no strong king: the land is divided among warlords who each tax their own stretch of road and river."
+   },
+   "feiten": [[{"nl":"Reizigers", "en":"Travelers"},{"nl":"Halt en Arnaut", "en":"Halt and Horace"}]],
+   "geenSnap": 1
+  },
+  {
+   "id": "montsombre",
+   "naam": {"nl":"Château Montsombre", "en":"Château Montsombre"},
+   "soort": "kasteel",
+   "gebied": "gallica",
+   "beeld": "Montsombre.jpg",
+   "x": 200,
+   "y": 372,
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ3"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Het zwarte kasteel van krijgsheer Deparnieux, die zijn gevangenen in kooien langs de weg liet sterven. Hij hield Halt en Arnaut maandenlang als 'gasten' vast, tot Arnaut hem in een tweegevecht versloeg — en het kasteel aan Halt liet, die het aan de bewoners naliet.",
+    "en": "The black castle of the warlord Deparnieux, who left his prisoners to die in cages along the road. He held Halt and Horace as 'guests' for months, until Horace defeated him in single combat — and left the castle to Halt, who passed it on to its people."
+   },
+   "feiten": [
+    [{"nl":"Krijgsheer", "en":"Warlord"},{"nl":"Deparnieux", "en":"Deparnieux"}],
+    [{"nl":"Uitkomst", "en":"Outcome"},{"nl":"Verslagen door Arnaut", "en":"Defeated by Horace"}]
+   ]
+  },
+  {
+   "id": "socorro",
+   "naam": {"nl":"Socorro", "en":"Socorro"},
+   "soort": "haven",
+   "gebied": "arrida",
+   "rel": ["arrida",0.13,0.14],
+   "z": 3,
+   "serie": ["BB"],
+   "boeken": ["BB4"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Een Arridische havenstad die berucht is om haar slavenmarkt. Toen Tursgud een dorp aan de Araluaanse kust overviel en de bewoners hier verkocht, haalden Hal en de Reigers hen samen met de Grijze Jager Gilan weer weg.",
+    "en": "An Arridi port town notorious for its slave market. When Tursgud raided a village on the Araluen coast and sold its people here, Hal and the Herons rescued them together with the Ranger Gilan."
+   },
+   "feiten": [
+    [{"nl":"Berucht om", "en":"Notorious for"},{"nl":"De slavenmarkt", "en":"The slave market"}],
+    [{"nl":"Bevrijders", "en":"Rescuers"},{"nl":"De Reigers en Gilan", "en":"The Herons and Gilan"}]
+   ]
+  },
+  {
+   "id": "tabork",
+   "naam": {"nl":"Tabork", "en":"Tabork"},
+   "soort": "haven",
+   "gebied": "arrida",
+   "z": 3.4,
+   "serie": ["BB"],
+   "boeken": ["BB5"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Havenstad aan de Arridische kust, aanloophaven voor de Reigers op hun zoektocht naar het tegengif voor Cassandra.",
+    "en": "A port town on the Arridi coast, a port of call for the Herons on their search for the antidote for Cassandra."
+   },
+   "feiten": [],
+   "x": 224.85,
+   "y": 593.37,
+   "geenSnap": 1
+  },
+  {
+   "id": "alshabah",
+   "naam": {"nl":"Al Shabah", "en":"Al Shabah"},
+   "soort": "stad",
+   "gebied": "arrida",
+   "beeld": "Al Shabah.webp",
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ7"],
+   "approx": 1,
+   "tekst": {
+    "nl": "De stad van wakir Selethen, de Arridische bevelhebber die eerst als tegenstander en daarna als bondgenoot van Halt optreedt bij de jacht op de Tualaghi.",
+    "en": "The city of Wakir Selethen, the Arridi commander who first opposes and then allies with Halt in the hunt for the Tualaghi."
+   },
+   "feiten": [[{"nl":"Wakir", "en":"Wakir"},{"nl":"Selethen", "en":"Selethen"}]],
+   "x": 285.42,
+   "y": 618.2,
+   "geenSnap": 1
+  },
+  {
+   "id": "mararoc",
+   "naam": {"nl":"Mararoc", "en":"Mararoc"},
+   "soort": "stad",
+   "gebied": "arrida",
+   "rel": ["arrida",0.42,0.4],
+   "z": 3,
+   "serie": ["GJ"],
+   "boeken": ["GJ7"],
+   "approx": 1,
+   "tekst": {
+    "nl": "De hoofdstad van Arrida, waar de emir zetelt en waar de onderhandelingen over het losgeld voor Erak beginnen — tot blijkt dat de Oberjarl helemaal niet meer in handen is van de mensen met wie men onderhandelt.",
+    "en": "The capital of Arrida, seat of the emir, where negotiations over Erak's ransom begin — until it turns out the Oberjarl is no longer in the hands of the people being negotiated with."
+   },
+   "feiten": [[{"nl":"Rol", "en":"Role"},{"nl":"Hoofdstad van Arrida", "en":"Capital of Arrida"}]]
+  },
+  {
+   "id": "maashava",
+   "naam": {"nl":"Maashava", "en":"Maashava"},
+   "soort": "stad",
+   "gebied": "arrida",
+   "z": 3.2,
+   "serie": ["GJ"],
+   "boeken": ["GJ7"],
+   "approx": 1,
+   "tekst": {
+    "nl": "De ommuurde stad van de Tualaghi, de blauwgesluierde woestijnrovers die iedereen vrezen. Hier werd Erak gevangen gehouden, en hier bevrijdden Halt, Will, Arnaut, Evanlyn en Selethen hem.",
+    "en": "The walled city of the Tualaghi, the blue-veiled desert raiders everyone fears. Erak was held prisoner here, and here Halt, Will, Horace, Evanlyn and Selethen freed him."
+   },
+   "feiten": [
+    [{"nl":"Bewoners", "en":"Inhabitants"},{"nl":"De Tualaghi", "en":"The Tualaghi"}],
+    [{"nl":"Gevangene", "en":"Prisoner"},{"nl":"Oberjarl Erak", "en":"Oberjarl Erak"}]
+   ],
+   "x": 281.4,
+   "y": 662.57,
+   "geenSnap": 1
+  },
+  {
+   "id": "schorpioenberg",
+   "naam": {"nl":"Schorpioenberg", "en":"Scorpion Mountain"},
+   "soort": "natuur",
+   "begroeiing": "kaal",
+   "straal": 12,
+   "gebied": "arrida",
+   "z": 3.2,
+   "serie": ["BB"],
+   "boeken": ["BB5"],
+   "approx": 1,
+   "tekst": {
+    "nl": "Het rotsheiligdom van de Schorpioensekte: huurmoordenaars die doden met een gif waarvan alleen zij het tegengif kennen. Nadat Cassandra door zo'n moordenaar werd geraakt, moesten de Reigers de sekte in haar eigen berg opzoeken.",
+    "en": "The rocky sanctuary of the Scorpion cult: assassins who kill with a poison only they know the antidote for. After Cassandra was struck by one of their killers, the Herons had to seek the cult out in its own mountain."
+   },
+   "feiten": [
+    [{"nl":"Sekte", "en":"Cult"},{"nl":"De Schorpioenen", "en":"The Scorpions"}],
+    [
+     {"nl":"Inzet", "en":"At stake"},
+     {"nl":"Het tegengif voor Cassandra", "en":"The antidote for Cassandra"}
+    ]
+   ],
+   "x": 370.54,
+   "y": 673.11,
+   "geenSnap": 1
+  },
+  {
+   "id": "bedullin",
+   "naam": {"nl":"Het gebied van de Bedullin", "en":"The territory of the Bedullin"},
+   "soort": "natuur",
+   "begroeiing": "woestijn",
+   "straal": 30,
+   "gebied": "arrida",
+   "beeld": "Bedullin Village.jpg",
+   "rel": ["arrida",0.3,0.62],
+   "z": 3.4,
+   "serie": ["GJ"],
+   "approx": 1,
+   "boeken": ["GJ7"],
+   "tekst": {
+    "nl": "De open woestijn van de Bedullin: nomaden met snelle paarden en een strenge gastvrijheidscode. Wie hun gastvriend wordt, heeft er bondgenoten voor het leven.",
+    "en": "The open desert of the Bedullin: nomads with swift horses and a strict code of hospitality. Whoever becomes their sworn friend has allies for life."
+   },
+   "feiten": [[{"nl":"Volk", "en":"People"},{"nl":"De Bedullin", "en":"The Bedullin"}]]
+  },
+  {
+   "id": "iwanai",
+   "naam": {"nl":"Iwanai", "en":"Iwanai"},
+   "soort": "haven",
+   "gebied": "nihon-ja",
+   "serie": ["GJ"],
+   "boeken": ["GJ10"],
+   "tekst": {
+    "nl": "De havenstad waar het gezelschap van Halt, Will, Evanlyn en Alyss aan land ging op zoek naar Arnaut, die in de burgeroorlog van Nihon-Ja verzeild was geraakt.",
+    "en": "The port town where Halt, Will, Evanlyn and Alyss came ashore in search of Horace, who had become caught up in the civil war in Nihon-Ja."
+   },
+   "feiten": [],
+   "rel": ["nihon-ja",0.1,0.87],
+   "approx": 1
+  },
+  {
+   "id": "ito",
+   "naam": {"nl":"Ito", "en":"Ito"},
+   "soort": "kasteel",
+   "gebied": "nihon-ja",
+   "serie": ["GJ"],
+   "boeken": ["GJ10"],
+   "tekst": {
+    "nl": "De hoofdstad van keizer Shigeru, tot senshi-heer Arisaka in opstand komt omdat de keizer de lagere standen gelijke rechten wil geven.",
+    "en": "The capital of Emperor Shigeru, until the Senshi lord Arisaka rebels because the emperor wants to give the lower classes equal rights."
+   },
+   "feiten": [
+    [{"nl":"Keizer", "en":"Emperor"},{"nl":"Shigeru", "en":"Shigeru"}],
+    [{"nl":"Opstandeling", "en":"Rebel"},{"nl":"Heer Arisaka", "en":"Lord Arisaka"}]
+   ],
+   "rel": ["nihon-ja",0.42,0.72],
+   "approx": 1
+  },
+  {
+   "id": "rankoshi",
+   "naam": {"nl":"Ran-Koshi", "en":"Ran-Koshi"},
+   "soort": "kasteel",
+   "gebied": "nihon-ja",
+   "beeld": "The Fortress of Ran-Kashi.jpg",
+   "serie": ["GJ"],
+   "boeken": ["GJ10"],
+   "tekst": {
+    "nl": "Een vergeten vesting in een bergdal, met een smalle toegang tussen steile rotswanden. Shigeru's aanhangers verschansen zich hier terwijl Arnaut en Will van de Kikori-houthakkers een leger maken dat in gesloten formatie leert vechten.",
+    "en": "A forgotten fortress in a mountain valley, with a narrow approach between steep rock walls. Shigeru's followers dig in here while Horace and Will forge the Kikori woodcutters into an army that learns to fight in close formation."
+   },
+   "feiten": [[{"nl":"Verdedigers", "en":"Defenders"},{"nl":"Kikori en Hasanu", "en":"Kikori and Hasanu"}]],
+   "rel": ["nihon-ja",0.72,0.25],
+   "approx": 1
+  },
+  {
+   "id": "limmat",
+   "naam": {"nl":"Limmat", "en":"Limmat"},
+   "soort": "haven",
+   "gebied": "constante-zee",
+   "wacht": {"nl":"de zuidkust", "en":"the south coast"},
+   "serie": ["BB"],
+   "boeken": ["BB2"],
+   "tekst": {
+    "nl": "Een welvarende handelsstad die leeft van haar smaragdmijn. De piraat Zavac nam de stad met zijn schip de Raaf in; de Reigers hielpen de verdediging organiseren en dreven hem weg.",
+    "en": "A prosperous trading town that lives off its emerald mine. The pirate Zavac seized the town with his ship the Raven; the Herons helped organize its defense and drove him off."
+   },
+   "feiten": [
+    [{"nl":"Rijkdom", "en":"Wealth"},{"nl":"Smaragden", "en":"Emeralds"}],
+    [{"nl":"Belager", "en":"Attacker"},{"nl":"Zavac en de Raaf", "en":"Zavac and the Raven"}]
+   ]
+  },
+  {
+   "id": "raguza",
+   "naam": {"nl":"Raguza", "en":"Raguza"},
+   "soort": "haven",
+   "gebied": "magyara",
+   "wacht": {"nl":"het zuidoosten", "en":"the southeast"},
+   "serie": ["BB"],
+   "boeken": ["BB3"],
+   "tekst": {
+    "nl": "Een wetteloze havenstad, bestuurd door een raad van piratenkapiteins: wie genoeg buit binnenbrengt en zich aan de huisregels houdt, is welkom. Hier spoorden de Reigers Zavac uiteindelijk op.",
+    "en": "A lawless port town, ruled by a council of pirate captains: anyone who brings in enough plunder and keeps the house rules is welcome. Here the Herons finally tracked Zavac down."
+   },
+   "feiten": [
+    [
+     {"nl":"Bestuur", "en":"Government"},
+     {"nl":"Raad van piratenkapiteins", "en":"Council of pirate captains"}
+    ]
+   ]
+  },
+  {
+   "id": "santorina",
+   "naam": {"nl":"Santorillos", "en":"Santorillos"},
+   "soort": "stad",
+   "gebied": "constante-zee",
+   "wacht": {"nl":"de Constante Zee", "en":"the Constant Sea"},
+   "serie": ["BB"],
+   "boeken": ["BB7"],
+   "tekst": {
+    "nl": "Een eilandstaat in de Constante Zee, waarvan de Reigers de jonge erfgenaam moesten beschermen tegen piraten die vanuit de krater van een uitgedoofde vulkaan opereerden.",
+    "en": "An island state in the Constant Sea, whose young heir the Herons had to protect against pirates operating out of the crater of an extinct volcano."
+   },
+   "feiten": []
+  },
+  {
+   "id": "mawagansett",
+   "naam": {"nl":"Land van de Mawagansett", "en":"Land of the Mawagansett"},
+   "soort": "natuur",
+   "begroeiing": "loofbos",
+   "straal": 26,
+   "gebied": "westen",
+   "wacht": {"nl":"het land in het westen", "en":"the western lands"},
+   "serie": ["BB"],
+   "boeken": ["BB6"],
+   "tekst": {
+    "nl": "Ver over de Eindeloze Oceaan dreef een storm de Reiger naar een beboste, onbekende kust. De bemanning werd opgenomen door de Mawagansett — een gastvrij vissersvolk dat elk jaar wordt overvallen door de gevreesde Geestgezichten.",
+    "en": "Far across the Endless Ocean, a storm drove the Heron to a wooded, unknown shore. The crew was taken in by the Mawagansett — a hospitable fishing people raided every year by the dreaded Ghostfaces."
+   },
+   "feiten": [
+    [{"nl":"Volk", "en":"People"},{"nl":"De Mawagansett", "en":"The Mawagansett"}],
+    [{"nl":"Vijand", "en":"Enemy"},{"nl":"De Geestgezichten", "en":"The Ghostfaces"}]
+   ]
+  }
+ ],
+ "routegroepen": {
+  "GJ": {"label":{"nl":"Grijze Jager", "en":"Ranger's Apprentice"},"kleur":"var(--route-1)"},
+  "VJ": {"label":{"nl":"Vroege jaren", "en":"Early Years"},"kleur":"var(--route-2)"},
+  "BB": {"label":{"nl":"Broederband", "en":"Brotherband"},"kleur":"var(--route-3)"}
+ },
+ "routes": [
+  {
+   "id": "GJ1",
+   "grp": "GJ",
+   "nr": "1",
+   "tekst": {
+    "nl": "Van Redmont naar de ruïnes van Gorlan: Halt en Will volgen het spoor van de Kalkara.",
+    "en": "From Redmont to the ruins of Gorlan: Halt and Will follow the trail of the Kalkara."
+   },
+   "benen": [["redmont", "gorlan"]]
+  },
+  {
+   "id": "GJ2",
+   "grp": "GJ",
+   "nr": "2",
+   "tekst": {
+    "nl": "Will, Arnaut en Evanlyn door Celtica naar De Spleet; het leger van Araluen trekt intussen naar de Vlakte van Uthal.",
+    "en": "Will, Horace and Evanlyn through Celtica to the Fissure; meanwhile the Araluen army marches to the Plains of Uthal."
+   },
+   "benen": [["redmont", "westwoud", "spleet"], ["kasteel-araluen", "uthal"]]
+  },
+  {
+   "id": "GJ3",
+   "grp": "GJ",
+   "nr": "3",
+   "tekst": {
+    "nl": "Will en Evanlyn worden over de Stormwitte Zee gevoerd, via Skorghijl naar Hallasholm; Halt en Arnaut steken de Nauwe Zee over naar Gallica en reizen te paard naar Kasteel Montsombre.",
+    "en": "Will and Evanlyn are shipped across the Stormwhite Sea, via Skorghijl to Hallasholm; Halt and Horace cross the Narrow Sea to Gallica and travel on horseback to Castle Montsombre."
+   },
+   "benen": [
+    [
+     [116.99,420.36],
+     [127.31,407.39],
+     [126.54,380.06],
+     [125.88,360.35],
+     [135.16,335.7],
+     [149.03,316.28],
+     [182.52,313.75],
+     [209.16,322.49],
+     "skorghijl",
+     [224.01,306.63],
+     "hallasholm"
+    ],
+    [
+     "kasteel-araluen",
+     [123.31,400.15],
+     [132,378],
+     [133.96,359.99],
+     [136.31,353.5],
+     "larivage",
+     [159.77,347.79],
+     [170.14,359.62],
+     [184.74,366.04],
+     "montsombre"
+    ]
+   ]
+  },
+  {
+   "id": "GJ4",
+   "grp": "GJ",
+   "nr": "4",
+   "tekst": {
+    "nl": "Halt en Arnaut reizen van Kasteel Montsombre door Teutland, over de bergpassen naar Hallasholm; daarna houden Skandiërs en Araluanen samen de bergpas tegen het Temujai-leger.",
+    "en": "Halt and Horace travel from Castle Montsombre through Teutlandt, over the mountain passes to Hallasholm; then Skandians and Araluens together hold the pass against the Temujai army."
+   },
+   "benen": [
+    [
+     "montsombre",
+     [230.32,365.2],
+     [258.35,354.89],
+     [269.15,329.76],
+     [275.91,300.76],
+     [243.05,275.46],
+     "hallasholm"
+    ],
+    ["hallasholm", "berghut", "pas"]
+   ]
+  },
+  {
+   "id": "GJ5",
+   "grp": "GJ",
+   "nr": "5",
+   "tekst": {
+    "nl": "Will verlaat zijn post op Zeeklif en reist als jongleur naar het noorden, naar Kasteel Macindaw.",
+    "en": "Will leaves his post at Seacliff and travels north as a juggler, to Castle Macindaw."
+   },
+   "benen": [["zeeklif", "kasteel-araluen", "macindaw"]]
+  },
+  {
+   "id": "GJ6",
+   "grp": "GJ",
+   "nr": "6",
+   "tekst": {
+    "nl": "Het beleg speelt zich af tussen Grimsdell Woud en Kasteel Macindaw; Malcolms bos wordt de uitvalsbasis.",
+    "en": "The siege plays out between Grimsdell Wood and Castle Macindaw; Malcolm's forest becomes the base of operations."
+   },
+   "benen": [["grimsdell", "macindaw"]]
+  },
+  {
+   "id": "GJ7",
+   "grp": "GJ",
+   "nr": "7",
+   "tekst": {
+    "nl": "Over de Nauwe Zee, ten westen van Iberion langs, naar de kust van Arrida, en dan de woestijn in achter de Tualaghi aan.",
+    "en": "Across the Narrow Sea, past the west of Iberion, to the coast of Arrida, then into the desert after the Tualaghi."
+   },
+   "benen": [
+    [
+     "kasteel-araluen",
+     [128.16,403.02],
+     [125.33,431.74],
+     [119.92,447.83],
+     [119.62,464.67],
+     [124.73,483.91],
+     [137.66,502.1],
+     [157.66,512.48],
+     [180.51,521.8],
+     [203.97,541.64],
+     [229.07,560.74],
+     [257.34,581.34],
+     "alshabah",
+     "maashava"
+    ]
+   ]
+  },
+  {
+   "id": "GJ8",
+   "grp": "GJ",
+   "nr": "8",
+   "tekst": {
+    "nl": "Naar Hibernia, waar de Buitenstaanders koninkrijk na koninkrijk innemen: langs Mountshannon en Craikennis naar Dun Kilty.",
+    "en": "To Hibernia, where the Outsiders take over kingdom after kingdom: past Mountshannon and Craikennis to Dun Kilty."
+   },
+   "benen": [["redmont",[100,400], [80,404],"mountshannon", "craikennis", "dunkilty"]]
+  },
+  {
+   "id": "GJ9",
+   "grp": "GJ",
+   "nr": "9",
+   "tekst": {
+    "nl": "De achtervolging op Tennyson voert per smokkelschip van Hibernia naar de westkust van Picta; vandaar over land naar Malcolm in Grimsdell, waar Halt, geraakt door een vergiftigde pijl, wordt verzorgd.",
+    "en": "The pursuit of Tennyson leads by smuggler ship from Hibernia to the west coast of Picta; from there overland to Malcolm in Grimsdell, where Halt, struck by a poisoned arrow, is treated."
+   },
+   "benen": [["dunkilty", "craikennis",[62,375], [65,358],"grimsdell"]]
+  },
+  {
+   "id": "GJ10",
+   "grp": "GJ",
+   "nr": "10",
+   "tekst": {
+    "nl": "De reis begint in Toscana: over de Constante Zee, door het Assaranyaanse kanaal en de Bloedzee naar het verre oosten, naar Iwanai — en dan het bergland in naar Ran-Koshi.",
+    "en": "The journey begins in Toscana: across the Constant Sea, through the Assaranyan Canal and the Blood Sea to the far east, to Iwanai — then into the mountains to Ran-Koshi."
+   },
+   "benen": [
+    [
+     [303.37,567.63],
+     [336.31,593.51],
+     [376.34,610.27],
+     [402.97,608.16],
+     [454.62,616.48],
+     [475,630],
+     [488.45,651.16],
+     [489.6,677.14],
+     [494.66,705.87],
+     [512.82,737.14],
+     [543.85,765.41],
+     [590.29,781.5],
+     [633.73,747.48],
+     [661.78,718.52],
+     [687.76,703.35],
+     [703.85,687.94],
+     [718.79,671.16],
+     [730,660],
+     [747.5,635],
+     [765,610],
+     [782.5,585],
+     [794.65,556.91],
+     [803.33,533.33],
+     [806.67,506.67],
+     [805.1,479.97],
+     [805.5,467.1],
+     [808.93,455.6],
+     "iwanai",
+     [877.94,415.27],
+     "rankoshi"
+    ]
+   ]
+  },
+  {
+   "id": "GJ11",
+   "grp": "GJ",
+   "nr": "11",
+   "tekst": {
+    "nl": "Losse verhalen uit het korps, grotendeels rond Redmont en Kasteel Araluen.",
+    "en": "Loose stories from the Corps, mostly set around Redmont and Castle Araluen."
+   },
+   "benen": [["redmont", "kasteel-araluen"]]
+  },
+  {
+   "id": "GJ12",
+   "grp": "GJ",
+   "nr": "12",
+   "tekst": {
+    "nl": "Maddie wordt vanaf Kasteel Araluen bij Will in Redmont geplaatst; hun eerste zaak voert het zuiden van het leen in.",
+    "en": "Maddie is posted from Castle Araluen to Will at Redmont; their first case takes them into the south of the fief."
+   },
+   "benen": [["kasteel-araluen", "redmont", "gorlan"]]
+  },
+  {
+   "id": "VJ1",
+   "grp": "VJ",
+   "nr": "V1",
+   "tekst": {
+    "nl": "De jonge Halt en Crowley trekken door Araluen naar het toernooi van Gorlan, waar Morgarath naar de macht grijpt.",
+    "en": "The young Halt and Crowley travel through Araluen to the tournament at Gorlan, where Morgarath makes his bid for power."
+   },
+   "benen": [["redmont", "gorlan"]]
+  },
+  {
+   "id": "VJ2",
+   "grp": "VJ",
+   "nr": "V2",
+   "tekst": {
+    "nl": "De oorlog tegen Morgarath eindigt op de Heckingse Heide, waar Wills vader Daniel sneuvelt.",
+    "en": "The war against Morgarath ends at Hackham Heath, where Will's father Daniel is killed."
+   },
+   "benen": [["gorlan", "heckingse"]]
+  },
+  {
+   "id": "GJ13",
+   "grp": "GJ",
+   "nr": "13",
+   "tekst": {
+    "nl": "Vanuit Redmont naar Kasteel Araluen, dat door de Rode Vossenclan wordt bedreigd.",
+    "en": "From Redmont to Castle Araluen, which is threatened by the Red Fox Clan."
+   },
+   "benen": [["redmont", "kasteel-araluen"]]
+  },
+  {
+   "id": "GJ14",
+   "grp": "GJ",
+   "nr": "14",
+   "tekst": {
+    "nl": "Het beleg van Kasteel Araluen: Maddie rijdt heen en weer tussen de belegerde burcht en de troepen buiten.",
+    "en": "The siege of Castle Araluen: Maddie rides back and forth between the besieged stronghold and the troops outside."
+   },
+   "benen": [["kasteel-araluen", "uthal"]]
+  },
+  {
+   "id": "GJ15",
+   "grp": "GJ",
+   "nr": "15",
+   "tekst": {
+    "nl": "Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.",
+    "en": "Route not yet on the map: the locations from this book still need to be added."
+   },
+   "benen": [["nog-toe-te-voegen-gj15"]]
+  },
+  {
+   "id": "GJ16",
+   "grp": "GJ",
+   "nr": "16",
+   "tekst": {
+    "nl": "Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.",
+    "en": "Route not yet on the map: the locations from this book still need to be added."
+   },
+   "benen": [["nog-toe-te-voegen-gj16"]]
+  },
+  {
+   "id": "GJ17",
+   "grp": "GJ",
+   "nr": "17",
+   "tekst": {
+    "nl": "Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.",
+    "en": "Route not yet on the map: the locations from this book still need to be added."
+   },
+   "benen": [["nog-toe-te-voegen-gj17"]]
+  },
+  {
+   "id": "GJ18",
+   "grp": "GJ",
+   "nr": "18",
+   "tekst": {
+    "nl": "Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.",
+    "en": "Route not yet on the map: the locations from this book still need to be added."
+   },
+   "benen": [["nog-toe-te-voegen-gj18"]]
+  },
+  {
+   "id": "BB1",
+   "grp": "BB",
+   "nr": "1",
+   "tekst": {
+    "nl": "De Broederbandtraining langs de Skandische kust bij Hallasholm, waar de Reigers hun schip leren varen.",
+    "en": "Brotherband training along the Skandian coast at Hallasholm, where the Herons learn to sail their ship."
+   },
+   "benen": [["hallasholm",[214,326],"skorghijl"]]
+  },
+  {
+   "id": "BB2",
+   "grp": "BB",
+   "nr": "2",
+   "tekst": {
+    "nl": "De jacht op Zavac voert de Reiger het halve westen rond, tot in Limmat.",
+    "en": "The hunt for Zavac takes the Heron halfway around the west, all the way to Limmat."
+   },
+   "benen": [["hallasholm", "limmat"]]
+  },
+  {
+   "id": "BB3",
+   "grp": "BB",
+   "nr": "3",
+   "tekst": {
+    "nl": "Van Limmat verder de Constante Zee op, naar het piratennest Raguza.",
+    "en": "From Limmat further out onto the Constant Sea, to the pirate haven of Raguza."
+   },
+   "benen": [["limmat", "raguza"]]
+  },
+  {
+   "id": "BB4",
+   "grp": "BB",
+   "nr": "4",
+   "tekst": {
+    "nl": "Als plichtschip naar Cresthaven in Araluen, en daarvandaan achter de slavenhandelaren aan naar Socorro.",
+    "en": "As duty ship to Cresthaven in Araluen, and from there after the slave traders to Socorro."
+   },
+   "benen": [
+    [
+     "hallasholm",
+     [210,298],
+     [198,306],
+     [186,306],
+     [170,314],
+     [150,314],
+     [136,328],
+     [122,342],
+     [122,366],
+     [130,382],
+     "cresthaven"
+    ],
+    [
+     "cresthaven",
+     [129.24,393.28],
+     [127.82,429.61],
+     [128.45,453.15],
+     [141.72,478.42],
+     [153.1,497.54],
+     [166,510],
+     [182.48,519.02],
+     [198,534],
+     [198,554],
+     "socorro"
+    ]
+   ]
+  },
+  {
+   "id": "BB5",
+   "grp": "BB",
+   "nr": "5",
+   "tekst": {
+    "nl": "Met het tegengif voor Cassandra als inzet: van Araluen naar de Arridische kust en het binnenland in.",
+    "en": "With the antidote for Cassandra at stake: from Araluen to the Arridi coast and into the interior."
+   },
+   "benen": [
+    [
+     "cresthaven",
+     [132,401],
+     [126.12,433.18],
+     [126.33,459.6],
+     [140.07,481.38],
+     [149.16,497.02],
+     [166,510],
+     [180.65,522.6],
+     [198,534],
+     [204.54,543.31],
+     [210.88,557.05],
+     [216.56,577.26],
+     "tabork",
+     [285.1,617.27],
+     "schorpioenberg"
+    ]
+   ]
+  },
+  {
+   "id": "BB6",
+   "grp": "BB",
+   "nr": "6",
+   "tekst": {
+    "nl": "Een storm drijft de Reiger de Eindeloze Oceaan op, naar een onbekende kust in het westen.",
+    "en": "A storm drives the Heron out onto the Endless Ocean, toward an unknown shore in the west."
+   },
+   "benen": [["hallasholm", "mawagansett"]]
+  },
+  {
+   "id": "BB7",
+   "grp": "BB",
+   "nr": "7",
+   "tekst": {
+    "nl": "Naar het zuiden, de Constante Zee op, om de erfgenaam van de eilandstaat Santorillos te beschermen.",
+    "en": "South, out onto the Constant Sea, to protect the heir of the island state of Santorillos."
+   },
+   "benen": [["hallasholm", "santorina"]]
+  },
+  {
+   "id": "BB8",
+   "grp": "BB",
+   "nr": "8",
+   "tekst": {
+    "nl": "De Temujai keren terug: de verdediging van Skandia speelt zich af tussen de bergpas en Hallasholm.",
+    "en": "The Temujai return: the defense of Skandia plays out between the mountain pass and Hallasholm."
+   },
+   "benen": [["pas", "berghut", "hallasholm"]]
+  },
+  {
+   "id": "BB9",
+   "grp": "BB",
+   "nr": "9",
+   "tekst": {
+    "nl": "Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.",
+    "en": "Route not yet on the map: the locations from this book still need to be added."
+   },
+   "benen": [["nog-toe-te-voegen-bb9"]]
+  }
+ ]
+}
