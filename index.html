@@ -16,6 +16,7 @@
 <meta name="twitter:title" content="Araluen & the Known World">
 <meta name="twitter:description" content="An interactive, searchable map of the Ranger's Apprentice & Brotherband world, with per-book travel routes.">
 <meta name="twitter:image" content="https://ranger-apprentice-map.netlify.app/og-preview.png">
+<meta name="google-site-verification" content="J2SXFPTUf8tZzIywQ81mc69N-2mHVKIpww5EzObU8kw" />
 <style>
 :root{
   --donker:0;
@@ -171,21 +172,65 @@ button,input{font:inherit;color:inherit}
   border:1px solid var(--edge);border-radius:6px;box-shadow:var(--shadow);font-size:13px;
   max-width:calc(100vw - 32px)}
 body.zetten .zetbalk{display:flex}
-.zrij{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.zsel{border-top:1px solid var(--edge);padding-top:8px;gap:14px}
+.zrij{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.ztools{display:flex;align-items:center;gap:3px;flex:none}
+.ztool{display:flex;align-items:center;justify-content:center;width:32px;height:32px;
+  padding:0!important;background:var(--paper-2);border:1px solid var(--edge);
+  border-radius:5px;cursor:pointer;flex:none;color:var(--ink-soft)}
+.ztool:hover{border-color:var(--ink-faint);color:var(--ink)}
+.ztool svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.5;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.ztool[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.ztool.klaar{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.ztool.klaar:hover{opacity:.85}
+.zetselblok{display:flex;flex-direction:column;gap:14px}
+.zetselblok[hidden]{display:none}
+.zetselblok .zgroep{flex-wrap:wrap}
 .zscheid{width:1px;align-self:stretch;background:var(--edge)}
 .zgroep{display:flex;align-items:center;gap:4px}
+.zgroep[hidden]{display:none}
 .zlbl{color:var(--ink-faint);font-size:12px;margin-right:2px}
 .zgroep output{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;font-size:12.5px}
 .zgroep button{padding:3px 8px!important;min-width:28px}
 .zetbalk b{font-weight:500}
-.zetbalk em{font-style:normal;color:var(--ink-faint);font-size:12px}
+.zetbalk em{font-style:normal;color:var(--ink-faint);font-size:12px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;min-width:0}
 .zetbalk select{padding:5px 6px;background:var(--paper-2);border:1px solid var(--edge);border-radius:4px;font-size:12.5px}
 .zetbalk button{padding:5px 11px;background:var(--paper-2);border:1px solid var(--edge);
   border-radius:4px;cursor:pointer;font-size:12.5px}
 .zetbalk button:hover{border-color:var(--ink-faint)}
 .zetbalk button.klaar{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 .zetbalk button:disabled{opacity:.4;cursor:not-allowed}
+.zetbalk button.gevaar{color:var(--accent);border-color:var(--accent-soft)}
+.zetbalk button.gevaar:hover{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.zetbalk button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.zform input[type=text],.zform textarea,.zform select{padding:5px 7px;background:var(--paper-2);
+  border:1px solid var(--edge);border-radius:4px;font-size:12.5px;font-family:var(--font-ui);
+  color:var(--ink)}
+.zform textarea{resize:vertical;min-height:44px}
+.zform{display:flex;flex-direction:column;gap:14px;width:100%}
+.zveld{display:flex;flex-direction:column;gap:5px}
+.zveld input,.zveld textarea,.zveld select{width:100%}
+.zveld .zlbl{margin:0;font-size:12px;color:var(--ink-faint)}
+.zfeiten{display:flex;flex-direction:column;gap:5px}
+.zfeitrij{display:flex;gap:5px;align-items:center}
+.zfeitrij input{flex:1;min-width:0}
+.zfeitrij button{padding:3px 8px;flex:none;background:var(--paper-2);border:1px solid var(--edge);
+  border-radius:4px;cursor:pointer;font-size:12.5px}
+.zboeken{display:flex;flex-wrap:wrap;gap:5px}
+.zboeken button{font-size:11.5px;color:var(--ink-soft);padding:4px 9px;background:var(--paper-2);
+  border:1px solid var(--edge);border-radius:999px;cursor:pointer;line-height:1.3}
+.zboeken button:hover{border-color:var(--ink-faint)}
+.zboeken button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.zform button.gevaar,.zform button.zfneutraal{padding:7px 12px;background:var(--paper-2);
+  border:1px solid var(--edge);border-radius:4px;cursor:pointer;font-size:12.5px}
+.zform button.gevaar{border-color:var(--accent-soft);color:var(--accent)}
+.zform button.gevaar:hover{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.zform button.zfneutraal:hover{border-color:var(--ink-faint)}
+.zform .zgroep2{display:flex;gap:8px;flex-wrap:wrap}
+.zform .zgroep2 button{padding:6px 11px;background:var(--paper-2);border:1px solid var(--edge);
+  border-radius:4px;cursor:pointer;font-size:12.5px}
+.zform .zgroep2 button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
 body.zetten .marker{cursor:grab}
 body.zetten .marker.pak{cursor:grabbing}
 body.zetten .marker .glyph{stroke:var(--accent)}
@@ -252,6 +297,23 @@ body.zetten .pak .mlabelg,body.zetten .mlabelg.pak{cursor:grabbing}
 .lrow svg{width:30px;height:22px;overflow:visible}
 .lrow .glyph .solid{fill:var(--ink);stroke:none}
 
+/* ---------- bewerk-zijpaneel ---------- */
+/* Volgt dezelfde slide-in-vanaf-rechts opzet als .detail, maar is een eigen,
+   los paneel: het bewerkpaneel toont formuliervelden, het detailpaneel toont
+   platte tekst, en de twee staan nooit tegelijk open (buiten de bewerkstand
+   opent .detail, binnen de bewerkstand dit paneel). */
+.zetpaneel{position:absolute;top:0;right:0;height:100%;width:340px;max-width:100%;background:var(--paper);
+  border-left:1px solid var(--edge);box-shadow:var(--shadow);z-index:4;display:flex;flex-direction:column;
+  transform:translateX(101%);transition:transform .28s cubic-bezier(.4,0,.2,1);visibility:hidden}
+.zetpaneel.open{transform:none;visibility:visible}
+.zphead{padding:18px 20px 14px;border-bottom:1px solid var(--edge);flex:none;display:flex;
+  align-items:center;justify-content:space-between;gap:10px}
+.zphead b{font-family:var(--font-map);font-size:17px;font-weight:600}
+.zpclose{width:28px;height:28px;border:0;background:none;cursor:pointer;color:var(--ink-faint);
+  font-size:19px;line-height:1;border-radius:4px;flex:none}
+.zpclose:hover{color:var(--accent);background:var(--paper-2)}
+.zpbody{flex:1;overflow-y:auto;padding:18px 20px 40px;min-height:0;overscroll-behavior:contain}
+
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
   .rail{position:absolute;inset:0 auto 0 0;width:min(322px,86vw);transform:translateX(-101%);
@@ -279,6 +341,12 @@ body.zetten .pak .mlabelg,body.zetten .mlabelg.pak{cursor:grabbing}
    zoals hij was. */
 .gebied .vlak{stroke:none;pointer-events:all}
 body.relief .gebied .vlak{fill-opacity:0}
+/* in de bewerkstand mag een klik ergens op het land nooit meer het land zelf
+   activeren/selecteren — dat botst met punten neerzetten en is verder ook
+   gewoon vervelend als je aan het slepen/klikken bent op andere dingen. Een
+   landnaam blijft wel apart aan te klikken/te verslepen: die krijgt hierboven
+   (body.zetten .t-gebied) al zijn eigen pointer-events, los van het land. */
+body.zetten .gebied .vlak{pointer-events:none}
 /* selectie als eigen markeerlaag in plaats van een felheidsfilter: dat laatste
    maakt de landkleur vaal en vies */
 .gebied .mark{fill:var(--accent);fill-opacity:0;stroke:var(--accent);stroke-width:0;
@@ -331,6 +399,17 @@ body.relief .reliefbeeld{opacity:1}
 .rivier.r1{stroke-width:.85}
 .rivier.r2{stroke-width:1.4}
 .rivier.r3{stroke-width:2.1}
+/* in de rivier-tool is elke bestaande rivier aan te wijzen om 'm te
+   verwijderen; een dikkere, onzichtbare treffer-lijn eronder maakt dat
+   makkelijker dan het dunne zichtbare lijntje zelf */
+body.zetten.tool-rivier .rivier{cursor:pointer;pointer-events:stroke;stroke-width:6}
+body.zetten.tool-rivier .rivier:hover{stroke:var(--accent);opacity:1}
+/* de nog-niet-afgeronde rivier die je zelf aan het intekenen bent: duidelijk
+   anders dan een echte, al berekende rivier */
+.rivier-werk{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-dasharray:4 3;
+  vector-effect:non-scaling-stroke;opacity:.9;pointer-events:none}
+.rivier-werkpunt{fill:var(--paper);stroke:var(--accent);stroke-width:1.4;r:2.4;
+  vector-effect:non-scaling-stroke;pointer-events:none}
 /* Bos, woestijn en steppe staan niet als tekentjes op de kaart maar zitten in
    het reliëfbeeld zelf: als kleur en als korrel. Zie GROEI bij het rekenwerk. */
 text{font-family:var(--font-map);paint-order:stroke fill;stroke:var(--halo);stroke-width:3px;
@@ -522,41 +601,144 @@ body.zetten .routepunt.pak{cursor:grabbing;fill:var(--accent)}
     </svg>
     <div class="zetbalk" id="zetbalk">
       <div class="zrij">
-        <b data-t="bewerkenKop">Bewerken</b>
-        <em id="zetstand" data-t="sleepHint">sleep een markering of een naam</em>
-        <span class="zscheid"></span>
-        <select id="zetsoort" data-t-aria="soortNieuweLabel" aria-label="Soort voor een nieuwe plaats">
+        <span class="ztools" role="group" data-t-aria="gereedschapLabel" aria-label="Gereedschap">
+          <button id="toolSelect" class="ztool" type="button" data-tool="select" aria-pressed="true" data-t-aria="toolSelectLabel" aria-label="Selecteren en slepen" data-t-attr="title:toolSelectLabel" title="Selecteren en slepen">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 3l9.5 8.2-4.2.6 2.3 4-1.8 1-2.3-4-3 3z"/></svg>
+          </button>
+          <button id="toolPlaats" class="ztool" type="button" data-tool="plaats" aria-pressed="false" data-t-aria="toolPlaatsLabel" aria-label="Nieuwe plaats" data-t-attr="title:toolPlaatsLabel" title="Nieuwe plaats">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="3.6"/><path d="M9 1.6v2M9 14.4v2M1.6 9h2M14.4 9h2"/></svg>
+          </button>
+          <button id="toolRoute" class="ztool" type="button" data-tool="route" aria-pressed="false" data-t-aria="toolRouteLabel" aria-label="Nieuwe route" data-t-attr="title:toolRouteLabel" title="Nieuwe route">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="3.5" cy="14.5" r="1.6"/><circle cx="14.5" cy="3.5" r="1.6"/><path d="M4.8 13.2 13.2 4.8" stroke-dasharray="2.2 1.8"/></svg>
+          </button>
+          <button id="toolRivier" class="ztool" type="button" data-tool="rivier" aria-pressed="false" data-t-aria="toolRivierLabel" aria-label="Nieuwe rivier" data-t-attr="title:toolRivierLabel" title="Nieuwe rivier">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 5q3.4-2.6 6.8 0t6.2 0M2.5 9.5q3.4-2.6 6.8 0t6.2 0M2.5 14q3.4-2.6 6.8 0t6.2 0"/></svg>
+          </button>
+        </span>
+        <select id="zetsoort" hidden data-t-aria="soortNieuweLabel" aria-label="Soort voor een nieuwe plaats">
           <option value="stad" data-t="optDorpStad">Dorp of stad</option>
           <option value="kasteel" data-t="optKasteel">Kasteel</option>
           <option value="haven" data-t="optHaven">Havenstad</option>
           <option value="ruine" data-t="optRuine">Ruïne</option>
           <option value="slagveld" data-t="optSlagveld">Slagveld</option>
           <option value="natuur" data-t="optLandschap">Landschap</option>
-          <option value="rivier" data-t="optRivier">Rivier</option>
         </select>
-        <button id="zetnieuw" data-t="nieuwePlaats">+ Nieuwe plaats</button>
+        <em id="zetstand" data-t="sleepHint">sleep een markering of een naam</em>
         <span class="zscheid"></span>
-        <button id="zetkopie" data-t="kopieer">Kopieer</button>
-        <button id="zetbestand" data-t="opslaanAls">Opslaan als data.json</button>
-        <button id="zetterug" data-t="allesTerug">Alles terug</button>
-        <button id="zetklaar" class="klaar" data-t="klaar">Klaar</button>
+        <button id="zetkopie" class="ztool" type="button" data-t-aria="kopieerLabel" aria-label="Kopieer" data-t-attr="title:kopieerLabel" title="Kopieer">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="6" y="6" width="9" height="9" rx="1"/><path d="M3 12V4a1 1 0 0 1 1-1h8"/></svg>
+        </button>
+        <button id="zetbestand" class="ztool" type="button" data-t-aria="opslaanAlsLabel" aria-label="Opslaan als data.json" data-t-attr="title:opslaanAlsLabel" title="Opslaan als data.json">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 3h9l3 3v9H3z"/><path d="M6 3v4h6V3M6 11h6v4H6z"/></svg>
+        </button>
+        <button id="zetterug" class="ztool" type="button" data-t-aria="allesTerugLabel" aria-label="Alles terug" data-t-attr="title:allesTerugLabel" title="Alles terug">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4v4h4M4.3 8A6 6 0 1 1 5 13"/></svg>
+        </button>
+        <span class="zscheid"></span>
+        <button id="zetklaar" class="ztool klaar" type="button" data-t-aria="klaarLabel" aria-label="Klaar" data-t-attr="title:klaarLabel" title="Klaar">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>
+        </button>
       </div>
-      <div class="zrij zsel" id="zetsel" hidden>
-        <b id="zetselnaam">&nbsp;</b>
-        <span class="zgroep" id="zetdraai">
-          <span class="zlbl" data-t="draaien">Draaien</span>
-          <button data-draai="-5" data-t-aria="naarLinksDraaien" aria-label="Naar links draaien">&#8630;</button>
-          <output id="zetrot">0&deg;</output>
-          <button data-draai="5" data-t-aria="naarRechtsDraaien" aria-label="Naar rechts draaien">&#8631;</button>
-        </span>
-        <span class="zgroep" id="zetmaat">
-          <span class="zlbl" data-t="maat">Maat</span>
-          <button data-maat="-1" data-t-aria="kleiner" aria-label="Kleiner">&minus;</button>
-          <output id="zetmt">1,0&times;</output>
-          <button data-maat="1" data-t-aria="groter" aria-label="Groter">+</button>
-        </span>
-        <button id="zetstd" data-t="standaard">Standaard</button>
-        <button id="zetlos" data-t="loslaten">Loslaten</button>
+    </div>
+    <div class="zetpaneel" id="zetpaneel">
+      <div class="zphead">
+        <b id="zpKop" data-t="bewerkenKop">Bewerken</b>
+        <button class="zpclose" id="zpsluit" data-t-aria="sluitPaneel" aria-label="Sluit paneel">&times;</button>
+      </div>
+      <div class="zpbody">
+        <div class="zetselblok" id="zetsel" hidden>
+          <b id="zetselnaam">&nbsp;</b>
+          <span class="zgroep" id="zetdraai">
+            <span class="zlbl" data-t="draaien">Draaien</span>
+            <button data-draai="-5" data-t-aria="naarLinksDraaien" aria-label="Naar links draaien">&#8630;</button>
+            <output id="zetrot">0&deg;</output>
+            <button data-draai="5" data-t-aria="naarRechtsDraaien" aria-label="Naar rechts draaien">&#8631;</button>
+          </span>
+          <span class="zgroep" id="zetmaat">
+            <span class="zlbl" data-t="maat">Maat</span>
+            <button data-maat="-1" data-t-aria="kleiner" aria-label="Kleiner">&minus;</button>
+            <output id="zetmt">1,0&times;</output>
+            <button data-maat="1" data-t-aria="groter" aria-label="Groter">+</button>
+          </span>
+          <button id="zetstd" data-t="standaard">Standaard</button>
+          <button id="zetlos" data-t="loslaten">Loslaten</button>
+        </div>
+        <div id="zetplaats" hidden>
+          <div class="zform">
+            <div class="zveld">
+              <span class="zlbl" data-t="veldNaam">Naam</span>
+              <input type="text" id="zpNaam">
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldSoort">Soort</span>
+              <select id="zpSoort">
+                <option value="stad" data-t="optDorpStad">Dorp of stad</option>
+                <option value="kasteel" data-t="optKasteel">Kasteel</option>
+                <option value="haven" data-t="optHaven">Havenstad</option>
+                <option value="ruine" data-t="optRuine">Ruïne</option>
+                <option value="slagveld" data-t="optSlagveld">Slagveld</option>
+                <option value="natuur" data-t="optLandschap">Landschap</option>
+                <option value="rivier" data-t="optRivier">Rivier</option>
+              </select>
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldOmschrijving">Omschrijving</span>
+              <textarea id="zpTekst" rows="3"></textarea>
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldFeiten">Feiten</span>
+              <div class="zfeiten" id="zpFeiten"></div>
+              <button id="zpFeitBij" type="button" class="zfneutraal" data-t="feitToevoegen">+ Feit</button>
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldReeks">Reeks</span>
+              <div class="zboeken" id="zpReeks"></div>
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldBoeken">Boeken</span>
+              <div class="zboeken" id="zpBoeken"></div>
+            </div>
+            <button id="zpVerwijder" class="gevaar" type="button" data-t="plaatsVerwijderen">Plaats verwijderen</button>
+          </div>
+        </div>
+        <div id="zetroute" hidden>
+          <div class="zform">
+            <div class="zveld">
+              <span class="zlbl" data-t="veldReeksEnkel">Reeks</span>
+              <select id="zrGroep">
+                <option value="GJ">Ranger's Apprentice</option>
+                <option value="VJ">Early Years</option>
+                <option value="BB">Brotherband</option>
+              </select>
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldNummer">Nummer</span>
+              <input type="text" id="zrNummer">
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldOmschrijving">Omschrijving</span>
+              <textarea id="zrTekst" rows="2"></textarea>
+            </div>
+            <p class="zlbl" id="zrHint" data-t="klikOmToeTeVoegen">Klik op de kaart om punten toe te voegen aan deze route.</p>
+            <div class="zgroep2">
+              <button id="zrInvoegen" type="button" data-t="puntInvoegen">Punt invoegen</button>
+              <button id="zrVolgendBeen" type="button" data-t="volgendBeen">Volgend been</button>
+            </div>
+            <button id="zrVerwijder" class="gevaar" type="button" data-t="routeVerwijderen">Route verwijderen</button>
+          </div>
+        </div>
+        <div id="zetrivier" hidden>
+          <div class="zform">
+            <p class="zlbl" id="zvHint" data-t="klikVoorRivierpunt">Klik op de kaart om punten van de rivier neer te zetten.</p>
+            <div class="zgroep2">
+              <button id="zvKlaar" type="button" data-t="rivierKlaar">Klaar, geef een naam</button>
+            </div>
+            <div class="zveld" id="zvNaamVeld" hidden>
+              <span class="zlbl" data-t="veldNaam">Naam</span>
+              <input type="text" id="zvNaam">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="ctrl">
@@ -716,6 +898,24 @@ const U={
   opslaanAls:{nl:"Opslaan als data.json",en:"Save as data.json"},
   allesTerug:{nl:"Alles terug",en:"Revert all"},
   klaar:{nl:"Klaar",en:"Done"},
+  toolSelectLabel:{nl:"Selecteren en slepen",en:"Select and drag"},
+  toolPlaatsLabel:{nl:"Nieuwe plaats",en:"New place"},
+  toolRouteLabel:{nl:"Nieuwe route",en:"New route"},
+  toolRivierLabel:{nl:"Nieuwe rivier",en:"New river"},
+  klikVoorRivierpunt:{nl:"Klik op de kaart om punten van de rivier neer te zetten.",
+    en:"Click the map to place points along the river."},
+  rivierKlaar:{nl:"Klaar, geef een naam",en:"Done, give it a name"},
+  nieuweRivierNaam:{nl:"Nieuwe rivier",en:"New river"},
+  rivierVerwijderen:{nl:"Rivier verwijderen",en:"Remove river"},
+  bevestigRivierVerwijderen:{nl:"Deze rivier hier laten stoppen? Bij een latere aanpassing kan hij op ongeveer dezelfde plek terugkomen.",
+    en:"Suppress this river here? It may reappear in roughly the same spot after a later edit."},
+  teWeinigPunten:{nl:"Zet minstens twee punten neer voordat je de rivier afrondt.",
+    en:"Place at least two points before finishing the river."},
+  kopieerLabel:{nl:"Kopieer",en:"Copy"},
+  opslaanAlsLabel:{nl:"Opslaan als data.json",en:"Save as data.json"},
+  allesTerugLabel:{nl:"Alles terug",en:"Revert all"},
+  klaarLabel:{nl:"Klaar",en:"Done"},
+  gereedschapLabel:{nl:"Gereedschap",en:"Tools"},
   draaien:{nl:"Draaien",en:"Rotate"},
   naarLinksDraaien:{nl:"Naar links draaien",en:"Rotate left"},
   naarRechtsDraaien:{nl:"Naar rechts draaien",en:"Rotate right"},
@@ -724,6 +924,35 @@ const U={
   groter:{nl:"Groter",en:"Bigger"},
   standaard:{nl:"Standaard",en:"Reset"},
   loslaten:{nl:"Loslaten",en:"Deselect"},
+  veldNaam:{nl:"Naam",en:"Name"},
+  veldSoort:{nl:"Soort",en:"Type"},
+  veldOmschrijving:{nl:"Omschrijving",en:"Description"},
+  veldFeiten:{nl:"Feiten",en:"Facts"},
+  feitToevoegen:{nl:"+ Feit",en:"+ Fact"},
+  feitSleutel:{nl:"Naam van het feit",en:"Fact label"},
+  feitWaarde:{nl:"Waarde",en:"Value"},
+  feitVerwijderen:{nl:"Feit verwijderen",en:"Remove fact"},
+  veldReeks:{nl:"Reeks",en:"Series"},
+  veldBoeken:{nl:"Boeken",en:"Books"},
+  plaatsVerwijderen:{nl:"Plaats verwijderen",en:"Delete place"},
+  bevestigPlaatsVerwijderen:{nl:"Deze plaats verwijderen? Dit kan niet ongedaan worden gemaakt.",
+    en:"Delete this place? This cannot be undone."},
+  nieuwePlaatsNaam:{nl:"Nieuwe plaats",en:"New place"},
+  plaatsBewerken:{nl:"Plaats bewerken",en:"Edit place"},
+  naamBewerken:{nl:"Naam bewerken",en:"Edit label"},
+  routeBewerken:{nl:"Route bewerken",en:"Edit route"},
+  nieuweRoute:{nl:"+ Nieuwe route",en:"+ New route"},
+  veldReeksEnkel:{nl:"Reeks",en:"Series"},
+  veldNummer:{nl:"Nummer",en:"Number"},
+  puntenToevoegen:{nl:"Punten toevoegen",en:"Add points"},
+  klikOmToeTeVoegen:{nl:"Klik op de kaart om punten toe te voegen aan deze route.",
+    en:"Click the map to add points to this route."},
+  volgendBeen:{nl:"Volgend been",en:"Next leg"},
+  puntInvoegen:{nl:"Punt invoegen",en:"Insert point"},
+  routeVerwijderen:{nl:"Route verwijderen",en:"Delete route"},
+  bevestigRouteVerwijderen:{nl:"Deze route verwijderen? Dit kan niet ongedaan worden gemaakt.",
+    en:"Delete this route? This cannot be undone."},
+  puntVerwijderen:{nl:"Verwijderen",en:"Remove"},
   inzoomen:{nl:"Inzoomen",en:"Zoom in"},
   uitzoomen:{nl:"Uitzoomen",en:"Zoom out"},
   heleKaart:{nl:"Hele kaart tonen",en:"Show whole map"},
@@ -798,6 +1027,7 @@ const U={
   laadEerst:{nl:"De kaart wordt getekend",en:"Drawing the map"},
   bezigThema:{nl:"Kleuren opnieuw bakken",en:"Rebaking the colors"},
   bezigTaal:{nl:"Van taal wisselen",en:"Switching language"},
+  bezigRivier:{nl:"Rivier wordt uitgerekend",en:"Recalculating the river"},
 };
 const t=k=>{ const v=U[k]; return v?v[TAAL]:k; };
 /* Vult alle statische HTML met data-t/data-t-attr/data-t-aria in de actieve
@@ -826,6 +1056,12 @@ let state={q:"",series:{GJ:true,BB:true},route:null,sel:null};
 const NS="http://www.w3.org/2000/svg";
 const el=(n,a={},p)=>{const e=document.createElementNS(NS,n);
   for(const k in a)e.setAttribute(k,a[k]); if(p)p.appendChild(e); return e;};
+/* voor gewone HTML-formulierelementen (input/textarea/div/...) in het
+   bewerkpaneel — el() hierboven maakt alleen SVG-elementen, waarop
+   .value/.checked niet werken zoals op een echte HTML-input */
+const html=(n,a={},p)=>{const e=document.createElement(n);
+  for(const k in a){ if(k==="value")e.value=a[k]; else e.setAttribute(k,a[k]); }
+  if(p)p.appendChild(e); return e;};
 const $=s=>document.querySelector(s);
 const W=GEO.vw, H=GEO.vh;
 
@@ -1088,7 +1324,10 @@ function bouwRoutes(){
     r.paden=r.benen.map(beenPunten);
     r.kanNiet=r.paden.some(p=>!p);
     const g=el("g",{class:"route",stroke:RGRP[r.grp].kleur},gRoutes);
+    /* een been dat nog in aanbouw is (0 of 1 punt, tijdens het bewerken van
+       een nieuwe route) tekent nog niets — pas bij twee punten is er een lijn */
     if(!r.kanNiet)for(const pad of r.paden){
+      if(pad.length<2)continue;
       el("path",{d:vloeiend(pad)},g);
       el("circle",{class:"end",cx:pad[0][0],cy:pad[0][1],r:1.6,fill:RGRP[r.grp].kleur},g);
       const z=pad[pad.length-1];
@@ -1105,6 +1344,7 @@ function bouwRoutes(){
    kaart niet vol te zetten met grepen tonen we dit alleen voor de route die
    nu open staat in het zijpaneel. */
 const gRoutepunten=el("g",{},world);
+const gRivierWerk=el("g",{},world);
 function bouwRoutepunten(){
   gRoutepunten.textContent="";
   const r=ROUTES.find(x=>x.id===state.route);
@@ -1114,7 +1354,7 @@ function bouwRoutepunten(){
       if(!Array.isArray(stap))return;
       const c=el("circle",{class:"routepunt",cx:stap[0],cy:stap[1]},gRoutepunten);
       c.addEventListener("pointerdown",e=>{
-        if(!zetten)return;
+        if(!zetten||actieveTool!=="select")return;
         e.stopPropagation(); e.preventDefault();
         sleep={soort:"routepunt",been,stapIdx,c,bewogen:0};
         c.classList.add("pak");
@@ -1162,16 +1402,22 @@ function maakMarker(p){
   const t=el("text",{class:"t-plaats mlabel"+(p.soort==="rivier"?" t-water":""),
     "text-anchor":"middle"},lg);
   t.textContent=p.naam;
-  const m={g,inner,t,lg,pos};
+  const m={g,inner,t,lg,gl,pos};
   markerEls[p.id]=m;
   NAMEN.push({soort:"plaats",d:p,g:lg,t,m});
   zetPlaatsNaam(m,p);
   /* in de bewerkstand opent een klik geen paneel: daar kies je het onderdeel
-     dat je onder handen neemt */
-  g.addEventListener("click",e=>{e.stopPropagation();if(!zetten&&!gesleept())kies(p.id);});
+     dat je onder handen neemt. Terwijl een route in de bouw-modus staat gaat
+     een klik op een markering naar routeKlik() — die plakt de plaats-id als
+     stap in de route, in plaats van een los coördinaat. */
+  g.addEventListener("click",e=>{
+    e.stopPropagation();
+    if(zetten&&routePuntenAan()){routeKlik(p.id,null); return;}
+    if(!zetten&&!gesleept())kies(p.id);
+  });
   g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();kies(p.id);}});
   g.addEventListener("pointerdown",e=>{
-    if(!zetten)return;
+    if(!zetten||actieveTool!=="select")return;
     e.stopPropagation(); e.preventDefault();
     sleep={soort:"punt",p,m,bewogen:0};
     g.classList.add("pak");
@@ -1948,7 +2194,11 @@ let rivierpunten=[];
    herhalen. */
 function tekenRivieren(data){
   gWater.textContent="";
-  for(const p of data.paden)el("path",{class:p.klasse,d:p.d},gWater);
+  for(const p of data.paden){
+    const a={class:p.klasse,d:p.d};
+    if(p.bron){a["data-bx"]=p.bron[0]; a["data-by"]=p.bron[1];}
+    el("path",a,gWater);
+  }
   rivierpunten=data.punten;
 }
 function bouwRivieren(info,reg){
@@ -1961,6 +2211,56 @@ function bouwRivieren(info,reg){
     const y=Math.min(RH-1,Math.round((j+.5)*GS*RES));
     const p=y*RW+x, c=j*GW+i;
     if(landvlak[p]){h[c]=hoogte[p]; vak[c]=reg[p];} else zee[c]=1;
+  }
+
+  /* --- zelf getekende rivieren: een geul graven vóór de afwatering rekent ---
+     Elk punt van een rivieroverride ligt in world.svg-maat; dat wordt hier
+     naar een cel op dit GS=2-rooster omgerekend. Van elk lijnstuk tussen twee
+     opeenvolgende punten worden de cellen binnen een paar stappen als
+     "gedwongen kanaal" gemarkeerd. Zo'n cel wordt dieper gezet dan zijn eigen
+     buren — geen vaste diepte, want de hoogte loopt sterk uiteen per streek —
+     zodat het water er vanzelf naartoe stroomt zodra de kommen gevuld zijn en
+     de afwatering wordt berekend. forceCel bewaart welke cellen dit zijn, zodat
+     de afwatering daar zo meteen ook een vaste bonus krijgt: een korte,
+     geïsoleerde rivier met weinig eigen stroomgebied moet alsnog de rivier-
+     drempel halen. */
+  const forceCel=new Uint8Array(G);
+  const DIEPTE=6, STRAAL_CEL=1;
+  for(const ov of (DATA.rivieroverrides||[])){
+    const pnt=(ov.punten||[]).map(([x,y])=>[x/GS,y/GS]);
+    for(let s=0;s<pnt.length-1;s++){
+      const [x1,y1]=pnt[s], [x2,y2]=pnt[s+1];
+      const stappen=Math.max(1,Math.ceil(Math.hypot(x2-x1,y2-y1)));
+      for(let k=0;k<=stappen;k++){
+        const fx=x1+(x2-x1)*k/stappen, fy=y1+(y2-y1)*k/stappen;
+        const ci=Math.round(fx), cj=Math.round(fy);
+        for(let dj=-STRAAL_CEL;dj<=STRAAL_CEL;dj++)for(let di=-STRAAL_CEL;di<=STRAAL_CEL;di++){
+          const ni=ci+di, nj=cj+dj;
+          if(ni<0||nj<0||ni>=GW||nj>=GH)continue;
+          const nc=nj*GW+ni;
+          if(zee[nc])continue;
+          forceCel[nc]=1;
+        }
+      }
+    }
+  }
+  if(forceCel.some(Boolean)){
+    /* de nieuwe hoogte ligt onder het gemiddelde van de acht buren, zodat de
+       geul zich voegt naar het lokale niveau in plaats van een vaste waarde
+       op te dringen die in de bergen niets voorstelt en op een vlakte het
+       hele land onder water zet */
+    const stapV=[-1,1,-GW,GW,-GW-1,-GW+1,GW-1,GW+1];
+    const hNieuw=h.slice();
+    for(let c=0;c<G;c++){
+      if(!forceCel[c]||zee[c])continue;
+      let som=0,n=0;
+      for(const d of stapV){
+        const b=c+d; if(b<0||b>=G||zee[b])continue;
+        som+=h[b]; n++;
+      }
+      if(n)hNieuw[c]=Math.min(h[c],som/n-DIEPTE);
+    }
+    for(let c=0;c<G;c++)if(forceCel[c]&&!zee[c])h[c]=hNieuw[c];
   }
 
   /* --- kommen vullen ---
@@ -2031,6 +2331,10 @@ function bouwRivieren(info,reg){
   const water=new Float32Array(G);
   for(const c of orde)water[c]=1;
   for(const c of orde){const r=naar[c]; if(r>=0)water[r]+=water[c];}
+  /* Vanaf hoeveel afwatering het een rivier heet. Lager geeft een fijner net
+     van beken en maakt de kaart druk; hoger houdt alleen de grote stromen
+     over. Dit is per gebied nog eens vermenigvuldigd met dorst hieronder. */
+  const T=165;
 
   /* --- welk gebied hoeveel afwatering nodig heeft voor een rivier ---
      Twee dingen tellen mee. Het klimaat: een woestijn watert nauwelijks af, en
@@ -2052,20 +2356,29 @@ function bouwRivieren(info,reg){
     const a=opp[k]||1;
     dorst[k]=m*Math.min(1,Math.max(.10,a/2600));
   }
-  /* Vanaf hoeveel afwatering het een rivier heet. Lager geeft een fijner net
-     van beken en maakt de kaart druk; hoger houdt alleen de grote stromen
-     over. Dit is per gebied nog eens vermenigvuldigd met dorst hierboven. */
-  const T=165;
   const water_genoeg=c=>!zee[c]&&water[c]>=T*(dorst[vak[c]]||1);
 
   /* --- de lopen uittekenen ---
      Begonnen wordt bij een bovenloop: een punt dat net rivier is en waar geen
      rivier in uitkomt. Van daar volgt de loop de afvoer tot in zee of tot hij
-     op een al getekende loop stuit — daar is het een zijtak die uitmondt. */
+     op een al getekende loop stuit — daar is het een zijtak die uitmondt.
+
+     Een uitgegraven geul (forceCel) doet hier niet aan mee: die wordt zo
+     meteen sowieso als één gegarandeerde lijn getekend (verderop in deze
+     functie), dus de natuurlijke sporing zou er alleen maar overheen tekenen.
+     Erger nog: elke cel in zo'n geul haalt de drempel al op zichzelf (de geul
+     ligt lager dan zijn omgeving), maar zonder dat het water van de ene naar
+     de volgende cel écht optelt volgens hetzelfde stroompatroon als de rest
+     van de simulatie — dat zag de sporing hierboven aan voor tientallen
+     losse bovenlopen op rij, wat honderden korte snippers gaf in plaats van
+     één lijn. Door forceCel-cellen alvast als "al getekend" te merken,
+     kunnen ze nooit als bron gelden en stopt een natuurlijke zijtak er netjes
+     bovenop, precies zoals bij een monding in een al getekende rivier. */
   const getekend=new Uint8Array(G);
+  for(let c=0;c<G;c++)if(forceCel[c])getekend[c]=1;
   const bronnen=[];
   for(let c=0;c<G;c++){
-    if(!water_genoeg(c))continue;
+    if(forceCel[c]||!water_genoeg(c))continue;
     const i=c%GW; let boven=false;
     for(const d of stap){
       const n=c+d;
@@ -2074,7 +2387,18 @@ function bouwRivieren(info,reg){
     }
     if(!boven)bronnen.push(c);
   }
-  bronnen.sort((a,b)=>water[b]-water[a]);   /* de grootste stroom eerst */
+  /* uitsluitingsgebieden: een bron die daarbinnen valt, wordt hier al
+     weggefilterd, vóór er ooit een pad vanaf getraceerd wordt — dat is
+     goedkoper dan een getekend pad achteraf weer weggooien, en voorkomt dat
+     de rivier een eindje verderop toch weer opduikt */
+  const suppressies=DATA.riviersuppressies||[];
+  const bronnenOk=suppressies.length
+    ? bronnen.filter(c=>{
+        const wx=((c%GW)+.5)*GS, wy=(((c/GW)|0)+.5)*GS;
+        return !suppressies.some(s=>((wx-s.x)**2+(wy-s.y)**2)<=s.straal*s.straal);
+      })
+    : bronnen;
+  bronnenOk.sort((a,b)=>water[b]-water[a]);   /* de grootste stroom eerst */
 
   /* Een loop over acht richtingen zigzagt in stapjes van vijfenveertig graden.
      Twee keer uitmiddelen haalt die hoek eraf; de kromme door de punten doet
@@ -2089,7 +2413,8 @@ function bouwRivieren(info,reg){
     return p;
   }
   const klasse=w=>w>=T*11?"r3":w>=T*3.4?"r2":"r1";
-  for(const start of bronnen){
+  for(const start of bronnenOk){
+    const bronWereld=[((start%GW)+.5)*GS,(((start/GW)|0)+.5)*GS];
     const punten=[], stromen=[];
     let c=start;
     for(let n=0;n<6000;n++){
@@ -2114,10 +2439,35 @@ function bouwRivieren(info,reg){
       const nu=klasse(stromen[Math.min(i,glad.length-1)]);
       if(i===glad.length||nu!==klasse(stromen[i0])){
         const deel=glad.slice(i0,Math.min(glad.length,i+1));
-        if(deel.length>1)paden.push({klasse:"rivier "+klasse(stromen[i0]),d:vloeiend(deel)});
+        if(deel.length>1)paden.push({klasse:"rivier "+klasse(stromen[i0]),d:vloeiend(deel),bron:bronWereld});
         i0=i;
       }
     }
+  }
+  /* --- zelf getekende rivieren: altijd getekend, ongeacht de simulatie ---
+     De geul die hierboven in het hoogteveld is gegraven, buigt de berekende
+     afwatering om en geeft meestal al een goede, organische rivier op precies
+     dit tracé. Maar "meestal" is niet "altijd": op een deel van een lang of
+     grillig tracé kan de drempel net niet gehaald worden, en dan valt er een
+     gat in de rivier. Om dat te voorkomen wordt het eigen tracé hier ook
+     altijd zelf als pad getekend, boven op wat de simulatie oplevert — geen
+     kans meer op een gat, wel verlies je op dat stuk de van-nature-berekende
+     breedte-variatie (die blijft wel gelden op elke natuurlijke zijtak die
+     er toevallig op uitkomt, want die volgt gewoon de simulatie). */
+  for(const ov of (DATA.rivieroverrides||[])){
+    const ruw=ov.punten||[]; if(ruw.length<2)continue;
+    /* tussenpunten invoegen, anders geeft strijk() bij maar een paar klikken
+       nog steeds hoekige knikken in plaats van een vloeiende bocht */
+    const fijn=[];
+    for(let s=0;s<ruw.length-1;s++){
+      const [x1,y1]=ruw[s], [x2,y2]=ruw[s+1];
+      const stappen=Math.max(1,Math.ceil(Math.hypot(x2-x1,y2-y1)/GS));
+      for(let k=0;k<stappen;k++)fijn.push([x1+(x2-x1)*k/stappen,y1+(y2-y1)*k/stappen]);
+    }
+    fijn.push(ruw[ruw.length-1]);
+    const glad=fijn.length>=3?strijk(fijn):fijn;
+    for(const q of glad)rivierpunten.push(q);
+    paden.push({klasse:"rivier r2",d:vloeiend(glad),bron:[ruw[0][0],ruw[0][1]]});
   }
   const data={paden,punten:rivierpunten};
   tekenRivieren(data);
@@ -2412,26 +2762,47 @@ for(const [k,naam] of [["GJ",RGRP.GJ.label],["BB",RGRP.BB.label]]){
   b.onclick=()=>{state.series[k]=!state.series[k];b.setAttribute("aria-pressed",state.series[k]);teken();};
   seriesBox.appendChild(b);
 }
-const routeBtns={};
-for(const grp in RGRP){
-  const leden=ROUTES.filter(r=>r.grp===grp); if(!leden.length)continue;
-  const rij=document.createElement("div"); rij.className="rrow";
-  const lab=document.createElement("span"); lab.className="rgl"; lab.textContent=RGRP[grp].label;
-  const box=document.createElement("div"); box.className="chips";
-  for(const r of leden){
-    const b=document.createElement("button");
-    b.className="chip mini"; b.type="button"; b.setAttribute("aria-pressed","false");
-    b.textContent=r.nr;
-    b.title=(BOEKEN[r.id]?BOEKEN[r.id][0]:r.id)+(r.kanNiet?t("wachtOpLand"):"");
-    b.disabled=r.kanNiet;
-    b.setAttribute("aria-label",`${t("reisrouteAria")}${BOEKEN[r.id]?BOEKEN[r.id][0]:r.id}`);
-    b.onclick=()=>zetRoute(r.id);
-    routeBtns[r.id]=b; box.appendChild(b);
+let routeBtns={};
+/* opnieuw op te bouwen zodra een route erbij komt of weggaat, want de
+   bewerkstand kan dat live doen — niet alleen bij het laden van de pagina */
+function bouwRouteChips(){
+  routesBox.textContent=""; routeBtns={};
+  for(const grp in RGRP){
+    const leden=ROUTES.filter(r=>r.grp===grp); if(!leden.length)continue;
+    const rij=document.createElement("div"); rij.className="rrow";
+    const lab=document.createElement("span"); lab.className="rgl"; lab.textContent=RGRP[grp].label;
+    const box=document.createElement("div"); box.className="chips";
+    for(const r of leden){
+      const b=document.createElement("button");
+      b.className="chip mini"; b.type="button"; b.setAttribute("aria-pressed",String(r.id===state.route));
+      b.textContent=r.nr;
+      b.title=(BOEKEN[r.id]?BOEKEN[r.id][0]:r.id)+(r.kanNiet?t("wachtOpLand"):"");
+      b.disabled=r.kanNiet;
+      b.setAttribute("aria-label",`${t("reisrouteAria")}${BOEKEN[r.id]?BOEKEN[r.id][0]:r.id}`);
+      b.onclick=()=>zetRoute(r.id);
+      routeBtns[r.id]=b; box.appendChild(b);
+    }
+    rij.append(lab,box); routesBox.appendChild(rij);
   }
-  rij.append(lab,box); routesBox.appendChild(rij);
 }
+bouwRouteChips();
 function zetRoute(id){
   state.route = state.route===id ? null : id;
+  /* een route openen terwijl er nog een plaats/naam gekozen stond zou het
+     paneel in twee standen tegelijk laten zichtbaarheid claimen */
+  if(zetten&&state.route&&keuze)kiesDeel(null);
+  /* een route open zonder dat de route-tool actief staat is een valkuil: het
+     paneel toont dan wel bewerkknoppen (Invoegen, Volgend been), maar die
+     knoppen en de klik-op-de-kaart-listener werken alleen als actieveTool
+     ook echt "route" is — dus die twee altijd samen laten opgaan. Direct de
+     tool-state zetten (niet via kiesTool) om dubbel nieuweRouteAanmaken()/
+     toonRouteFormulier() te vermijden — die roepen we hieronder toch al aan. */
+  if(zetten&&state.route&&typeof toolKnoppen!=="undefined"&&actieveTool!=="route"){
+    actieveTool="route";
+    for(const k in toolKnoppen)toolKnoppen[k].setAttribute("aria-pressed",String(k==="route"));
+    $("#zetsoort").hidden=true;
+    verversZetbezig();
+  }
   for(const r of ROUTES){
     const aan=r.id===state.route;
     routeEls[r.id].classList.toggle("on",aan);
@@ -2439,6 +2810,7 @@ function zetRoute(id){
   }
   const r=ROUTES.find(x=>x.id===state.route);
   bouwRoutepunten();
+  if(typeof toonRouteFormulier==="function")toonRouteFormulier();
   /* de plaatsen van deze route blijven zichtbaar, ook op het overzicht: een
      route die het halve werelddeel overspant past niet in één zoomstap */
   routePlekken=new Set(r?r.benen.flat().filter(s=>typeof s==="string"):[]);
@@ -2594,7 +2966,10 @@ $("#about").onclick=()=>{
    maak je groter of kleiner. Alles verandert DATA zelf en komt er als een
    volledige data.json weer uit, die je in de map opslaat.               */
 const zetbalk=$("#zetbalk"), zetstand=$("#zetstand"), zetsel=$("#zetsel");
-let zetten=false, sleep=null, keuze=null;
+/* actieveTool: "select" (slepen/kiezen, de standaard zodra je gaat bewerken),
+   "plaats" (nieuwe plaats neerklikken), "route" (route-punten toevoegen).
+   Nooit meer dan één tegelijk aan — een tool kiezen zet de vorige altijd uit. */
+let zetten=false, sleep=null, keuze=null, actieveTool="select";
 
 /* ---- de stand bewaren en wegschrijven ---- */
 /* bouwRoutes() hangt berekende paden aan de routes; die zijn rekenwerk en
@@ -2649,12 +3024,14 @@ function schoneData(){
   terugvertaal(RUWDATA,DATA);
   const bron=RUWDATA;
   const uit={};
-  for(const k of ["_uitleg","boeken","gebieden","zeeen","detail","plaatsen","routegroepen","routes"])
+  for(const k of ["_uitleg","boeken","gebieden","zeeen","detail","plaatsen","routegroepen","routes",
+    "rivieroverrides","riviersuppressies"])
     if(bron[k]!==undefined)uit[k]=bron[k];
   uit.gebieden=Object.fromEntries(Object.entries(uit.gebieden).map(([k,v])=>[k,schoon(v)]));
   uit.zeeen=uit.zeeen.map(schoon);
   uit.plaatsen=uit.plaatsen.map(schoon);
   uit.routes=uit.routes.map(schoon);
+  if(uit.rivieroverrides)uit.rivieroverrides=uit.rivieroverrides.map(schoon);
   return uit;
 }
 /* Dezelfde opmaak als data.json in de map: alles op een eigen regel, maar wat
@@ -2691,26 +3068,54 @@ function opgeslagen(bericht){
   toonZetstand(); zetstand.textContent=bericht;
 }
 
-/* ---- wat er nu onder handen is ---- */
+/* ---- wat er nu onder handen is ----
+   Eén paneel rechts toont om beurten: de draai/schaal-grepen van een naam, het
+   plaats-formulier, of het route-formulier — nooit meer dan één tegelijk. De
+   kop van het paneel volgt mee, zodat duidelijk blijft wat je onder handen
+   hebt. zetPaneelZichtbaar bepaalt dat op basis van keuze én state.route
+   samen, dus die moet na allebei een wijziging opnieuw draaien. */
+const zetpaneel=$("#zetpaneel");
+function zetPaneelZichtbaar(){
+  const open=!!keuze
+    ||(zetten&&!!$("#zetroute")&&!$("#zetroute").hidden)
+    ||(zetten&&actieveTool==="rivier");
+  zetpaneel.classList.toggle("open",open);
+}
+/* het kruisje sluit precies wat er open staat: een plaats/naam-selectie via
+   kiesDeel, anders (geen keuze, maar wel een geopende route) de route zelf —
+   nooit allebei door elkaar, en nooit een route heropenen die niet de reden
+   was dat het paneel openstond. */
+$("#zpsluit").onclick=()=>{
+  if(keuze)kiesDeel(null);
+  else if(zetten&&state.route)zetRoute(state.route);
+};
+
 const SOORTNAAM=TAAL==="nl"
   ?{zee:"Zee",gebied:"Land",plaats:"Naam",punt:"Markering"}
   :{zee:"Sea",gebied:"Country",plaats:"Name",punt:"Marker"};
 function toonKeuze(){
-  zetsel.hidden=!keuze; if(!keuze)return;
+  zetsel.hidden=!keuze;
+  if(!keuze){zetPaneelZichtbaar();return;}
+  $("#zpKop").textContent=keuze.soort==="punt"?t("plaatsBewerken"):t("naamBewerken");
   $("#zetselnaam").textContent=`${SOORTNAAM[keuze.soort]}: ${keuze.d.naam}`;
-  /* een markering is een punt: die valt niet te draaien of te vergroten */
+  /* een markering is een punt: die valt niet te draaien of te vergroten, maar
+     krijgt in plaats daarvan het volledige plaats-formulier */
   const naam=keuze.soort!=="punt";
   $("#zetdraai").hidden=$("#zetmaat").hidden=$("#zetstd").hidden=!naam;
   $("#zetrot").textContent=(keuze.d.rot||0)+"°";
   /* in procenten, niet in tienden: een stap van 10% zou anders twee keer
      achter elkaar hetzelfde getal opleveren */
   $("#zetmt").textContent=Math.round((keuze.d.maat||1)*100)+"%";
+  const zp=$("#zetplaats");
+  zp.hidden=naam;
+  if(!naam)vulPlaatsFormulier(keuze.d);
+  zetPaneelZichtbaar();
 }
 function kiesDeel(it){
   for(const n of NAMEN)n.t.classList.remove("naamsel");
   for(const id in markerEls)markerEls[id].g.classList.remove("puntsel");
   keuze=it;
-  if(!it){zetsel.hidden=true;return;}
+  if(!it){zetsel.hidden=true; zetPaneelZichtbaar(); return;}
   if(it.soort==="punt")it.m.g.classList.add("puntsel");
   else it.t.classList.add("naamsel");
   toonKeuze();
@@ -2719,6 +3124,295 @@ function kiesDeel(it){
 function pasNaamAan(it){
   if(it.soort==="plaats")zetPlaatsNaam(it.m,it.d); else zetNaamPlek(it);
 }
+
+/* ---- het plaats-formulier: naam, soort, omschrijving, feiten, boeken ----
+   keuze.d is de levende, al-vertaalde plaats; wijzigingen hierin lopen bij
+   bewaar() vanzelf via schoneData()/terugvertaal() terug naar de juiste taal
+   in RUWDATA, precies zoals rot/maat dat al deden. */
+function vulPlaatsFormulier(p){
+  $("#zpNaam").value=p.naam||"";
+  $("#zpSoort").value=p.soort||"stad";
+  $("#zpTekst").value=p.tekst||"";
+  const fbak=$("#zpFeiten"); fbak.textContent="";
+  for(const [i,fe] of (p.feiten||[]).entries()){
+    const rij=html("div",{class:"zfeitrij"},fbak);
+    const sl=html("input",{type:"text",value:fe[0]||"","aria-label":t("feitSleutel")},rij);
+    const wa=html("input",{type:"text",value:fe[1]||"","aria-label":t("feitWaarde")},rij);
+    const vw=html("button",{type:"button","aria-label":t("feitVerwijderen")},rij);
+    vw.textContent="×";
+    sl.addEventListener("change",()=>{p.feiten[i][0]=sl.value; bewaar();});
+    wa.addEventListener("change",()=>{p.feiten[i][1]=wa.value; bewaar();});
+    vw.addEventListener("click",()=>{p.feiten.splice(i,1); vulPlaatsFormulier(p); bewaar();});
+  }
+  const rbak=$("#zpReeks"); rbak.textContent="";
+  for(const grp of ["GJ","BB"]){
+    const aan=(p.serie||[]).includes(grp);
+    const b=html("button",{type:"button","aria-pressed":String(aan)},rbak);
+    b.textContent=RGRP[grp].label;
+    b.addEventListener("click",()=>{
+      p.serie=p.serie||[];
+      const nu=!(p.serie.includes(grp));
+      if(nu){ if(!p.serie.includes(grp))p.serie.push(grp); }
+      else p.serie=p.serie.filter(c=>c!==grp);
+      b.setAttribute("aria-pressed",String(nu));
+      bewaar(); teken();
+    });
+  }
+  const bbak=$("#zpBoeken"); bbak.textContent="";
+  for(const code in BOEKEN){
+    const aan=(p.boeken||[]).includes(code);
+    const b=html("button",{type:"button","aria-pressed":String(aan)},bbak);
+    b.textContent=BOEKEN[code][1]||code;
+    b.addEventListener("click",()=>{
+      p.boeken=p.boeken||[];
+      const nu=!(p.boeken.includes(code));
+      if(nu){ if(!p.boeken.includes(code))p.boeken.push(code); }
+      else p.boeken=p.boeken.filter(c=>c!==code);
+      b.setAttribute("aria-pressed",String(nu));
+      bewaar();
+    });
+  }
+}
+$("#zpNaam").addEventListener("change",()=>{
+  if(!keuze||keuze.soort!=="punt")return;
+  const p=keuze.d, waarde=$("#zpNaam").value.trim()||t("nieuwePlaatsNaam");
+  p.naam=waarde;
+  keuze.m.t.textContent=waarde;
+  $("#zetselnaam").textContent=`${SOORTNAAM[keuze.soort]}: ${waarde}`;
+  bewaar();
+});
+$("#zpSoort").addEventListener("change",()=>{
+  if(!keuze||keuze.soort!=="punt")return;
+  const p=keuze.d, waarde=$("#zpSoort").value;
+  p.soort=waarde;
+  keuze.m.gl.innerHTML=GLYPH[waarde]||GLYPH.stad;
+  bewaar();
+});
+$("#zpTekst").addEventListener("change",()=>{
+  if(!keuze||keuze.soort!=="punt")return;
+  keuze.d.tekst=$("#zpTekst").value;
+  bewaar();
+});
+$("#zpFeitBij").addEventListener("click",()=>{
+  if(!keuze||keuze.soort!=="punt")return;
+  const p=keuze.d; p.feiten=p.feiten||[]; p.feiten.push(["",""]);
+  vulPlaatsFormulier(p); bewaar();
+});
+$("#zpVerwijder").addEventListener("click",()=>{
+  if(!keuze||keuze.soort!=="punt")return;
+  if(!confirm(t("bevestigPlaatsVerwijderen")))return;
+  const p=keuze.d;
+  const idx=PLAATSEN.indexOf(p); if(idx>=0)PLAATSEN.splice(idx,1);
+  delete plaatsById[p.id]; delete byId[p.id];
+  const ai=ALLES.indexOf(p); if(ai>=0)ALLES.splice(ai,1);
+  const m=markerEls[p.id];
+  if(m){m.g.remove(); delete markerEls[p.id];}
+  const ni=NAMEN.findIndex(n=>n.d===p); if(ni>=0)NAMEN.splice(ni,1);
+  kiesDeel(null);
+  bewaar(); verversNaZet(); teken();
+});
+
+/* ---- routes bewerken ----
+   Een route is een samengesteld object (meerdere punten over meerdere
+   benen), dat past niet in het "één ding tegelijk"-model van keuze/kiesDeel.
+   Het formulier volgt gewoon state.route (net als bij een plaats gebeurt
+   punten-toevoegen alleen als routePuntenAan expliciet aanstaat — anders zou
+   een gewone klik op de kaart, terwijl je een route bekijkt, per ongeluk een
+   punt neerzetten. */
+/* routePuntenAan volgt gewoon de actieve tool: zolang "route" de gekozen
+   tool is, voegt een klik op de kaart een punt toe aan de geopende route.
+   routeInvoegAan is een losse sub-schakelaar daarbinnen (invoegen tussen
+   bestaande punten in plaats van achteraan toevoegen). */
+let routeInvoegAan=false;
+const routePuntenAan=()=>actieveTool==="route";
+function toonRouteFormulier(){
+  const zr=$("#zetroute");
+  const r=zetten?ROUTES.find(x=>x.id===state.route):null;
+  zr.hidden=!r;
+  if(!r){routeInvoegAan=false; zetPaneelZichtbaar(); verversZetbezig(); return;}
+  $("#zpKop").textContent=t("routeBewerken");
+  $("#zrGroep").value=r.grp;
+  $("#zrNummer").value=r.nr;
+  $("#zrTekst").value=r.tekst||"";
+  $("#zrInvoegen").setAttribute("aria-pressed",String(routeInvoegAan));
+  zetPaneelZichtbaar();
+}
+function nieuweRouteAanmaken(){
+  let id="route-"+Date.now();
+  while(ROUTES.some(r=>r.id===id))id="route-"+Date.now();
+  const r={id,grp:"GJ",nr:String(ROUTES.filter(x=>x.grp==="GJ").length+1),
+    tekst:"",benen:[[]]};
+  ROUTES.push(r);
+  bouwRouteChips();
+  bewaar(); verversNaZet();
+  zetRoute(id);
+}
+$("#zrGroep").addEventListener("change",()=>{
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  r.grp=$("#zrGroep").value; bewaar(); bouwRouteChips(); teken();
+});
+$("#zrNummer").addEventListener("change",()=>{
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  r.nr=$("#zrNummer").value; bewaar(); bouwRouteChips(); teken();
+});
+$("#zrTekst").addEventListener("change",()=>{
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  r.tekst=$("#zrTekst").value; bewaar();
+});
+$("#zrVolgendBeen").addEventListener("click",()=>{
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  r.benen.push([]); bewaar(); verversNaZet();
+});
+$("#zrInvoegen").addEventListener("click",()=>{
+  routeInvoegAan=!routeInvoegAan;
+  toonRouteFormulier(); verversZetbezig();
+});
+$("#zrVerwijder").addEventListener("click",()=>{
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  if(!confirm(t("bevestigRouteVerwijderen")))return;
+  const idx=ROUTES.indexOf(r); if(idx>=0)ROUTES.splice(idx,1);
+  delete routeEls[r.id];
+  state.route=null; routeInvoegAan=false;
+  bouwRouteChips();
+  bewaar(); verversNaZet(); teken(); toonRouteFormulier();
+  kiesTool("select");
+});
+/* dichtstbijzijnde beensegment vinden om een punt tussenin te zetten */
+function dichtstbijBeensegment(r,x,y){
+  let best=null, bd=Infinity;
+  r.benen.forEach((been,beenIdx)=>{
+    const pts=beenPunten(been); if(!pts)return;
+    for(let i=0;i<pts.length-1;i++){
+      const [x1,y1]=pts[i], [x2,y2]=pts[i+1];
+      const dx=x2-x1, dy=y2-y1, len2=dx*dx+dy*dy;
+      let t2=len2?((x-x1)*dx+(y-y1)*dy)/len2:0;
+      t2=Math.max(0,Math.min(1,t2));
+      const px=x1+t2*dx, py=y1+t2*dy;
+      const d=(x-px)**2+(y-py)**2;
+      if(d<bd){bd=d; best={beenIdx,stapIdx:i+1};}
+    }
+  });
+  return best;
+}
+/* klikken tijdens het bouwen/bewerken van een route: op een marker landt een
+   plaats-id-stap, elders een coördinaat-stap — zo mixen bestaande routes het
+   ook al. Gedeeld tussen de klik op een markering (die zijn eigen listener
+   heeft en de gewone svg-klik nooit bereikt) en de klik op de lege kaart. In
+   invoeg-modus komt het nieuwe punt tussen het dichtstbijzijnde beensegment
+   in plaats van achteraan. */
+function routeKlik(plaatsId,coord){
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  const waarde=plaatsId||coord;
+  if(routeInvoegAan&&coord){
+    const doel=dichtstbijBeensegment(r,coord[0],coord[1]);
+    if(doel)r.benen[doel.beenIdx].splice(doel.stapIdx,0,waarde);
+    else r.benen[r.benen.length-1].push(waarde);
+  } else {
+    r.benen[r.benen.length-1].push(waarde);
+  }
+  bewaar(); verversNaZet();
+}
+svg.addEventListener("click",e=>{
+  if(!zetten||!routePuntenAan()||gesleept())return;
+  if(e.target.closest(".marker"))return; /* die klik loopt al via de marker zijn eigen listener */
+  const w=wereldPunt(e);
+  routeKlik(null,[+w.x.toFixed(2),+w.y.toFixed(2)]);
+});
+/* een routepunt verwijderen: extra knop naast het bestaande sleep-circeltje,
+   alleen zichtbaar in de bouw-modus van deze route */
+gRoutepunten.addEventListener("click",e=>{
+  const c=e.target.closest(".routepunt"); if(!c||!zetten)return;
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  e.stopPropagation();
+  const cx=+c.getAttribute("cx"), cy=+c.getAttribute("cy");
+  outer: for(const been of r.benen)for(let i=0;i<been.length;i++){
+    const s=been[i];
+    if(Array.isArray(s)&&s[0]===cx&&s[1]===cy){been.splice(i,1);break outer;}
+  }
+  bewaar(); verversNaZet();
+});
+
+/* ---- rivieren bewerken ----
+   Twee losstaande dingen delen de "rivier"-tool: een nieuwe rivier intekenen
+   (punten verzamelen, dan een naam geven — dat gaat in DATA.rivieroverrides
+   en stuurt bouwRivieren() zoals hierboven beschreven), en een bestaande,
+   automatisch getekende rivier aanwijzen om 'm te onderdrukken (het bronpunt
+   gaat dan in DATA.riviersuppressies). Nooit allebei tegelijk: zolang er
+   al punten verzameld worden, telt een klik op een bestaande rivier als een
+   mislukte poging om te tekenen eroverheen, niet als een verwijderverzoek. */
+let rivierWerkPunten=[];
+function rivierWerkReset(){
+  rivierWerkPunten=[];
+  gRivierWerk.textContent="";
+  $("#zvNaamVeld").hidden=true;
+  $("#zvNaam").value="";
+}
+function rivierTekenWerk(){
+  gRivierWerk.textContent="";
+  if(rivierWerkPunten.length>1)
+    el("path",{class:"rivier-werk",d:vloeiend(rivierWerkPunten)},gRivierWerk);
+  for(const [x,y] of rivierWerkPunten)
+    el("circle",{class:"rivier-werkpunt",cx:x,cy:y},gRivierWerk);
+}
+function toonRivierFormulier(){
+  $("#zetrivier").hidden=actieveTool!=="rivier";
+  if(actieveTool==="rivier")$("#zpKop").textContent=t("toolRivierLabel");
+  zetPaneelZichtbaar();
+}
+svg.addEventListener("click",e=>{
+  if(!zetten||actieveTool!=="rivier"||gesleept())return;
+  if(e.target.closest(".rivier")||e.target.closest(".rivier-werkpunt"))return;
+  const w=wereldPunt(e);
+  rivierWerkPunten.push([+w.x.toFixed(2),+w.y.toFixed(2)]);
+  rivierTekenWerk();
+});
+let rivierTeller=1;
+$("#zvKlaar").addEventListener("click",()=>{
+  if(rivierWerkPunten.length<2){
+    const hint=$("#zvHint");
+    hint.textContent=t("teWeinigPunten");
+    setTimeout(()=>{hint.textContent=t("klikVoorRivierpunt");},2500);
+    return;
+  }
+  $("#zvNaamVeld").hidden=false;
+  $("#zvNaam").focus();
+});
+$("#zvNaam").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  e.preventDefault();
+  const naam=$("#zvNaam").value.trim()||t("nieuweRivierNaam");
+  let id="rivier-"+(rivierTeller++);
+  while(byId[id])id="rivier-"+(rivierTeller++);
+  DATA.rivieroverrides=DATA.rivieroverrides||[];
+  DATA.rivieroverrides.push({id,naam,punten:rivierWerkPunten.slice()});
+  /* dezelfde soort plaats-entry als de al bekende riviernamen (Tarbus, Zalm,
+     Slijpsteen): zetRivierNamen() schuift het label vanzelf naar de
+     berekende loop zodra bouwRivieren() klaar is */
+  const midden=rivierWerkPunten[Math.floor(rivierWerkPunten.length/2)];
+  const p={id,naam,soort:"rivier",gebied:gebiedOp(midden[0],midden[1])||"araluen",
+    x:midden[0],y:midden[1],z:4.4,serie:["GJ"],boeken:[],feiten:[],tekst:""};
+  PLAATSEN.push(p); plaatsById[p.id]=p; byId[p.id]=p; ALLES.push(p);
+  const m=maakMarker(p);
+  if(m)hangNaamOp(NAMEN[NAMEN.length-1]);
+  bewaar(); verversNaZet(); teken();
+  kiesTool("select");
+  herbouw("bezigRivier");
+});
+/* een bestaande, automatisch getekende rivier aanwijzen om 'm te onderdrukken —
+   alleen relevant zolang er nog geen eigen punten verzameld worden, anders zou
+   een klik op de net getekende lijn zelf verkeerd worden opgevat */
+gWater.addEventListener("click",e=>{
+  if(!zetten||actieveTool!=="rivier"||rivierWerkPunten.length)return;
+  const pad=e.target.closest(".rivier"); if(!pad)return;
+  const bx=+pad.dataset.bx, by=+pad.dataset.by;
+  if(Number.isNaN(bx)||Number.isNaN(by))return;
+  e.stopPropagation();
+  if(!confirm(t("bevestigRivierVerwijderen")))return;
+  DATA.riviersuppressies=DATA.riviersuppressies||[];
+  DATA.riviersuppressies.push({x:bx,y:by,straal:18});
+  bewaar();
+  herbouw("bezigRivier");
+});
 
 /* ---- draaien en vergroten ---- */
 zetsel.addEventListener("click",e=>{
@@ -2754,7 +3448,7 @@ const wereldPunt=e=>{
    maakMarker, zodat ook een plaats die je zelf toevoegt meteen meedoet. */
 function hangNaamOp(it){
   it.g.addEventListener("pointerdown",e=>{
-    if(!zetten)return;
+    if(!zetten||actieveTool!=="select")return;
     e.stopPropagation(); e.preventDefault();
     kiesDeel(it);
     const w=wereldPunt(e);
@@ -2834,27 +3528,63 @@ function gebiedOp(x,y){
   for(const id in gebiedEls) if(GEBIEDEN[id]&&inGebied(id,x,y))return id;
   return null;
 }
-let nieuwAan=false;
-$("#zetnieuw").onclick=()=>{
-  nieuwAan=!nieuwAan;
-  $("#zetnieuw").textContent = nieuwAan ? t("klikOpKaart") : t("nieuwePlaats");
-};
+/* land-klikken zijn in de hele bewerkstand al uitgeschakeld (zie
+   body.zetten .gebied .vlak in de CSS) — deze class markeert specifiek
+   wanneer een toevoeg-tool actief is, voor het geval daar ooit nog eigen
+   styling voor nodig is. */
+function verversZetbezig(){
+  document.body.classList.toggle("zetbezig",
+    actieveTool==="plaats"||actieveTool==="route"||actieveTool==="rivier");
+}
+/* ---- gereedschap: select / plaats / route / rivier, nooit meer dan één tegelijk ----
+   "select" is de standaard: slepen en aanklikken werkt zoals voorheen.
+   "plaats" zet de kaart in klik-om-neer-te-zetten-stand voor een nieuwe
+   plaats. "route" opent (of maakt) een route en zet de kaart in klik-om-
+   punt-toe-te-voegen-stand — zie routePuntenAan()/routeKlik() hierboven.
+   "rivier" verzamelt klikken in een eigen werk-array (zie hieronder) totdat
+   je 'm afrondt met een naam, of wijst een bestaande rivier aan om 'm te
+   onderdrukken. */
+const toolKnoppen={select:$("#toolSelect"),plaats:$("#toolPlaats"),route:$("#toolRoute"),rivier:$("#toolRivier")};
+function kiesTool(naam){
+  const was=actieveTool;
+  actieveTool=naam;
+  for(const k in toolKnoppen)toolKnoppen[k].setAttribute("aria-pressed",String(k===naam));
+  document.body.classList.toggle("tool-rivier",naam==="rivier");
+  $("#zetsoort").hidden=naam!=="plaats";
+  if(naam!=="select"&&keuze)kiesDeel(null);
+  if(naam==="route"&&was!=="route"){
+    if(!state.route)nieuweRouteAanmaken();
+    else toonRouteFormulier();
+  }
+  if(was==="route"&&naam!=="route"){routeInvoegAan=false; toonRouteFormulier();}
+  if(naam==="rivier"&&was!=="rivier")rivierWerkReset();
+  if(was==="rivier"&&naam!=="rivier")rivierWerkReset();
+  if(naam==="rivier"||was==="rivier")toonRivierFormulier();
+  verversZetbezig();
+}
+$("#toolSelect").onclick=()=>kiesTool("select");
+$("#toolPlaats").onclick=()=>kiesTool(actieveTool==="plaats"?"select":"plaats");
+$("#toolRoute").onclick=()=>kiesTool(actieveTool==="route"?"select":"route");
+$("#toolRivier").onclick=()=>kiesTool(actieveTool==="rivier"?"select":"rivier");
+/* een oplopende teller in plaats van een op de naam gebaseerde slug: het id
+   verandert dan nooit meer als de naam later wordt bijgewerkt, en niets wat
+   naar dit id verwijst (een route-stap, een wacht-veld) raakt zo zijn doel kwijt */
+let nieuwePlaatsTeller=1;
 svg.addEventListener("click",e=>{
-  if(!zetten||!nieuwAan||gesleept())return;
+  if(!zetten||actieveTool!=="plaats"||gesleept())return;
   const w=wereldPunt(e);
   const x=+w.x.toFixed(2), y=+w.y.toFixed(2);
-  const naam=prompt(t("vraagNaamPlaats"));
-  if(!naam){nieuwAan=false;$("#zetnieuw").textContent=t("nieuwePlaats");return;}
-  let id=naam.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"plaats";
-  while(byId[id])id+="-2";
-  const p={id,naam:naam.trim(),soort:$("#zetsoort").value,gebied:gebiedOp(x,y)||"araluen",
+  let id="plaats-"+(nieuwePlaatsTeller++);
+  while(byId[id])id="plaats-"+(nieuwePlaatsTeller++);
+  const p={id,naam:t("nieuwePlaatsNaam"),soort:$("#zetsoort").value,gebied:gebiedOp(x,y)||"araluen",
     x,y,geenSnap:1,serie:["GJ"],boeken:[],feiten:[],z:4,
-    tekst:t("zelfToegevoegd")};
+    tekst:""};
   PLAATSEN.push(p); plaatsById[p.id]=p; byId[p.id]=p; ALLES.push(p);
   const m=maakMarker(p);
   if(m)hangNaamOp(NAMEN[NAMEN.length-1]);
   bewaar(); verversNaZet(); teken();
-  nieuwAan=false; $("#zetnieuw").textContent=t("nieuwePlaats");
+  kiesTool("select");
+  if(m)kiesDeel({soort:"punt",d:p,m});
 });
 
 /* ---- de stand aan- en uitzetten ---- */

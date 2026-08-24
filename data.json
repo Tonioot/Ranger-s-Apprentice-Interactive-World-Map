@@ -6,7 +6,9 @@
   "plaatsen": "detail = punt uit de Araluen-detailkaart; anders x,y in world.svg-maat, of rel = [gebied, breedte-deel, hoogte-deel]. geenSnap houdt de plaats precies op x,y in plaats van hem het land in te schuiven. lx/ly/rot/maat gelden voor het naambordje. wacht = het land waarop deze plaats hoort ontbreekt nog in world.svg. z = vanaf welke zoomstap het label verschijnt. begroeiing bij een plaats legt een vlek van dat landschap om die plaats heen — zo staan de bossen en vlakten uit de boeken ook echt op de kaart. straal is hoe ver die vlek reikt, in world.svg-maat; de rand ervan is grillig en loopt zacht uit.",
   "routes": "Punten in benen zijn plaats-ids of vaste coordinaten in world.svg. Een route verschijnt alleen als al haar plaatsen op de kaart staan.",
   "bewerken": "Alles hierin is in de kaart zelf te bewerken: knop Bewerken linksonder, dan slepen, draaien en vergroten. Die stand sla je op als dit bestand; de kaart leest het bij de volgende herlaadbeurt meteen weer in.",
-  "terrein": "terrein bij een gebied bepaalt het reliëf en de begroeiing op de kaart. relief = vlak | heuvels | hoogland | bergen: hoe hoog en hoe grillig het land wordt. begroeiing = akker | grasland | steppe | heide | loofbos | naaldbos | jungle | woestijn | moeras | toendra | kaal, of een lijstje daarvan; die worden dan over het gebied verdeeld. koud: 1 geeft sneeuw op de toppen. rivieren: aantal rivieren (standaard volgt uit het reliëf; 0 is geen)."
+  "terrein": "terrein bij een gebied bepaalt het reliëf en de begroeiing op de kaart. relief = vlak | heuvels | hoogland | bergen: hoe hoog en hoe grillig het land wordt. begroeiing = akker | grasland | steppe | heide | loofbos | naaldbos | jungle | woestijn | moeras | toendra | kaal, of een lijstje daarvan; die worden dan over het gebied verdeeld. koud: 1 geeft sneeuw op de toppen. rivieren: aantal rivieren (standaard volgt uit het reliëf; 0 is geen).",
+  "rivieroverrides": "Zelf getekende rivieren: punten in world.svg-maat, neergezet in de bewerkstand. Die punten graven een geul in het hoogteveld vóór de rivieren berekend worden, zodat het water er vanzelf doorheen stroomt — de vorm/breedte blijft berekend, alleen het tracé is van jou.",
+  "riviersuppressies": "Uitsluitingsgebieden ({x,y,straal} in world.svg-maat) waarbinnen geen automatische rivier meer start. Bij benadering: na een latere aanpassing kan de bron van diezelfde rivier iets verschuiven en net buiten het gebied vallen."
  },
  "boeken": {
   "GJ1": [
@@ -156,7 +158,7 @@
    "soort": "gebergte",
    "tint": "d",
    "terrein": {"relief":"bergen", "begroeiing":["heide", "kaal"],"koud":1},
-   "ly": 9,
+   "ly": -3.24,
    "serie": ["GJ"],
    "boeken": ["GJ1", "GJ2"],
    "tekst": {
@@ -170,7 +172,9 @@
     ],
     [{"nl":"Leger", "en":"Army"},{"nl":"Wargals", "en":"Wargals"}],
     [{"nl":"Toegang", "en":"Access"},{"nl":"De Driestappas", "en":"Three Step Pass"}]
-   ]
+   ],
+   "lx": 7.06,
+   "maat": 1.33
   },
   "hibernia": {
    "naam": {"nl":"Hibernia", "en":"Hibernia"},
@@ -332,7 +336,7 @@
    "naam": {"nl":"Toscana", "en":"Toscana"},
    "soort": "land",
    "tint": "c",
-   "terrein": {"relief":"heuvels", "begroeiing":["akker", "kaal"]},
+   "terrein": {"relief":"heuvels", "begroeiing":["akker", "kaal"],"rivieren":3},
    "serie": ["GJ"],
    "boeken": [],
    "tekst": {
@@ -612,12 +616,12 @@
    "rot": 22,
    "maat": 0.6,
    "tekst": {
-    "nl": "De zee in het zuiden, tussen Iberion, Toscana en de kust van Arrida. Aan deze kust liggen Limmat en Santorillos.",
-    "en": "The sea in the south, between Iberion, Toscana and the coast of Arrida. Limmat and Santorillos lie on this coast."
+    "nl": "De zee in het zuiden, tussen Iberion, Toscana en de kust van Arrida. Aan deze kust ligt Santorillos.",
+    "en": "The sea in the south, between Iberion, Toscana and the coast of Arrida. Santorillos lies on this coast."
    },
    "feiten": [
     [{"nl":"Grenst aan", "en":"Borders"},{"nl":"Iberion, Toscana, Arrida", "en":"Iberion, Toscana, Arrida"}],
-    [{"nl":"Plaatsen", "en":"Places"},{"nl":"Limmat, Santorillos", "en":"Limmat, Santorillos"}]
+    [{"nl":"Plaatsen", "en":"Places"},{"nl":"Santorillos", "en":"Santorillos"}]
    ]
   },
   {
@@ -682,9 +686,6 @@
    "driestappas": [360,472],
    "hoogvlakte": [320,487],
    "spleet": [196,520],
-   "tarbus": [142,344],
-   "zalm": [148,372],
-   "slijpsteen": [245,235],
    "eenzamen": [194,449],
    "zuidkliffen": [296,558],
    "westkliffen": [218,524],
@@ -1081,53 +1082,6 @@
    "y": 425.79
   },
   {
-   "id": "tarbus",
-   "naam": {"nl":"Tarbusrivier", "en":"Tarbus River"},
-   "soort": "rivier",
-   "gebied": "araluen",
-   "z": 4.4,
-   "serie": ["GJ"],
-   "boeken": [],
-   "tekst": {
-    "nl": "De rivier die langs Redmont stroomt en verderop in zee uitmondt.",
-    "en": "The river that flows past Redmont and empties into the sea further on."
-   },
-   "feiten": [],
-   "x": 80.53,
-   "y": 397.08,
-   "geenSnap": 1
-  },
-  {
-   "id": "zalm",
-   "naam": {"nl":"Zalmrivier", "en":"Salmon River"},
-   "soort": "rivier",
-   "gebied": "araluen",
-   "detail": "zalm",
-   "z": 4.4,
-   "serie": ["GJ"],
-   "boeken": [],
-   "tekst": {
-    "nl": "Rivier in het westen van Araluen, langs het Westwoud.",
-    "en": "A river in the west of Araluen, running past the Western Woodlands."
-   },
-   "feiten": []
-  },
-  {
-   "id": "slijpsteen",
-   "naam": {"nl":"Slijpsteenrivier", "en":"Whetstone River"},
-   "soort": "rivier",
-   "gebied": "araluen",
-   "detail": "slijpsteen",
-   "z": 4.4,
-   "serie": ["GJ"],
-   "boeken": [],
-   "tekst": {
-    "nl": "De rivier die vanuit het noorden langs Karwij naar zee loopt.",
-    "en": "The river that runs from the north past Caraway to the sea."
-   },
-   "feiten": []
-  },
-  {
    "id": "zuidkliffen",
    "naam": {"nl":"Zuidelijke kliffen", "en":"South Cliffs"},
    "soort": "natuur",
@@ -1338,7 +1292,7 @@
    "x": 230,
    "y": 330,
    "z": 3,
-   "serie": ["GJ"],
+   "serie": ["GJ", "BB"],
    "boeken": ["GJ3"],
    "tekst": {
     "nl": "Een kaal, mistig rotseiland met een beschutte kraterhaven, waar wolfschepen de najaarsstormen uitzitten. Will en Evanlyn brachten er weken door aan boord van Eraks schip Wolfwind.",
@@ -1421,8 +1375,8 @@
     "en": "A port town on the Arridi coast, a port of call for the Herons on their search for the antidote for Cassandra."
    },
    "feiten": [],
-   "x": 224.85,
-   "y": 593.37,
+   "x": 307.49,
+   "y": 612.34,
    "geenSnap": 1
   },
   {
@@ -1440,8 +1394,8 @@
     "en": "The city of Wakir Selethen, the Arridi commander who first opposes and then allies with Halt in the hunt for the Tualaghi."
    },
    "feiten": [[{"nl":"Wakir", "en":"Wakir"},{"nl":"Selethen", "en":"Selethen"}]],
-   "x": 285.42,
-   "y": 618.2,
+   "x": 220.22,
+   "y": 593.5,
    "geenSnap": 1
   },
   {
@@ -1579,8 +1533,10 @@
    "id": "limmat",
    "naam": {"nl":"Limmat", "en":"Limmat"},
    "soort": "haven",
-   "gebied": "constante-zee",
-   "wacht": {"nl":"de zuidkust", "en":"the south coast"},
+   "gebied": "skandia",
+   "x": 235,
+   "y": 345,
+   "approx": 1,
    "serie": ["BB"],
    "boeken": ["BB2"],
    "tekst": {
@@ -1596,34 +1552,46 @@
    "id": "raguza",
    "naam": {"nl":"Raguza", "en":"Raguza"},
    "soort": "haven",
-   "gebied": "magyara",
-   "wacht": {"nl":"het zuidoosten", "en":"the southeast"},
+   "gebied": "toscana",
+   "x": 254.76,
+   "y": 515.64,
+   "approx": 1,
    "serie": ["BB"],
    "boeken": ["BB3"],
    "tekst": {
-    "nl": "Een wetteloze havenstad, bestuurd door een raad van piratenkapiteins: wie genoeg buit binnenbrengt en zich aan de huisregels houdt, is welkom. Hier spoorden de Reigers Zavac uiteindelijk op.",
-    "en": "A lawless port town, ruled by a council of pirate captains: anyone who brings in enough plunder and keeps the house rules is welcome. Here the Herons finally tracked Zavac down."
+    "nl": "Een wetteloze havenstad aan het zuidelijke eind van de Dan, bestuurd door een raad van piratenkapiteins (de Korpal): wie genoeg buit binnenbrengt en zich aan de huisregels houdt, is welkom. Schepen betalen hier tien procent tol. Hier spoorden de Reigers Zavac uiteindelijk op.",
+    "en": "A lawless port town at the southern end of the Dan, ruled by a council of pirate captains (the Korpal): anyone who brings in enough plunder and keeps the house rules is welcome. Ships pay a ten percent toll here. Here the Herons finally tracked Zavac down."
    },
    "feiten": [
     [
      {"nl":"Bestuur", "en":"Government"},
-     {"nl":"Raad van piratenkapiteins", "en":"Council of pirate captains"}
-    ]
+     {"nl":"Raad van piratenkapiteins (de Korpal)", "en":"Council of pirate captains (the Korpal)"}
+    ],
+    [{"nl":"Tol", "en":"Toll"},{"nl":"~10% van de lading", "en":"~10% of cargo"}]
    ]
   },
   {
    "id": "santorina",
    "naam": {"nl":"Santorillos", "en":"Santorillos"},
    "soort": "stad",
-   "gebied": "constante-zee",
-   "wacht": {"nl":"de Constante Zee", "en":"the Constant Sea"},
+   "gebied": "santorillos",
+   "vorm": "santorillos",
+   "terrein": {"relief": "bergen", "begroeiing": "kaal"},
+   "tint": "f",
+   "x": 271.8,
+   "y": 585.1,
+   "approx": 1,
+   "geenSnap": 1,
    "serie": ["BB"],
    "boeken": ["BB7"],
    "tekst": {
-    "nl": "Een eilandstaat in de Constante Zee, waarvan de Reigers de jonge erfgenaam moesten beschermen tegen piraten die vanuit de krater van een uitgedoofde vulkaan opereerden.",
-    "en": "An island state in the Constant Sea, whose young heir the Herons had to protect against pirates operating out of the crater of an extinct volcano."
+    "nl": "Een vulkanisch eiland in de Constante Zee, dicht bij Byzantos, met een bijna onneembare vesting op de rand van een uitgedoofde vulkaankrater. Schuilplaats van de kaper Myrgos en zijn schip de Vulture. Hier moesten de Reigers de jonge erfgenaam beschermen tegen de piraten die vanuit de krater opereerden.",
+    "en": "A volcanic island in the Constant Sea, close to Byzantos, with a nearly impregnable fortress on the rim of an extinct volcanic crater. Hideout of the corsair Myrgos and his ship the Vulture. Here the Herons had to protect the young heir against the pirates operating out of the crater."
    },
-   "feiten": []
+   "feiten": [
+    [{"nl":"Terrein", "en":"Terrain"},{"nl":"Uitgedoofde vulkaankrater", "en":"Extinct volcanic crater"}],
+    [{"nl":"Vijand", "en":"Enemy"},{"nl":"Myrgos en de Vulture", "en":"Myrgos and the Vulture"}]
+   ]
   },
   {
    "id": "mawagansett",
@@ -1642,6 +1610,100 @@
    "feiten": [
     [{"nl":"Volk", "en":"People"},{"nl":"De Mawagansett", "en":"The Mawagansett"}],
     [{"nl":"Vijand", "en":"Enemy"},{"nl":"De Geestgezichten", "en":"The Ghostfaces"}]
+   ]
+  },
+  {
+   "id": "rivier-1",
+   "naam": {"nl":"Dan River", "en":"Dan River"},
+   "soort": "rivier",
+   "gebied": "toscana",
+   "x": 283.12,
+   "y": 429.25,
+   "z": 4.4,
+   "serie": ["BB"],
+   "boeken": ["BB3"],
+   "feiten": [
+    [{"nl":"Loop", "en":"Course"},{"nl":"Noord-zuid door Toscana", "en":"North-south through Toscana"}],
+    [
+     {"nl":"Nederzettingen", "en":"Settlements"},
+     {"nl":"Krall, Bayrath, Raguza", "en":"Krall, Bayrath, Raguza"}
+    ]
+   ],
+   "tekst": {
+    "nl": "Een grote rivier die Toscana van noord naar zuid doorsnijdt, van de Stormwhite-kust tot dicht bij de Constante Zee. Langs de oever liggen, van bron tot monding, Krall, Bayrath en Raguza. Hier achtervolgden de Reigers de piraat Zavac na de aanval op Limmat, met een gevaarlijke stroomversnelling onderweg die ze via een zijkanaal moesten omzeilen.",
+    "en": "A great river that cuts through Toscana from north to south, from the Stormwhite coast to near the Constant Sea. Along its banks, from source to mouth, lie Krall, Bayrath and Raguza. Here the Herons pursued the pirate Zavac after the attack on Limmat, bypassing a dangerous set of rapids via a side channel along the way."
+   }
+  },
+  {
+   "id": "krall",
+   "naam": {"nl":"Krall", "en":"Krall"},
+   "soort": "haven",
+   "gebied": "toscana",
+   "x": 250.3,
+   "y": 337.26,
+   "approx": 1,
+   "serie": ["BB"],
+   "boeken": ["BB3"],
+   "tekst": {
+    "nl": "Een nederzetting aan de noordelijke bovenloop van de Dan, waar de Reigers aanmeerden voor bevoorrading tijdens de achtervolging op Zavac. Een informant vertelde hier over Zavacs route, maar werd afgeluisterd; hun gevangene Rikard werd vermoord en Hal moest bewijzen dat de Reigers het niet waren.",
+    "en": "A settlement on the northern upper reaches of the Dan, where the Herons put in for supplies during the chase after Zavac. An informant told them about Zavac's route here, but was overheard; their prisoner Rikard was murdered and Hal had to prove the Herons weren't responsible."
+   },
+   "feiten": [
+    [
+     {"nl":"Ligging", "en":"Location"},
+     {"nl":"Noordelijke bovenloop van de Dan", "en":"Northern upper reaches of the Dan"}
+    ]
+   ]
+  },
+  {
+   "id": "bayrath",
+   "naam": {"nl":"Bayrath", "en":"Bayrath"},
+   "soort": "stad",
+   "gebied": "toscana",
+   "x": 284.32,
+   "y": 450.25,
+   "approx": 1,
+   "serie": ["BB"],
+   "boeken": ["BB3"],
+   "tekst": {
+    "nl": "Een grote stad, bijna een metropool, aan de oostoever van de Dan. De corrupte burgemeester (de Gatmeister) liet zich door Zavac omkopen: de Reigers werden gevangengezet en hun schip in beslag genomen, en Lydia ontsnapte maar net aan slavernij.",
+    "en": "A large city, almost a metropolis, on the eastern bank of the Dan. The corrupt mayor (the Gatmeister) was bribed by Zavac: the Herons were imprisoned and their ship seized, and Lydia narrowly escaped being sold into slavery."
+   },
+   "feiten": [
+    [
+     {"nl":"Bestuur", "en":"Government"},
+     {
+      "nl": "De Gatmeister (corrupt, omgekocht door Zavac)",
+      "en": "The Gatmeister (corrupt, bribed by Zavac)"
+     }
+    ]
+   ]
+  },
+  {
+   "id": "byzantos",
+   "naam": {"nl":"Byzantos", "en":"Byzantos"},
+   "soort": "haven",
+   "gebied": "toscana",
+   "x": 284.82,
+   "y": 575.9,
+   "approx": 1,
+   "geenSnap": 1,
+   "serie": ["BB"],
+   "boeken": ["BB7"],
+   "z": 4,
+   "tekst": {
+    "nl": "Een jonge, energieke stadstaat aan de Gouden Reikwijdte, gesticht door Constantus de Eerste toen het Toscaanse rijk te groot werd voor één heerser. Aan drie kanten door water beschermd en met dikke muren versterkt. Hier ontmoetten de Reigers keizerin Justina.",
+    "en": "A young, energetic city-state on the Golden Reach, founded by Constantus the First when the Toscan Empire grew too large for one ruler. Protected on three sides by water and secured behind thick walls. Here the Herons met Empress Justina."
+   },
+   "feiten": [
+    [
+     {"nl":"Stichter", "en":"Founder"},
+     {"nl":"Constantus de Eerste", "en":"Constantus the First"}
+    ],
+    [
+     {"nl":"Heerser", "en":"Ruler"},
+     {"nl":"Keizerin Justina", "en":"Empress Justina"}
+    ]
    ]
   }
  ],
@@ -2028,7 +2090,7 @@
      [210.88,557.05],
      [216.56,577.26],
      "tabork",
-     [285.1,617.27],
+     [313.55,632.18],
      "schorpioenberg"
     ]
    ]
@@ -2073,5 +2135,89 @@
    },
    "benen": [["nog-toe-te-voegen-bb9"]]
   }
- ]
+ ],
+ "rivieroverrides": [
+  {
+   "id": "rivier-1",
+   "naam": {"nl":"Dan River", "en":"Dan River"},
+   "punten": [
+    [254.76,515.64],
+    [257.69,513.95],
+    [259.69,512.23],
+    [262.13,509.92],
+    [264.51,507.65],
+    [266.71,505.23],
+    [268.61,502.99],
+    [270.19,500.82],
+    [272.6,498.17],
+    [275.16,496.31],
+    [278.67,494.62],
+    [282.09,494.13],
+    [285.19,494.2],
+    [288.19,492.1],
+    [289.26,489.31],
+    [290.5,487.14],
+    [288.71,484.74],
+    [288.18,482.1],
+    [287.44,479.25],
+    [286.49,476.29],
+    [285.65,473.76],
+    [284.8,471.43],
+    [283.85,469.43],
+    [283.53,466.57],
+    [282.9,464.04],
+    [283.85,461.29],
+    [284.59,458.12],
+    [284.69,456.43],
+    [284.91,453.16],
+    [284.32,450.25],
+    [284.32,448.58],
+    [283.93,445.74],
+    [283.99,443.18],
+    [282.87,439.89],
+    [281.76,436.83],
+    [281.62,434.26],
+    [281.73,431.76],
+    [283.12,429.25],
+    [283.79,426.41],
+    [284.51,423.46],
+    [284.46,420.67],
+    [284.01,417.22],
+    [283.4,414.55],
+    [283.14,411.89],
+    [284.45,409.34],
+    [285.82,406.47],
+    [286.54,403.4],
+    [287.86,400.06],
+    [289.1,397.08],
+    [289.23,394.01],
+    [289.23,391.45],
+    [289.1,388.38],
+    [288.12,385.75],
+    [287.19,384.11],
+    [286.93,381.04],
+    [286.54,378.43],
+    [285.3,375.35],
+    [282.68,374.5],
+    [280.53,372.41],
+    [280.27,369.86],
+    [278.44,367.45],
+    [276.66,365.03],
+    [274.31,363.2],
+    [272,361.77],
+    [269.98,359.35],
+    [267.56,357.59],
+    [264.49,355.69],
+    [262.33,353.67],
+    [260.89,351.12],
+    [259.98,348.05],
+    [258.21,345.04],
+    [256.71,342.75],
+    [254.29,340.72],
+    [252.72,338.63],
+    [250.3,337.26]
+   ]
+  }
+ ],
+ "riviersuppressies": [{"x":89,"y":399,"straal":18},{"x":257,"y":465,"straal":18},{"x":263,"y":489,"straal":18}]
 }
