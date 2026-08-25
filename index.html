@@ -445,7 +445,7 @@ text{font-family:var(--font-map);paint-order:stroke fill;stroke:var(--halo);stro
 .route.on{opacity:.95}
 .route.on path:not(.end){animation:flow 1.6s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-18}}
-.routepunt{display:none;fill:var(--paper);stroke:var(--accent);stroke-width:1.4;r:2.4;
+.routepunt{display:none;fill:var(--paper);stroke:var(--accent);stroke-width:1.4;r:1.4;
   vector-effect:non-scaling-stroke;cursor:grab}
 body.zetten .routepunt{display:block}
 body.zetten .routepunt.pak{cursor:grabbing;fill:var(--accent)}
@@ -1354,7 +1354,7 @@ function bouwRoutepunten(){
       if(!Array.isArray(stap))return;
       const c=el("circle",{class:"routepunt",cx:stap[0],cy:stap[1]},gRoutepunten);
       c.addEventListener("pointerdown",e=>{
-        if(!zetten||actieveTool!=="select")return;
+        if(!zetten||!routePuntenAan())return;
         e.stopPropagation(); e.preventDefault();
         sleep={soort:"routepunt",been,stapIdx,c,bewogen:0};
         c.classList.add("pak");
@@ -1412,8 +1412,9 @@ function maakMarker(p){
      stap in de route, in plaats van een los coördinaat. */
   g.addEventListener("click",e=>{
     e.stopPropagation();
+    if(gesleept())return;
     if(zetten&&routePuntenAan()){routeKlik(p.id,null); return;}
-    if(!zetten&&!gesleept())kies(p.id);
+    if(!zetten)kies(p.id);
   });
   g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();kies(p.id);}});
   g.addEventListener("pointerdown",e=>{
