@@ -1,0 +1,32 @@
+{
+  "name": "Araluen & the Known World",
+  "short_name": "Araluen",
+  "description": "An interactive, searchable map of the Ranger's Apprentice & Brotherband world, with per-book travel routes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#DCDDD2",
+  "theme_color": "#DCDDD2",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

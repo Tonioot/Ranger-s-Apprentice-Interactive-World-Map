@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kompasroos">
+  <title>Araluen &amp; de Bekende Wereld</title>
+  <!-- Kompasroos in perkament en inkt: dezelfde tekening als de roos op de
+       kaart zelf, op een ronde perkamenten schijf. De noordpunt is roodbruin
+       (de accentkleur van de kaart), zodat het icoon ook heel klein nog leest als een kompas en
+       niet als een grijze vlek. De rasterversies staan in favicon.ico en
+       icon-*.png; op 16 en 24 px vervallen daar de ringen en de tussenpunten,
+       anders lopen die dicht. -->
+  <circle cx="32" cy="32" r="31.5" fill="#DCDDD2" stroke="#B7BAAC" stroke-width="1"/>
+  <g transform="translate(32 32)">
+    <circle r="24.5" fill="none" stroke="#5A6159" stroke-width="1.5" opacity=".5"/>
+    <circle r="18" fill="none" stroke="#5A6159" stroke-width="1.1" opacity=".38"/>
+    <g transform="rotate(45)" opacity=".85">
+      <path d="M0-15.5-3.2 0 0 15.5Z" fill="#EAE7D9"/><path d="M0-15.5 3.2 0 0 15.5Z" fill="#5A6159"/>
+      <path d="M-15.5 0 0-3.2 15.5 0Z" fill="#EAE7D9"/><path d="M-15.5 0 0 3.2 15.5 0Z" fill="#5A6159"/>
+    </g>
+    <path d="M0-25-5.8 0 0 25Z" fill="#8A2F27"/><path d="M0-25 5.8 0 0 25Z" fill="#222A25"/>
+    <path d="M-25 0 0-5.8 25 0Z" fill="#EAE7D9"/><path d="M-25 0 0 5.8 25 0Z" fill="#222A25"/>
+    <circle r="3.2" fill="#DCDDD2" stroke="#222A25" stroke-width="1.4"/>
+  </g>
+</svg>

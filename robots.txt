@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# De bewerkstand en de ruwe data hoeven niet in de index; de inhoud
+# daaruit staat al als tekst op de pagina zelf.
+Disallow: /data.json
+Disallow: /world.svg
+
+Sitemap: https://ranger-apprentice-map.netlify.app/assets/sitemap.xml

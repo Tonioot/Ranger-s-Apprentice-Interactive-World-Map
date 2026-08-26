@@ -9,13 +9,29 @@
 <meta property="og:url" content="https://ranger-apprentice-map.netlify.app/">
 <meta property="og:title" content="Araluen & the Known World">
 <meta property="og:description" content="An interactive, searchable map of the Ranger's Apprentice & Brotherband world, with per-book travel routes. Fan project, not affiliated with John Flanagan.">
-<meta property="og:image" content="https://ranger-apprentice-map.netlify.app/og-preview.png">
+<meta property="og:image" content="https://ranger-apprentice-map.netlify.app/assets/og-preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Araluen & the Known World">
 <meta name="twitter:description" content="An interactive, searchable map of the Ranger's Apprentice & Brotherband world, with per-book travel routes.">
-<meta name="twitter:image" content="https://ranger-apprentice-map.netlify.app/og-preview.png">
+<meta name="twitter:image" content="https://ranger-apprentice-map.netlify.app/assets/og-preview.png">
+<link rel="canonical" href="https://ranger-apprentice-map.netlify.app/">
+<link rel="alternate" hreflang="en" href="https://ranger-apprentice-map.netlify.app/">
+<link rel="alternate" hreflang="nl" href="https://ranger-apprentice-map.netlify.app/?lang=nl">
+<link rel="alternate" hreflang="x-default" href="https://ranger-apprentice-map.netlify.app/">
+<meta property="og:site_name" content="Araluen &amp; the Known World">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="nl_NL">
+<meta property="og:image:alt" content="A hand-drawn style map of Araluen and the surrounding kingdoms.">
+<meta name="twitter:image:alt" content="A hand-drawn style map of Araluen and the surrounding kingdoms.">
+<meta name="author" content="Tom van Eeuwen">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/assets/site.webmanifest">
+<meta name="theme-color" content="#DCDDD2" media="(prefers-color-scheme:light)">
+<meta name="theme-color" content="#151B18" media="(prefers-color-scheme:dark)">
 <meta name="google-site-verification" content="J2SXFPTUf8tZzIywQ81mc69N-2mHVKIpww5EzObU8kw" />
 <style>
 :root{
@@ -63,6 +79,14 @@
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
 }
 *{box-sizing:border-box}
+/* De inhoud uit data.json staat ook als gewone tekst in de pagina, voor
+   zoekmachines en voor bezoek zonder JavaScript. De kaart is de interface,
+   dus die tekst blijft buiten beeld -- met clip in plaats van display:none,
+   want dat laatste telt bij Google minder zwaar mee. Het blok wordt door
+   seo.py gegenereerd; wijzig de tekst in data.json, niet hier. */
+.seo-tekst{position:absolute;width:1px;height:1px;margin:-1px;padding:0;
+  overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;
+  border:0}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-ui);
   font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow:hidden}
 button,input{font:inherit;color:inherit}
@@ -518,6 +542,277 @@ body.zetten .routepunt.pak{cursor:grabbing;fill:var(--accent)}
   }catch(e){}
 })();
 </script>
+<!-- seo:jsonld -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://ranger-apprentice-map.netlify.app/#website",
+  "url": "https://ranger-apprentice-map.netlify.app/",
+  "name": "Araluen & the Known World",
+  "description": "An interactive, searchable map of the Ranger's Apprentice and Brotherband world, with per-book travel routes.",
+  "inLanguage": [
+    "en",
+    "nl"
+  ],
+  "isFamilyFriendly": true,
+  "keywords": "Castle Redmont, Castle Araluen, Castle Macindaw, Norgate, Caraway, Gorlan, Seacliff, Plains of Uthal, Hackham Heath, Grimsdell Wood, Wensley, Cresthaven, Thorntree Forest, Western Woodlands, The Fens, Solitary Plains, Three Step Pass, Morgarath's Plateau, The Fissure, South Cliffs, West Cliffs, North Cliffs, East Cliffs, Dun Kilty, Craikennis, Mountshannon, Hallasholm, The hunting cabin in the highlands, The mountain pass above Hallasholm, Skorghijl, La Rivage, Château Montsombre, Socorro, Tabork, Al Shabah, Mararoc, Maashava, Scorpion Mountain, The territory of the Bedullin, Iwanai",
+  "genre": "Fan map",
+  "about": [
+    {
+      "@type": "BookSeries",
+      "name": "Ranger's Apprentice",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "BookSeries",
+      "name": "Brotherband",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    }
+  ],
+  "mentions": [
+    {
+      "@type": "Book",
+      "name": "The Ruins of Gorlan",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Burning Bridge",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Icebound Land",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Battle for Skandia",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Sorcerer of the North",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Siege of Macindaw",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Erak's Ransom",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Kings of Clonmel",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Halt's Peril",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Emperor of Nihon-Ja",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Lost Stories",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Royal Ranger",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Tournament at Gorlan",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Battle of Hackham Heath",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Red Fox Clan",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Duel at Araluen",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Missing Prince",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Escape from Falaise",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Arazan's Wolves",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Ambush at Sorato",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Outcasts",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Invaders",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Hunters",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Slaves of Socorro",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Scorpion Mountain",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Ghostfaces",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Caldera",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "Return of the Temujai",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    },
+    {
+      "@type": "Book",
+      "name": "The Stern Chase",
+      "author": {
+        "@type": "Person",
+        "name": "John Flanagan"
+      }
+    }
+  ]
+}
+</script>
+<!-- /seo:jsonld -->
 </head>
 <body>
 <div class="app">
@@ -820,6 +1115,13 @@ const GEO={vw:VW,vh:VH,vormen:leesSvg(svgTekst)};
    hoeft te weten dat een veld tweetalig is. Standaard Engels; het onthouden
    gebeurt net als bij het thema in localStorage. */
 const TAAL=(()=>{
+  /* ?lang=nl wint van de bewaarde keuze: die URL staat als hreflang in de
+     head, dus een zoekmachine of een gedeelde link moet er ook echt de
+     Nederlandse kaart mee krijgen. */
+  try{
+    const p=new URLSearchParams(location.search).get("lang");
+    if(p==="nl"||p==="en")return p;
+  }catch(e){}
   try{
     const o=localStorage.getItem("gj-taal");
     if(o==="nl"||o==="en")return o;
@@ -3748,5 +4050,965 @@ try{
   matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>setTimeout(startGrond,80));
 }catch(e){}
 </script>
+<div class="seo-tekst" aria-hidden="true">
+<!-- seo:tekst -->
+<section lang="en">
+<h2>The known world</h2>
+<p>Every place, country and sea on this map, with the books they appear in. The map itself is interactive — this list is the same content as plain text.</p>
+<h3>Countries and regions</h3>
+<article><h4>Alpina</h4>
+<p>The high mountain range that separates the north from the south. The passes freeze shut in winter; anyone wanting to go south from Gallica then must wait for spring or sail around.</p>
+</article>
+<article><h4>Araluen</h4>
+<p>The kingdom of King Duncan, divided into fifty fiefs each ruled by a baron. Its defense rests on three pillars: the barons' armies, the Battleschools that train knights, and the Ranger Corps — fifty scouts with a mottled cloak, a double quiver, and a reputation far bigger than their numbers.</p>
+</article>
+<article><h4>Arrida</h4>
+<p>The desert land south of the Constant Sea, ruled by an emir with wakirs as governors. Order and trade rule in the cities; beyond them the Bedullin nomads and the feared Tualaghi hold sway. Anyone who enters the desert without a guide or a sworn friend does not come out.</p>
+</article>
+<article><h4>Aslava</h4>
+<p>A vast land east of Teutlandt and Alpina, merging into the plains the Temujai come from. Anyone traveling east by land passes through here.</p>
+</article>
+<article><h4>Baralat</h4>
+<p>The land at the eastern end of the Constant Sea, bordering Arrida. Just inside that border lies the Amrashin massif, close to the mouth of the Assaranyan Canal.</p>
+</article>
+<article><h4>Celtica</h4>
+<p>The mountainous southwest of the island, bound to Araluen by a mutual defense treaty. The Celts are miners and stonemasons, not soldiers — when Morgarath emptied their villages to build his bridge, they could do little to stop him.</p>
+</article>
+<article><h4>Eastern Steppes</h4>
+<p>The plains in the far east, beyond Aslava: the land of the Temujai. They fight on horseback and with the bow, and swept west from here until they were stopped in Skandia.</p>
+</article>
+<article><h4>Gallica</h4>
+<p>South of the Stormwhite Sea. There is a king in name, but power lies with warlords who each hold their own castle, road, and toll. For travelers, Gallica is therefore the most dangerous land in the west — and the standard escape route for anyone fleeing Araluen.</p>
+</article>
+<article><h4>Helleno</h4>
+<p>The land in the northeast of the Constant Sea. In the books it isn't a continuous coastline but a remote island group. Many Hellenics live by piracy; they stand out with brightly colored clothes and jewelry that clashes wildly. They worship the goddess Ariadne.</p>
+</article>
+<article><h4>Hibernia</h4>
+<p>The island west of Araluen, split into six kingdoms that would rather distrust each other than cooperate. That very division is what the Outsiders cult exploited, kingdom after kingdom. Halt was born here, in Clonmel.</p>
+</article>
+<article><h4>Iberion</h4>
+<p>The peninsula in the southwest. Anyone sailing south from the north toward Arrida or the Constant Sea rounds this coast first.</p>
+</article>
+<article><h4>Indus</h4>
+<p>The land in the far east, between the western kingdoms and Nihon-Ja. Anyone sailing east passes this coast.</p>
+</article>
+<article><h4>Middle Kingdoms</h4>
+<p>The kingdoms between Ursali and the east. When the Temujai first swept west, they were overrun early, together with Ursali.</p>
+</article>
+<article><h4>Mountains of Rain and Night</h4>
+<p>The inhospitable mountain range in the south, behind Morgarath's Plateau. Morgarath withdrew here after his defeat, with his army of Wargals — beast-like warriors who receive his will directly from his thoughts. The region is cut off from Araluen by the Fissure; the only way through is Three Step Pass.</p>
+</article>
+<article><h4>Nihon-Ja</h4>
+<p>The island empire in the far east, half a year's sailing from Araluen. The land is ruled by Emperor Shigeru and defended by the Senshi, a warrior class that fights with the long sword and holds to a strict code of honor. When the Senshi lord Arisaka seizes power, the emperor flees into the mountains, to the hidden fortress of Ran-Koshi — where the Kikori, woodcutters with no fighting experience, learn to fight in close formation.</p>
+</article>
+<article><h4>Picta</h4>
+<p>Rugged highlands in the north of the island, the land of the Scotti clans. They raid the northern fiefs whenever the border strongholds weaken — hence the ring of castles of which Macindaw is one.</p>
+</article>
+<article><h4>Skandia</h4>
+<p>The northern seafaring land on the Stormwhite Sea. Skandians sail wolfships, fight with the heavy battleaxe, and long lived off raiding — until the treaty with Araluen, forged after the joint fight against the Temujai, made them allies. The Oberjarl stands at their head.</p>
+</article>
+<article><h4>Sonderland</h4>
+<p>The forested land west of Skandia, on the passage between the open ocean and the Stormwhite Sea. Anyone sailing from Araluen to Hallasholm passes this way.</p>
+</article>
+<article><h4>Teutlandt</h4>
+<p>The land east of the Stormwhite Sea, which Halt and Horace crossed on their way to the Skandian coast.</p>
+</article>
+<article><h4>Toscana</h4>
+<p>A southern land of city-states, traders and marble, famous for its legions: professional soldiers who fight shield to shield in close formation. That style of fighting is held up as the standard across the known world.</p>
+</article>
+<article><h4>Ursali</h4>
+<p>The land at the center of the continent, between Aslava and Alpina in the west and the Eastern Steppes in the east. The Ursali kept only a small army, and when the Temujai swept west their land was one of the first to fall — together with the Middle Kingdoms. What was told of their defeat traveled ahead of the Temujai.</p>
+</article>
+<h3>Places on the map</h3>
+<article><h4>Al Shabah</h4>
+<p>Village or town · Arrida</p>
+<p>The city of Wakir Selethen, the Arridi commander who first opposes and then allies with Halt in the hunt for the Tualaghi.</p>
+<p>Erak's Ransom</p>
+</article>
+<article><h4>Bayrath</h4>
+<p>Village or town · Toscana</p>
+<p>A large city, almost a metropolis, on the eastern bank of the Dan. The corrupt mayor (the Gatmeister) was bribed by Zavac: the Herons were imprisoned and their ship seized, and Lydia narrowly escaped being sold into slavery.</p>
+<p>The Hunters</p>
+</article>
+<article><h4>Byzantos</h4>
+<p>Harbour town · Toscana</p>
+<p>A young, energetic city-state on the Golden Reach, founded by Constantus the First when the Toscan Empire grew too large for one ruler. Protected on three sides by water and secured behind thick walls. Here the Herons met Empress Justina.</p>
+<p>The Caldera</p>
+</article>
+<article><h4>Caraway</h4>
+<p>Castle · Araluen</p>
+<p>A fief in the northeast, with its own Battleschool.</p>
+<p>The Royal Ranger, Duel at Araluen</p>
+</article>
+<article><h4>Castle Araluen</h4>
+<p>Castle · Araluen</p>
+<p>The royal stronghold: slender white towers, sprawling gardens, and the seat of King Duncan. Princess Cassandra grows up here — the girl Will knew in Skandia as Evanlyn. In the Royal Ranger books the castle is besieged by the Red Fox Clan.</p>
+<p>The Ruins of Gorlan, The Burning Bridge, Erak's Ransom, The Royal Ranger, The Red Fox Clan, Duel at Araluen</p>
+</article>
+<article><h4>Castle Macindaw</h4>
+<p>Castle · Araluen</p>
+<p>A border stronghold on the edge of Picta, built to keep the Scotti out. When the castle fell into enemy hands through treachery, Will infiltrated it as the traveling juggler Will Barton, and recaptured it with the help of Malcolm, Alyss and the Skandian Gundar.</p>
+<p>The Sorcerer of the North, The Siege of Macindaw</p>
+</article>
+<article><h4>Castle Redmont</h4>
+<p>Castle · Araluen</p>
+<p>The red castle of Baron Arald, and Will's home. Redmont has a Battleschool under Battlemaster Rodney, a kitchen ruled by Master Chubb, and a courier service under Lady Pauline. Just outside the walls, at the edge of the forest, stands the Ranger's cabin: here Halt takes the orphan Will as his apprentice.</p>
+<p>The Ruins of Gorlan, The Burning Bridge, Erak's Ransom, Halt's Peril, The Lost Stories, The Royal Ranger</p>
+</article>
+<article><h4>Château La Lumière</h4>
+<p>Castle · Gallica</p>
+<p>The Gallican capital and seat of King Philippe, who deposed the weak King Henri nine years earlier. Despite its elegant name it is just as heavily fortified as Montsombre and Falaises. From here Philippe travels to Castle Araluen to beg King Duncan to free his son Giles.</p>
+<p>The Missing Prince, Escape from Falaise</p>
+</article>
+<article><h4>Château Montsombre</h4>
+<p>Castle · Gallica</p>
+<p>The black castle of the warlord Deparnieux, who left his prisoners to die in cages along the road. He held Halt and Horace as 'guests' for months, until Horace defeated him in single combat — and left the castle to Halt, who passed it on to its people.</p>
+<p>The Icebound Land</p>
+</article>
+<article><h4>Château des Falaises</h4>
+<p>Castle · Gallica</p>
+<p>The coastal stronghold of Baron Joubert de Lassigny, who holds Prince Giles captive and conspires against King Philippe with his brother Louis. Will and Maddie infiltrate it as jongleurs but are unmasked and imprisoned; in the next book they manage to escape and free the prince after all.</p>
+<p>The Missing Prince, Escape from Falaise</p>
+</article>
+<article><h4>Craikennis</h4>
+<p>Village or town · Hibernia</p>
+<p>A village in Clonmel that Halt, Will and Horace helped defend against a band of raiders. The attack had been staged by the Outsiders cult, who terrorize villages first so they can sell them 'protection' afterward.</p>
+<p>The Kings of Clonmel</p>
+</article>
+<article><h4>Cresthaven</h4>
+<p>Harbour town · Araluen</p>
+<p>The bay given to Hal Mikkelson and the crew of the Heron as their home port when they were sent to Araluen as a 'duty ship' — a Skandian vessel that, under the treaty, patrols the Araluen coast for a year.</p>
+<p>Slaves of Socorro</p>
+</article>
+<article><h4>Dan River</h4>
+<p>River · Toscana</p>
+<p>A great river that cuts through Toscana from north to south, from the Stormwhite coast to near the Constant Sea. Along its banks, from source to mouth, lie Krall, Bayrath and Raguza. Here the Herons pursued the pirate Zavac after the attack on Limmat, bypassing a dangerous set of rapids via a side channel along the way.</p>
+<p>The Hunters</p>
+</article>
+<article><h4>Dun Kilty</h4>
+<p>Castle · Hibernia</p>
+<p>The capital of Clonmel, one of the six kingdoms of Hibernia. King Ferris rules here — Halt's twin brother. Halt was the elder and thus heir to the throne, but gave up his claim after Ferris twice tried to have him killed.</p>
+<p>The Kings of Clonmel</p>
+</article>
+<article><h4>East Cliffs</h4>
+<p>Mountains of Rain and Night</p>
+<p>The eastern cliff edge of the mountains, above the sea.</p>
+</article>
+<article><h4>Genovesa</h4>
+<p>Village or town · Toscana</p>
+<p>An independent Toscan city-state, notorious for its assassins: master knife-fighters who carry multiple blades. In Halt's Peril, Tennyson hires Genovesan assassins to eliminate Halt, Will and Horace; in Ambush at Sorato, Will instead recruits Genovesan crossbowmen for the fight against the Temujai. The city itself never appears on-page, only its hired hands.</p>
+<p>Halt's Peril, Ambush at Sorato</p>
+</article>
+<article><h4>Gorlan</h4>
+<p>Ruin · Araluen</p>
+<p>Once Morgarath's fief, until he rose in rebellion against the crown. Since his defeat the castle lies in ruins and the local farmers avoid the area. Fifteen years earlier, Morgarath's first bid for power also began on the tournament field at Gorlan.</p>
+<p>The Ruins of Gorlan, The Tournament at Gorlan</p>
+</article>
+<article><h4>Grimsdell Wood</h4>
+<p>Araluen</p>
+<p>A misty, twisted wood near Macindaw, where the villagers fear the sorcerer Malkallam. In truth that's Malcolm: a brilliant healer who uses light, smoke and sound to impress people into leaving him alone. His knowledge of herbs and poison later saves Halt's life.</p>
+<p>The Sorcerer of the North, The Siege of Macindaw, Halt's Peril</p>
+</article>
+<article><h4>Hackham Heath</h4>
+<p>Battlefield · Araluen</p>
+<p>The battlefield of the first war against Morgarath, fifteen years before Will's apprenticeship. Will's father Daniel died here in an attack that saved Halt's life — the reason Halt later kept an eye on the orphaned boy.</p>
+<p>The Battle of Hackham Heath</p>
+</article>
+<article><h4>Hallasholm</h4>
+<p>Harbour town · Skandia</p>
+<p>The capital of Skandia on the Stormwhite Sea: a wooden Great Hall, a harbor full of wolfships, and a beach where Brotherband training begins every summer — three crews of boys competing for the right to sail as warriors. Here the smallest crew, Hal Mikkelson's Herons, comes into its own; here Will and Evanlyn were once held as slaves.</p>
+<p>The Icebound Land, The Battle for Skandia, The Outcasts, Return of the Temujai</p>
+</article>
+<article><h4>Ito</h4>
+<p>Castle · Nihon-Ja</p>
+<p>The capital of Nihon-Ja and the seat of Emperor Shigeru, with the great winter palace where the court spends the cold season. This is where the rebellion begins: the Senshi lord Arisaka rises up because the emperor means to grant the lower classes — the Kikori woodcutters chief among them — the same rights as the warrior class. Shigeru is forced to flee Ito and heads into the mountains with a small household, making for Ran-Koshi.</p>
+<p>The Emperor of Nihon-Ja</p>
+</article>
+<article><h4>Iwanai</h4>
+<p>Harbour town · Nihon-Ja</p>
+<p>The port town where Halt, Will, Evanlyn and Alyss came ashore in search of Horace, who had become caught up in the civil war in Nihon-Ja.</p>
+<p>The Emperor of Nihon-Ja</p>
+</article>
+<article><h4>Kawagishi</h4>
+<p>Harbour town · Nihon-Ja</p>
+<p>A fishing village on the northeastern coast, where the boats are hauled up onto the beach and timber from the mountains is shipped out. It lies on the road Emperor Shigeru and his party follow when, after the fall of Ito, they travel north along the coast in search of the hidden fortress of Ran-Koshi. For the Kikori, Kawagishi is where their timber goes out to sea.</p>
+<p>The Emperor of Nihon-Ja</p>
+</article>
+<article><h4>Krall</h4>
+<p>Harbour town · Toscana</p>
+<p>A settlement on the northern upper reaches of the Dan, where the Herons put in for supplies during the chase after Zavac. An informant told them about Zavac's route here, but was overheard; their prisoner Rikard was murdered and Hal had to prove the Herons weren't responsible.</p>
+<p>The Hunters</p>
+</article>
+<article><h4>La Rivage</h4>
+<p>Harbour town · Gallica</p>
+<p>The Gallican port town where Halt and Horace came ashore on their journey to Skandia to free Will. Gallica has no strong king: the land is divided among warlords who each tax their own stretch of road and river.</p>
+<p>The Icebound Land</p>
+</article>
+<article><h4>Land of the Mawagansett</h4>
+<p>Far across the Endless Ocean, a storm drove the Heron to a wooded, unknown shore. The crew was taken in by the Mawagansett — a hospitable fishing people raided every year by the dreaded Ghostfaces.</p>
+<p>The Ghostfaces</p>
+</article>
+<article><h4>Les Sourges</h4>
+<p>Village or town · Gallica</p>
+<p>A river town near La Rivage, with a wooden bridge and a ferry that runs most of the year. Will and Maddie pass through here as jongleurs on their way into the Gallican interior.</p>
+<p>The Missing Prince</p>
+</article>
+<article><h4>Limmat</h4>
+<p>Harbour town · Skandia</p>
+<p>A prosperous trading town that lives off its emerald mine. The pirate Zavac seized the town with his ship the Raven; the Herons helped organize its defense and drove him off.</p>
+<p>The Invaders</p>
+</article>
+<article><h4>Maashava</h4>
+<p>Village or town · Arrida</p>
+<p>The walled city of the Tualaghi, the blue-veiled desert raiders everyone fears. Erak was held prisoner here, and here Halt, Will, Horace, Evanlyn and Selethen freed him.</p>
+<p>Erak's Ransom</p>
+</article>
+<article><h4>Mararoc</h4>
+<p>Village or town · Arrida</p>
+<p>The capital of Arrida, seat of the emir, where negotiations over Erak's ransom begin — until it turns out the Oberjarl is no longer in the hands of the people being negotiated with.</p>
+<p>Erak's Ransom</p>
+</article>
+<article><h4>Mizu Umi Bakudai</h4>
+<p>Landscape · Nihon-Ja</p>
+<p>A large mountain lake in northern Nihon-Ja, its name reading as “the vast lake”. The water lies among the wooded slopes where the Kikori cut their timber, on the route the emperor's party follows to the hidden fortress of Ran-Koshi. In winter the shores freeze over and ice drifts on the lake.</p>
+<p>The Emperor of Nihon-Ja</p>
+</article>
+<article><h4>Morgarath's Plateau</h4>
+<p>Mountains of Rain and Night</p>
+<p>The bare plateau before the Mountains of Rain and Night, where Morgarath massed his Wargals.</p>
+<p>The Ruins of Gorlan, The Burning Bridge</p>
+</article>
+<article><h4>Mountshannon</h4>
+<p>Ruin · Hibernia</p>
+<p>The village that didn't pay. The Outsiders' bandits left nothing standing — proof that behind Prophet Tennyson's pious talk lies plain extortion and murder.</p>
+<p>The Kings of Clonmel</p>
+</article>
+<article><h4>Norgate</h4>
+<p>Castle · Araluen</p>
+<p>The northern fief that Macindaw belongs to, and the castle that guards the way into Picta.</p>
+<p>The Sorcerer of the North, The Siege of Macindaw</p>
+</article>
+<article><h4>North Cliffs</h4>
+<p>Mountains of Rain and Night</p>
+<p>The steep northern edge of Morgarath's territory, where the plateau drops away toward Araluen.</p>
+</article>
+<article><h4>Northern Mountains</h4>
+<p>Nihon-Ja</p>
+<p>The high range that covers almost the whole north of Nihon-Ja: steep walls, narrow valleys and peaks that lie under snow the year round. The Kikori live on the wooded slopes, making their living from timber; higher still the Hasanu, a taciturn mountain people the Senshi dismiss as barely human, but who know the passes better than anyone. Ran-Koshi lies hidden somewhere in these mountains, and it is the winter freezing the passes shut that gives Shigeru's followers time to turn woodcutters into an army.</p>
+<p>The Emperor of Nihon-Ja</p>
+</article>
+<article><h4>Palladio</h4>
+<p>Harbour town · Toscana</p>
+<p>A large coastal city in southern Toscana, on the Constant Sea. Palladio itself never appears in the story; the name only surfaces in a song Crowley and Halt quote ("A blacksmith from Palladio, he met a lovely lady").</p>
+</article>
+<article><h4>Plains of Uthal</h4>
+<p>Battlefield · Araluen</p>
+<p>The open field where the Araluen army met the Wargals pouring down from the mountains. When Morgarath demanded single combat, Horace took up the challenge — and killed him.</p>
+<p>The Burning Bridge</p>
+</article>
+<article><h4>Raguza</h4>
+<p>Harbour town · Toscana</p>
+<p>A lawless port town at the southern end of the Dan, ruled by a council of pirate captains (the Korpal): anyone who brings in enough plunder and keeps the house rules is welcome. Ships pay a ten percent toll here. Here the Herons finally tracked Zavac down.</p>
+<p>The Hunters</p>
+</article>
+<article><h4>Ran-Koshi</h4>
+<p>Castle · Nihon-Ja</p>
+<p>A forgotten fortress in a mountain valley, with a narrow approach between steep rock walls. Shigeru's followers dig in here while Horace and Will forge the Kikori woodcutters into an army that learns to fight in close formation.</p>
+<p>The Emperor of Nihon-Ja</p>
+</article>
+<article><h4>Rovo</h4>
+<p>Ruin · Toscana</p>
+<p>The capital of the ancient Rovo empire, the predecessor civilization of Toscana, which reached its height under Emperor Coltonus the Great. Rovo itself is never visited as a location in a story; it is background history that explains Toscan culture (legions, city-states). Position on this map is a rough guess.</p>
+</article>
+<article><h4>Santorillos</h4>
+<p>Village or town</p>
+<p>A volcanic island in the Constant Sea, close to Byzantos, with a nearly impregnable fortress on the rim of an extinct volcanic crater. Hideout of the corsair Myrgos and his ship the Vulture. Here the Herons had to protect the young heir against the pirates operating out of the crater.</p>
+<p>The Caldera</p>
+</article>
+<article><h4>Scorpion Mountain</h4>
+<p>Arrida</p>
+<p>The rocky sanctuary of the Scorpion cult: assassins who kill with a poison only they know the antidote for. After Cassandra was struck by one of their killers, the Herons had to seek the cult out in its own mountain.</p>
+<p>Scorpion Mountain</p>
+</article>
+<article><h4>Seacliff</h4>
+<p>Castle · Araluen</p>
+<p>A small island fief off the east coast: Will's first posting as a fully-fledged Ranger. Quiet, remote and — to his frustration — with almost no work for a Ranger.</p>
+<p>The Sorcerer of the North</p>
+</article>
+<article><h4>Skorghijl</h4>
+<p>A bare, misty rocky island with a sheltered crater harbor, where wolfships ride out the autumn storms. Will and Evanlyn spent weeks here aboard Erak's ship Wolfwind.</p>
+<p>The Icebound Land</p>
+</article>
+<article><h4>Socorro</h4>
+<p>Harbour town · Arrida</p>
+<p>An Arridi port town notorious for its slave market. When Tursgud raided a village on the Araluen coast and sold its people here, Hal and the Herons rescued them together with the Ranger Gilan.</p>
+<p>Slaves of Socorro</p>
+</article>
+<article><h4>Solitary Plains</h4>
+<p>Araluen</p>
+<p>An empty, marshy area in the southwest of Araluen.</p>
+</article>
+<article><h4>Sorato</h4>
+<p>Village or town · Toscana</p>
+<p>A valley in northern Toscana, where Will and Maddie set a trap for a Temujai reconnaissance force that has crossed the border. Will brings in Genovesans as crossbowmen to help close the trap.</p>
+<p>Ambush at Sorato</p>
+</article>
+<article><h4>South Cliffs</h4>
+<p>Mountains of Rain and Night</p>
+<p>The steep southern coast below the mountains.</p>
+</article>
+<article><h4>Summer Palace</h4>
+<p>Castle · Nihon-Ja</p>
+<p>Emperor Shigeru's summer residence, a lighter and more open building than the winter palace at Ito. Shigeru likes to withdraw here, away from the court; it is precisely this taste for life outside the capital that leaves him exposed when Arisaka strikes. The palace is built of wood and paper, with sliding walls that open onto the gardens — handsome to look at, but impossible to defend against a Senshi army.</p>
+<p>The Emperor of Nihon-Ja</p>
+</article>
+<article><h4>Tabork</h4>
+<p>Harbour town · Arrida</p>
+<p>A port town on the Arridi coast, a port of call for the Herons on their search for the antidote for Cassandra.</p>
+<p>Scorpion Mountain</p>
+</article>
+<article><h4>The Fens</h4>
+<p>Araluen</p>
+<p>Boggy lowland along the east coast; hard to cross and sparsely settled.</p>
+</article>
+<article><h4>The Fissure</h4>
+<p>Battlefield · Araluen</p>
+<p>The deep chasm that separates Araluen from Morgarath's territory. Here Morgarath secretly had a bridge built to bring his Wargals up behind the Araluen army. Will and Horace burned the bridge down — and were then captured by Skandian raiders.</p>
+<p>The Burning Bridge</p>
+</article>
+<article><h4>The hunting cabin in the highlands</h4>
+<p>Skandia</p>
+<p>High in the mountains above Hallasholm, Will and Evanlyn found an abandoned hunting cabin where they spent the winter. Here Evanlyn helped Will get clean from the numbing drug the Skandians gave the slaves in the great shed.</p>
+<p>The Icebound Land, The Battle for Skandia</p>
+</article>
+<article><h4>The mountain pass above Hallasholm</h4>
+<p>Battlefield · Skandia</p>
+<p>When the Temujai horde invaded Skandia, Skandians and Araluens had to fight side by side for the first time. Halt and Will drilled a corps of archers and Erak chose the ground: a pass where the Temujai couldn't use their cavalry tactics.</p>
+<p>The Battle for Skandia</p>
+</article>
+<article><h4>The territory of the Bedullin</h4>
+<p>Arrida</p>
+<p>The open desert of the Bedullin: nomads with swift horses and a strict code of hospitality. Whoever becomes their sworn friend has allies for life.</p>
+<p>Erak's Ransom</p>
+</article>
+<article><h4>Thorntree Forest</h4>
+<p>Araluen</p>
+<p>The dense forest east of Gorlan, between Hackham Heath and the Plains of Uthal.</p>
+</article>
+<article><h4>Three Step Pass</h4>
+<p>Mountains of Rain and Night</p>
+<p>The only way through between Araluen and Morgarath's Plateau: three successive steep steps cut into the rock. Whoever holds it seals off the mountains.</p>
+<p>The Ruins of Gorlan, The Burning Bridge</p>
+</article>
+<article><h4>Wensley</h4>
+<p>Village or town · Araluen</p>
+<p>The village at the foot of Redmont's hill, with an inn, a market, and the fields where the fief's people live. For Will, this is the first inhabited world outside the castle.</p>
+<p>The Ruins of Gorlan, The Burning Bridge</p>
+</article>
+<article><h4>West Cliffs</h4>
+<p>Mountains of Rain and Night</p>
+<p>The cliffs along the Fissure, on the west side of the mountains.</p>
+</article>
+<article><h4>Western Woodlands</h4>
+<p>Araluen</p>
+<p>A vast wooded area in the west of Araluen, between Redmont and the Celtic border.</p>
+</article>
+<h3>Seas and oceans</h3>
+<article><h4>Blood Sea</h4>
+<p>The sea in the southeast, east of Arrida and the territory of the Tualaghi, south of that of the Temujai. The Assaranyan Canal — dug in ancient times by the Assaranyans — connects it to the Constant Sea. Anyone sailing to Nihon-Ja passes through here and then out onto the Eastern Ocean.</p>
+</article>
+<article><h4>Constant Sea</h4>
+<p>The sea in the south, between Iberion, Toscana and the coast of Arrida. Santorillos lies on this coast.</p>
+</article>
+<article><h4>Eastern Ocean</h4>
+<p>The open ocean east of Nihon-Ja. None of the journeys on this map venture farther than the coast.</p>
+</article>
+<article><h4>Endless Ocean</h4>
+<p>The ocean west of Araluen and Iberion. In Brotherband 6 a storm drives the Heron out onto this ocean, away from any known coast.</p>
+</article>
+<article><h4>Frozen Sea</h4>
+<p>The ice sea north of Skandia. Pack ice drifts here and the water is frozen solid for most of the year; only in summer is there briefly open water.</p>
+</article>
+<article><h4>Narrow Sea</h4>
+<p>The strait between Araluen and the mainland of Gallica and Iberion. Anyone sailing south from the island crosses it first.</p>
+</article>
+<article><h4>Sea of Rostov</h4>
+<p>The inland sea in the east, with Toscana, Aslava, Baralat and the Middle Kingdoms on its shores. According to tradition it connects to the Blood Sea via the Assaranyan Canal.</p>
+</article>
+<article><h4>Stormwhite Sea</h4>
+<p>The inland sea between Sonderland, Skandia, Teutlandt and Gallica. Hallasholm lies on this sea; anyone sailing here from Araluen anchors at Skorghijl along the way.</p>
+</article>
+<article><h4>Western Ocean</h4>
+<p>The open ocean north and west of the known world. None of the journeys on this map venture farther than the coast.</p>
+</article>
+<h3>Travel routes by book</h3>
+<article><h4>The Ruins of Gorlan (Ranger's Apprentice 1)</h4>
+<p>From Redmont to the ruins of Gorlan: Halt and Will follow the trail of the Kalkara.</p>
+</article>
+<article><h4>The Burning Bridge (Ranger's Apprentice 2)</h4>
+<p>Will, Horace and Evanlyn through Celtica to the Fissure; meanwhile the Araluen army marches to the Plains of Uthal.</p>
+</article>
+<article><h4>The Icebound Land (Ranger's Apprentice 3)</h4>
+<p>Will and Evanlyn are shipped across the Stormwhite Sea, via Skorghijl to Hallasholm; Halt and Horace cross the Narrow Sea to Gallica and travel on horseback to Castle Montsombre.</p>
+</article>
+<article><h4>The Battle for Skandia (Ranger's Apprentice 4)</h4>
+<p>Halt and Horace travel from Castle Montsombre through Teutlandt, over the mountain passes to Hallasholm; then Skandians and Araluens together hold the pass against the Temujai army.</p>
+</article>
+<article><h4>The Sorcerer of the North (Ranger's Apprentice 5)</h4>
+<p>Will leaves his post at Seacliff and travels north as a juggler, to Castle Macindaw.</p>
+</article>
+<article><h4>The Siege of Macindaw (Ranger's Apprentice 6)</h4>
+<p>The siege plays out between Grimsdell Wood and Castle Macindaw; Malcolm's forest becomes the base of operations.</p>
+</article>
+<article><h4>Erak's Ransom (Ranger's Apprentice 7)</h4>
+<p>Across the Narrow Sea, past the west of Iberion, to the coast of Arrida, then into the desert after the Tualaghi.</p>
+</article>
+<article><h4>The Kings of Clonmel (Ranger's Apprentice 8)</h4>
+<p>To Hibernia, where the Outsiders take over kingdom after kingdom: past Mountshannon and Craikennis to Dun Kilty.</p>
+</article>
+<article><h4>Halt's Peril (Ranger's Apprentice 9)</h4>
+<p>The pursuit of Tennyson leads by smuggler ship from Hibernia to the west coast of Picta; from there overland to Malcolm in Grimsdell, where Halt, struck by a poisoned arrow, is treated.</p>
+</article>
+<article><h4>The Emperor of Nihon-Ja (Ranger's Apprentice 10)</h4>
+<p>The longest journey in the series. From the Toscan coast it runs across the Constant Sea, through the Assaranyan Canal and the Blood Sea, then months eastward until Nihon-Ja comes into sight. Halt, Will, Evanlyn and Alyss come ashore at Iwanai, seek out Horace at the summer palace, and travel on through the coastal village of Kawagishi into the snowbound mountains, to the hidden fortress of Ran-Koshi.</p>
+</article>
+<article><h4>The Lost Stories (Ranger's Apprentice 11)</h4>
+<p>Loose stories from the Corps, mostly set around Redmont and Castle Araluen.</p>
+</article>
+<article><h4>The Royal Ranger (Ranger's Apprentice 12)</h4>
+<p>Maddie is posted from Castle Araluen to Will at Redmont; their first case takes them into the south of the fief.</p>
+</article>
+<article><h4>The Tournament at Gorlan (Early Years 1)</h4>
+<p>The young Halt and Crowley travel through Araluen to the tournament at Gorlan, where Morgarath makes his bid for power.</p>
+</article>
+<article><h4>The Battle of Hackham Heath (Early Years 2)</h4>
+<p>The war against Morgarath ends at Hackham Heath, where Will's father Daniel is killed.</p>
+</article>
+<article><h4>The Red Fox Clan (Ranger's Apprentice 13)</h4>
+<p>From Redmont to Castle Araluen, which is threatened by the Red Fox Clan.</p>
+</article>
+<article><h4>Duel at Araluen (Ranger's Apprentice 14)</h4>
+<p>The siege of Castle Araluen: Maddie rides back and forth between the besieged stronghold and the troops outside.</p>
+</article>
+<article><h4>The Missing Prince (Ranger's Apprentice 15)</h4>
+<p>Will and Maddie travel from Redmont and Castle Araluen across to Gallica, disguised as jongleurs. Via La Rivage and Les Sourges they head inland, past Château La Lumière, to Château des Falaises, where Baron Lassigny holds Prince Giles captive — but their rescue attempt fails and they are taken prisoner themselves.</p>
+</article>
+<article><h4>Escape from Falaise (Ranger's Apprentice 16)</h4>
+<p>Halt and Horace cross via Cresthaven to Gallica to aid Will and Maddie, who are held captive in Château des Falaises. Together they manage to escape and free Prince Giles after all; Baron Lassigny falls in the fighting. They then bring the prince to his father at Château La Lumière.</p>
+</article>
+<article><h4>Arazan's Wolves (Ranger's Apprentice 17)</h4>
+<p>Route not yet on the map: the locations from this book still need to be added.</p>
+</article>
+<article><h4>Ambush at Sorato (Ranger's Apprentice 18)</h4>
+<p>Route not yet on the map: the locations from this book still need to be added.</p>
+</article>
+<article><h4>The Outcasts (Brotherband 1)</h4>
+<p>Brotherband training along the Skandian coast at Hallasholm, where the Herons learn to sail their ship.</p>
+</article>
+<article><h4>The Invaders (Brotherband 2)</h4>
+<p>The hunt for Zavac takes the Heron halfway around the west, all the way to Limmat.</p>
+</article>
+<article><h4>The Hunters (Brotherband 3)</h4>
+<p>From Limmat further out onto the Constant Sea, to the pirate haven of Raguza.</p>
+</article>
+<article><h4>Slaves of Socorro (Brotherband 4)</h4>
+<p>As duty ship to Cresthaven in Araluen, and from there after the slave traders to Socorro.</p>
+</article>
+<article><h4>Scorpion Mountain (Brotherband 5)</h4>
+<p>With the antidote for Cassandra at stake: from Araluen to the Arridi coast and into the interior.</p>
+</article>
+<article><h4>The Ghostfaces (Brotherband 6)</h4>
+<p>A storm drives the Heron out onto the Endless Ocean, toward an unknown shore in the west.</p>
+</article>
+<article><h4>The Caldera (Brotherband 7)</h4>
+<p>South, out onto the Constant Sea, to protect the heir of the island state of Santorillos.</p>
+</article>
+<article><h4>Return of the Temujai (Brotherband 8)</h4>
+<p>The Temujai return: the defense of Skandia plays out between the mountain pass and Hallasholm.</p>
+</article>
+<article><h4>The Stern Chase (Brotherband 9)</h4>
+<p>Route not yet on the map: the locations from this book still need to be added.</p>
+</article>
+</section>
+<section lang="nl">
+<h2>De bekende wereld</h2>
+<p>Alle plaatsen, landen en zeeën op deze kaart, met de boeken waarin ze voorkomen. De kaart zelf is interactief — deze lijst is dezelfde inhoud als gewone tekst.</p>
+<h3>Landen en gebieden</h3>
+<article><h4>Alpina</h4>
+<p>De hoge bergketen die het noorden van het zuiden scheidt. De passen vriezen in de winter dicht; wie dan van Gallica naar het zuiden wil, moet wachten tot het voorjaar of omvaren.</p>
+</article>
+<article><h4>Araluen</h4>
+<p>Het koninkrijk van koning Duncan, verdeeld in vijftig lenen die elk door een baron worden bestuurd. De verdediging rust op drie zuilen: het leger van de barons, de Krijgsscholen die ridders opleiden, en het Korps van de Grijze Jagers — vijftig verkenners met een grijsgroene mantel, een dubbele pijlenkoker en een reputatie die veel groter is dan hun aantal.</p>
+</article>
+<article><h4>Arrida</h4>
+<p>Het woestijnland ten zuiden van de Constante Zee, geregeerd door een emir met wakirs als gouverneurs. In de steden heerst orde en handel; daarbuiten hebben de Bedullin-nomaden en de gevreesde Tualaghi het voor het zeggen. Wie de woestijn in gaat zonder gids of gastvriend, komt er niet uit.</p>
+</article>
+<article><h4>Aslava</h4>
+<p>Uitgestrekt land ten oosten van Teutland en Alpina, dat overloopt in de vlakten waar de Temujai vandaan komen. Wie over land naar het oosten reist, komt hier doorheen.</p>
+</article>
+<article><h4>Baralat</h4>
+<p>Het land aan het oostelijke uiteinde van de Constante Zee, met een grens aan Arrida. Vlak binnen die grens ligt het Amrashin-massief, dicht bij de ingang van het Assaranyaanse kanaal.</p>
+</article>
+<article><h4>Celtica</h4>
+<p>Het bergachtige zuidwesten van het eiland, met een verdrag van wederzijdse bijstand met Araluen. De Celten zijn mijnwerkers en steenhouwers, geen soldaten — toen Morgarath hun dorpen leeghaalde om zijn brug te bouwen, konden ze weinig terugdoen.</p>
+</article>
+<article><h4>Oostelijke Steppen</h4>
+<p>De vlakten in het verre oosten, voorbij Aslava: het land van de Temujai. Zij vechten te paard en met de boog, en trokken van hieruit naar het westen tot ze in Skandia werden gestuit.</p>
+</article>
+<article><h4>Gallica</h4>
+<p>Ten zuiden van de Stormwitte Zee. Er is een koning in naam, maar de macht ligt bij krijgsheren die elk hun eigen kasteel, weg en tol hebben. Voor reizigers is Gallica daarmee het gevaarlijkste land van het westen — en de vaste vluchtroute voor iedereen die Araluen ontvlucht.</p>
+</article>
+<article><h4>Helleno</h4>
+<p>Het land in het noordoosten van de Constante Zee. In de boeken is het geen aaneengesloten kust maar een afgelegen eilandengroep. Veel Hellenen leven van de zeeroverij; ze vallen op door felgekleurde kleren en sieraden die nergens bij elkaar passen. Ze vereren de godin Ariadne.</p>
+</article>
+<article><h4>Hibernia</h4>
+<p>Het eiland ten westen van Araluen, verdeeld over zes koninkrijken die elkaar liever wantrouwen dan samenwerken. Precies die verdeeldheid buitte de sekte van de Buitenstaanders uit, koninkrijk na koninkrijk. Halt werd hier geboren, in Clonmel.</p>
+</article>
+<article><h4>Iberion</h4>
+<p>Het schiereiland in het zuidwesten. Wie vanuit het noorden naar Arrida of de Constante Zee vaart, rondt eerst deze kust.</p>
+</article>
+<article><h4>Indus</h4>
+<p>Het land in het verre oosten, tussen de westelijke koninkrijken en Nihon-Ja. Wie over zee naar het oosten reist, komt langs deze kust.</p>
+</article>
+<article><h4>Middenrijken</h4>
+<p>De rijken tussen Ursali en het oosten. Toen de Temujai voor het eerst naar het westen trokken, werden zij samen met Ursali als eerste onder de voet gelopen.</p>
+</article>
+<article><h4>Bergen van Nacht en Ontij</h4>
+<p>Het onherbergzame gebergte in het zuiden, achter Morgaraths Hoogvlakte. Hierheen trok Morgarath zich terug na zijn nederlaag, met zijn leger van Wargals — beestachtige krijgers die zijn wil rechtstreeks uit zijn gedachten ontvangen. Het gebied is van Araluen gescheiden door De Spleet; de enige doorgang is de Driestappas.</p>
+</article>
+<article><h4>Nihon-Ja</h4>
+<p>Het eilandenrijk in het verre oosten, een half jaar varen van Araluen. Het land wordt geregeerd door keizer Shigeru en verdedigd door de Senshi, een krijgersklasse die vecht met het lange zwaard en zich aan een strenge erecode houdt. Als de Senshi-heer Arisaka de macht grijpt, vlucht de keizer het bergland in, naar het verscholen fort Ran-Koshi — en daar leren de Kikori, houthakkers zonder enige krijgservaring, vechten in gesloten formatie.</p>
+</article>
+<article><h4>Picta</h4>
+<p>Ruig hoogland in het noorden van het eiland, het land van de Scotti-clans. Zij vallen de noordelijke lenen aan zodra de grensvestingen verzwakken — vandaar de gordel van kastelen waarvan Macindaw er één is.</p>
+</article>
+<article><h4>Skandia</h4>
+<p>Het noordelijke zeevaardersland aan de Stormwitte Zee. Skandiërs varen op wolfschepen, vechten met de zware bijl en leefden lang van rooftochten — tot het verdrag met Araluen, gesloten na de gezamenlijke strijd tegen de Temujai, hen tot bondgenoten maakte. Aan het hoofd staat de Oberjarl.</p>
+</article>
+<article><h4>Sonderland</h4>
+<p>Het beboste land ten westen van Skandia, aan de doorvaart tussen de open oceaan en de Stormwitte Zee. Wie van Araluen naar Hallasholm vaart, komt hier langs.</p>
+</article>
+<article><h4>Teutland</h4>
+<p>Het land ten oosten van de Stormwitte Zee, dat Halt en Arnaut doorkruisten op weg naar de Skandische kust.</p>
+</article>
+<article><h4>Toscana</h4>
+<p>Een zuidelijk land van stadstaten, handelaren en marmer, beroemd om zijn legioenen: beroepssoldaten die schild aan schild in gesloten formatie vechten. Die manier van vechten geldt in de hele bekende wereld als voorbeeld.</p>
+</article>
+<article><h4>Ursali</h4>
+<p>Het land midden op het continent, tussen Aslava en Alpina in het westen en de Oostelijke Steppen in het oosten. De Ursali hielden er maar een klein leger op na, en toen de Temujai naar het westen trokken was hun land een van de eerste die viel — samen met de Middenrijken. Wat er van hun nederlaag werd verteld, ging de Temujai vooruit.</p>
+</article>
+<h3>Plaatsen op de kaart</h3>
+<article><h4>Al Shabah</h4>
+<p>Dorp of stad · Arrida</p>
+<p>De stad van wakir Selethen, de Arridische bevelhebber die eerst als tegenstander en daarna als bondgenoot van Halt optreedt bij de jacht op de Tualaghi.</p>
+<p>Losgeld voor Erak</p>
+</article>
+<article><h4>Bayrath</h4>
+<p>Dorp of stad · Toscana</p>
+<p>Een grote stad, bijna een metropool, aan de oostoever van de Dan. De corrupte burgemeester (de Gatmeister) liet zich door Zavac omkopen: de Reigers werden gevangengezet en hun schip in beslag genomen, en Lydia ontsnapte maar net aan slavernij.</p>
+<p>De jagers</p>
+</article>
+<article><h4>Byzantos</h4>
+<p>Havenstad · Toscana</p>
+<p>Een jonge, energieke stadstaat aan de Gouden Reikwijdte, gesticht door Constantus de Eerste toen het Toscaanse rijk te groot werd voor één heerser. Aan drie kanten door water beschermd en met dikke muren versterkt. Hier ontmoetten de Reigers keizerin Justina.</p>
+<p>The Caldera</p>
+</article>
+<article><h4>Château La Lumière</h4>
+<p>Kasteel · Gallica</p>
+<p>De Gallische hoofdstad en zetel van koning Philippe, die negen jaar eerder de zwakke koning Henri van de troon stootte. Ondanks de sierlijke naam is het net zo goed een zwaarbewapende vesting als Montsombre en Falaises. Vanuit hier reist Philippe naar Kasteel Araluen om koning Duncan te smeken zijn zoon Giles te bevrijden.</p>
+<p>De vermiste prins, De vlucht uit Falaise</p>
+</article>
+<article><h4>Château Montsombre</h4>
+<p>Kasteel · Gallica</p>
+<p>Het zwarte kasteel van krijgsheer Deparnieux, die zijn gevangenen in kooien langs de weg liet sterven. Hij hield Halt en Arnaut maandenlang als 'gasten' vast, tot Arnaut hem in een tweegevecht versloeg — en het kasteel aan Halt liet, die het aan de bewoners naliet.</p>
+<p>Het ijzige land</p>
+</article>
+<article><h4>Château des Falaises</h4>
+<p>Kasteel · Gallica</p>
+<p>Het kustbolwerk van baron Joubert de Lassigny, die prins Giles gevangen houdt en tegen koning Philippe samenspant met diens broer Louis. Will en Maddie infiltreren er als jongleurs, maar worden ontmaskerd en gevangengezet; in het volgende boek weten ze te ontsnappen en alsnog de prins te bevrijden.</p>
+<p>De vermiste prins, De vlucht uit Falaise</p>
+</article>
+<article><h4>Craikennis</h4>
+<p>Dorp of stad · Hibernia</p>
+<p>Een dorp in Clonmel dat Halt, Will en Arnaut hielpen verdedigen tegen een roversbende. De aanval was in scène gezet door de sekte van de Buitenstaanders, die dorpen eerst laat terroriseren om ze daarna 'bescherming' te verkopen.</p>
+<p>De koning van Clonmel</p>
+</article>
+<article><h4>Cresthaven</h4>
+<p>Havenstad · Araluen</p>
+<p>De baai die Hal Mikkelson en de bemanning van de Reiger als thuishaven kregen toen zij als 'plichtschip' naar Araluen werden gestuurd — een Skandisch schip dat op grond van het verdrag een jaar lang de Araluaanse kust bewaakt.</p>
+<p>Slaven van Socorro</p>
+</article>
+<article><h4>Dan River</h4>
+<p>Rivier · Toscana</p>
+<p>Een grote rivier die Toscana van noord naar zuid doorsnijdt, van de Stormwhite-kust tot dicht bij de Constante Zee. Langs de oever liggen, van bron tot monding, Krall, Bayrath en Raguza. Hier achtervolgden de Reigers de piraat Zavac na de aanval op Limmat, met een gevaarlijke stroomversnelling onderweg die ze via een zijkanaal moesten omzeilen.</p>
+<p>De jagers</p>
+</article>
+<article><h4>De Spleet</h4>
+<p>Slagveld · Araluen</p>
+<p>De diepe kloof die Araluen van Morgaraths gebied scheidt. Hier liet Morgarath in het geheim een brug bouwen om zijn Wargals in de rug van het Araluaanse leger te laten opduiken. Will en Arnaut staken de brug in brand — waarna ze door Skandische raiders gevangen werden genomen.</p>
+<p>De brandende brug</p>
+</article>
+<article><h4>De bergpas boven Hallasholm</h4>
+<p>Slagveld · Skandia</p>
+<p>Toen het Temujai-ruiterleger Skandia binnenviel, moesten Skandiërs en Araluanen voor het eerst samen vechten. Halt en Will drilden een korps boogschutters en Erak koos het terrein: een pas waar de Temujai hun ruitertactiek niet konden uitspelen.</p>
+<p>De strijd om Skandia</p>
+</article>
+<article><h4>De jachthut in het hoogland</h4>
+<p>Skandia</p>
+<p>Hoog in de bergen boven Hallasholm vonden Will en Evanlyn een verlaten jachthut, waar ze de winter doorkwamen. Hier hielp Evanlyn Will afkicken van de verdovende drug die de Skandiërs de slaven in de jaarloods gaven.</p>
+<p>Het ijzige land, De strijd om Skandia</p>
+</article>
+<article><h4>Doornbos</h4>
+<p>Araluen</p>
+<p>Het dichte bos ten oosten van Gorlan, tussen de Heckingse Heide en de Vlakte van Uthal.</p>
+</article>
+<article><h4>Driestappas</h4>
+<p>Bergen van Nacht en Ontij</p>
+<p>De enige doorgang tussen Araluen en Morgaraths Hoogvlakte: drie opeenvolgende steile treden in de rots. Wie hem bezet houdt, sluit het gebergte af.</p>
+<p>De ruïnes van Gorlan, De brandende brug</p>
+</article>
+<article><h4>Dun Kilty</h4>
+<p>Kasteel · Hibernia</p>
+<p>De hoofdstad van Clonmel, een van de zes koninkrijken van Hibernia. Hier regeert koning Ferris — de tweelingbroer van Halt. Halt was de oudste en dus de troonopvolger, maar gaf zijn recht op nadat Ferris hem tweemaal probeerde te laten doden.</p>
+<p>De koning van Clonmel</p>
+</article>
+<article><h4>Genovesa</h4>
+<p>Dorp of stad · Toscana</p>
+<p>Een onafhankelijke Toscaanse stadstaat, berucht om haar huurmoordenaars: meestervechters met meerdere messen. In Halt's gevaar huurt Tennyson Genovese moordenaars in om Halt, Will en Horace te elimineren; in De hinderlaag bij Sorato werft Will juist Genovese kruisboogschutters voor de strijd tegen de Temujai. De stad zelf komt in de verhalen niet in beeld, alleen haar huurlingen.</p>
+<p>Halt in gevaar, De hinderlaag bij Sorato</p>
+</article>
+<article><h4>Gorlan</h4>
+<p>Ruïne · Araluen</p>
+<p>Ooit het leen van Morgarath, tot hij in opstand kwam tegen de kroon. Sinds zijn nederlaag ligt het kasteel in puin en mijden de boeren de streek. Op het toernooiveld van Gorlan begon, vijftien jaar eerder, ook Morgaraths eerste greep naar de macht.</p>
+<p>De ruïnes van Gorlan, The Tournament at Gorlan</p>
+</article>
+<article><h4>Grimsdell Woud</h4>
+<p>Araluen</p>
+<p>Een mistig, verwrongen woud bij Macindaw, waar de dorpelingen de tovenaar Malkallam vrezen. In werkelijkheid is dat Malcolm: een geniale geneesheer die met licht, rook en geluid indruk maakt om met rust gelaten te worden. Zijn kennis van kruiden en gif redt later Halts leven.</p>
+<p>De magiër van Macindaw, Het beleg van Macindaw, Halt in gevaar</p>
+</article>
+<article><h4>Hallasholm</h4>
+<p>Havenstad · Skandia</p>
+<p>De hoofdstad van Skandia aan de Stormwitte Zee: een houten Grote Zaal, een haven vol wolfschepen en een strand waar elke zomer de Broederbandtraining begint — drie ploegen jongens die tegen elkaar strijden om het recht als krijger te varen. Hier komt de kleinste ploeg, de Reigers van Hal Mikkelson, tot bloei; hier zaten Will en Evanlyn eerder als slaven.</p>
+<p>Het ijzige land, De strijd om Skandia, De Outsiders, De terugkeer van de Temujai</p>
+</article>
+<article><h4>Heckingse Heide</h4>
+<p>Slagveld · Araluen</p>
+<p>Het slagveld van de eerste oorlog tegen Morgarath, vijftien jaar voor Wills leertijd. Hier sneuvelde Wills vader Daniel bij een aanval waarmee hij Halts leven redde — de reden dat Halt de weesjongen later in het oog hield. In de oorspronkelijke boeken heet het Hackham Heath.</p>
+<p>The Battle of Hackham Heath</p>
+</article>
+<article><h4>Het gebied van de Bedullin</h4>
+<p>Arrida</p>
+<p>De open woestijn van de Bedullin: nomaden met snelle paarden en een strenge gastvrijheidscode. Wie hun gastvriend wordt, heeft er bondgenoten voor het leven.</p>
+<p>Losgeld voor Erak</p>
+</article>
+<article><h4>Ito</h4>
+<p>Kasteel · Nihon-Ja</p>
+<p>De hoofdstad van Nihon-Ja en de zetel van keizer Shigeru, met het grote winterpaleis waar het hof het koude seizoen doorbrengt. Hier begint de opstand: senshi-heer Arisaka komt in verzet omdat de keizer de lagere standen — de Kikori-houthakkers voorop — dezelfde rechten wil geven als de krijgersklasse. Shigeru moet Ito ontvluchten en trekt met een kleine hofhouding het bergland in, op weg naar Ran-Koshi.</p>
+<p>De keizer van Nihon-Ja</p>
+</article>
+<article><h4>Iwanai</h4>
+<p>Havenstad · Nihon-Ja</p>
+<p>De havenstad waar het gezelschap van Halt, Will, Evanlyn en Alyss aan land ging op zoek naar Arnaut, die in de burgeroorlog van Nihon-Ja verzeild was geraakt.</p>
+<p>De keizer van Nihon-Ja</p>
+</article>
+<article><h4>Karwij</h4>
+<p>Kasteel · Araluen</p>
+<p>Leen in het noordoosten, met een eigen Krijgsschool. In de oorspronkelijke boeken heet het Caraway.</p>
+<p>De koninklijke leerling, Het duel bij Araluen</p>
+</article>
+<article><h4>Kasteel Araluen</h4>
+<p>Kasteel · Araluen</p>
+<p>De koninklijke burcht: slanke witte torens, uitgestrekte tuinen en de zetel van koning Duncan. Hier groeit prinses Cassandra op — het meisje dat Will in Skandia als Evanlyn leerde kennen. In de Royal Ranger-boeken wordt het kasteel belegerd door de Rode Vossenclan.</p>
+<p>De ruïnes van Gorlan, De brandende brug, Losgeld voor Erak, De koninklijke leerling, De Clan van de Rode Vos, Het duel bij Araluen</p>
+</article>
+<article><h4>Kasteel Macindaw</h4>
+<p>Kasteel · Araluen</p>
+<p>Grensvesting aan de rand van Picta, gebouwd om de Scotti buiten te houden. Toen de burcht door verraad in vijandelijke handen viel, infiltreerde Will er als de rondtrekkende jongleur Will Barton, en heroverde hem met hulp van Malcolm, Alyss en de Skandiër Gundar.</p>
+<p>De magiër van Macindaw, Het beleg van Macindaw</p>
+</article>
+<article><h4>Kasteel Redmont</h4>
+<p>Kasteel · Araluen</p>
+<p>Het rode kasteel van baron Arald, en het thuis van Will. Redmont heeft een Krijgsschool onder krijgsmeester Rodney, een keuken waar meester Chubb de scepter zwaait en een koeriersdienst onder vrouwe Pauline. Even buiten de muren, aan de rand van het bos, staat de hut van de Grijze Jager: hier neemt Halt de weesjongen Will als leerling aan.</p>
+<p>De ruïnes van Gorlan, De brandende brug, Losgeld voor Erak, Halt in gevaar, De verloren verhalen, De koninklijke leerling</p>
+</article>
+<article><h4>Kawagishi</h4>
+<p>Havenstad · Nihon-Ja</p>
+<p>Een vissersdorp aan de noordoostkust, waar de boten op het strand worden getrokken en het hout uit het bergland wordt verscheept. Het ligt op de weg die keizer Shigeru en zijn gezelschap volgen wanneer zij na de val van Ito langs de kust naar het noorden trekken, op zoek naar het verscholen Ran-Koshi. Voor de Kikori is Kawagishi de plek waar hun hout de zee op gaat.</p>
+<p>De keizer van Nihon-Ja</p>
+</article>
+<article><h4>Krall</h4>
+<p>Havenstad · Toscana</p>
+<p>Een nederzetting aan de noordelijke bovenloop van de Dan, waar de Reigers aanmeerden voor bevoorrading tijdens de achtervolging op Zavac. Een informant vertelde hier over Zavacs route, maar werd afgeluisterd; hun gevangene Rikard werd vermoord en Hal moest bewijzen dat de Reigers het niet waren.</p>
+<p>De jagers</p>
+</article>
+<article><h4>La Rivage</h4>
+<p>Havenstad · Gallica</p>
+<p>De Gallische havenstad waar Halt en Arnaut aan land gingen op hun tocht naar Skandia om Will te bevrijden. Gallica kent geen sterke koning: het land is verdeeld onder krijgsheren die elk hun eigen stuk weg en rivier belasten.</p>
+<p>Het ijzige land</p>
+</article>
+<article><h4>Land van de Mawagansett</h4>
+<p>Ver over de Eindeloze Oceaan dreef een storm de Reiger naar een beboste, onbekende kust. De bemanning werd opgenomen door de Mawagansett — een gastvrij vissersvolk dat elk jaar wordt overvallen door de gevreesde Geestgezichten.</p>
+<p>The Ghostfaces</p>
+</article>
+<article><h4>Les Sourges</h4>
+<p>Dorp of stad · Gallica</p>
+<p>Een rivierstadje vlak bij La Rivage, met een houten brug en een veerpont die het grootste deel van het jaar dienstdoet. Will en Maddie trekken er als jongleurs doorheen op weg naar het binnenland van Gallica.</p>
+<p>De vermiste prins</p>
+</article>
+<article><h4>Limmat</h4>
+<p>Havenstad · Skandia</p>
+<p>Een welvarende handelsstad die leeft van haar smaragdmijn. De piraat Zavac nam de stad met zijn schip de Raaf in; de Reigers hielpen de verdediging organiseren en dreven hem weg.</p>
+<p>De indringers</p>
+</article>
+<article><h4>Maashava</h4>
+<p>Dorp of stad · Arrida</p>
+<p>De ommuurde stad van de Tualaghi, de blauwgesluierde woestijnrovers die iedereen vrezen. Hier werd Erak gevangen gehouden, en hier bevrijdden Halt, Will, Arnaut, Evanlyn en Selethen hem.</p>
+<p>Losgeld voor Erak</p>
+</article>
+<article><h4>Mararoc</h4>
+<p>Dorp of stad · Arrida</p>
+<p>De hoofdstad van Arrida, waar de emir zetelt en waar de onderhandelingen over het losgeld voor Erak beginnen — tot blijkt dat de Oberjarl helemaal niet meer in handen is van de mensen met wie men onderhandelt.</p>
+<p>Losgeld voor Erak</p>
+</article>
+<article><h4>Mizu Umi Bakudai</h4>
+<p>Landschap · Nihon-Ja</p>
+<p>Een groot bergmeer in het noorden van Nihon-Ja, waarvan de naam zich laat lezen als “het uitgestrekte meer”. Het water ligt tussen de beboste hellingen waar de Kikori hun hout halen, op de route die het gezelschap van de keizer volgt naar het verscholen Ran-Koshi. In de winter vriezen de oevers dicht en drijft er ijs op het meer.</p>
+<p>De keizer van Nihon-Ja</p>
+</article>
+<article><h4>Morgaraths Hoogvlakte</h4>
+<p>Bergen van Nacht en Ontij</p>
+<p>Het kale plateau voor de Bergen van Nacht en Ontij, waar Morgarath zijn Wargals verzamelde.</p>
+<p>De ruïnes van Gorlan, De brandende brug</p>
+</article>
+<article><h4>Mountshannon</h4>
+<p>Ruïne · Hibernia</p>
+<p>Het dorp dat níet betaalde. De bandieten van de Buitenstaanders lieten er niets van heel — het bewijs dat achter de vrome praat van profeet Tennyson gewoon afpersing en moord schuilgaan.</p>
+<p>De koning van Clonmel</p>
+</article>
+<article><h4>Noordam</h4>
+<p>Kasteel · Araluen</p>
+<p>Het noordelijke leen waaronder Macindaw valt, en het kasteel dat de doorgang naar Picta bewaakt. In de oorspronkelijke boeken heet dit leen Norgate.</p>
+<p>De magiër van Macindaw, Het beleg van Macindaw</p>
+</article>
+<article><h4>Noordelijke bergen</h4>
+<p>Nihon-Ja</p>
+<p>Het hooggebergte dat vrijwel het hele noorden van Nihon-Ja beslaat: steile wanden, nauwe dalen en toppen die het jaar rond onder de sneeuw liggen. Op de beboste hellingen wonen de Kikori, die van het hout leven; hoger nog de Hasanu, een zwijgzaam bergvolk dat door de Senshi als bijna dierlijk wordt weggezet, maar dat de passen kent als geen ander. Ergens in deze bergen ligt Ran-Koshi verscholen, en het is de winter die de passen dichtvriest die Shigeru's aanhangers de tijd geeft om van houthakkers een leger te maken.</p>
+<p>De keizer van Nihon-Ja</p>
+</article>
+<article><h4>Noordelijke kliffen</h4>
+<p>Bergen van Nacht en Ontij</p>
+<p>De steile noordrand van Morgaraths gebied, waar het plateau naar Araluen afbreekt.</p>
+</article>
+<article><h4>Oostelijke kliffen</h4>
+<p>Bergen van Nacht en Ontij</p>
+<p>De oostelijke kliffenrand van het gebergte, boven de zee.</p>
+</article>
+<article><h4>Palladio</h4>
+<p>Havenstad · Toscana</p>
+<p>Een grote kuststad in het zuiden van Toscana, aan de Constante Zee. Palladio komt zelf niet in beeld in de verhalen; de naam duikt alleen op in een liedje dat Crowley en Halt aanhalen ("Een smid uit Palladio ontmoette een lieftallige dame").</p>
+</article>
+<article><h4>Raguza</h4>
+<p>Havenstad · Toscana</p>
+<p>Een wetteloze havenstad aan het zuidelijke eind van de Dan, bestuurd door een raad van piratenkapiteins (de Korpal): wie genoeg buit binnenbrengt en zich aan de huisregels houdt, is welkom. Schepen betalen hier tien procent tol. Hier spoorden de Reigers Zavac uiteindelijk op.</p>
+<p>De jagers</p>
+</article>
+<article><h4>Ran-Koshi</h4>
+<p>Kasteel · Nihon-Ja</p>
+<p>Een vergeten vesting in een bergdal, met een smalle toegang tussen steile rotswanden. Shigeru's aanhangers verschansen zich hier terwijl Arnaut en Will van de Kikori-houthakkers een leger maken dat in gesloten formatie leert vechten.</p>
+<p>De keizer van Nihon-Ja</p>
+</article>
+<article><h4>Rovo</h4>
+<p>Ruïne · Toscana</p>
+<p>De hoofdstad van het oude Rovo-rijk, de voorganger-beschaving van Toscana, die zijn hoogtepunt beleefde onder keizer Coltonus de Grote. Rovo zelf komt niet voor als locatie in een verhaal; het is achtergrondgeschiedenis die de Toscaanse cultuur (legioenen, stadstaten) verklaart. Positie op deze kaart is een grove gok.</p>
+</article>
+<article><h4>Santorillos</h4>
+<p>Dorp of stad</p>
+<p>Een vulkanisch eiland in de Constante Zee, dicht bij Byzantos, met een bijna onneembare vesting op de rand van een uitgedoofde vulkaankrater. Schuilplaats van de kaper Myrgos en zijn schip de Vulture. Hier moesten de Reigers de jonge erfgenaam beschermen tegen de piraten die vanuit de krater opereerden.</p>
+<p>The Caldera</p>
+</article>
+<article><h4>Schorpioenberg</h4>
+<p>Arrida</p>
+<p>Het rotsheiligdom van de Schorpioensekte: huurmoordenaars die doden met een gif waarvan alleen zij het tegengif kennen. Nadat Cassandra door zo'n moordenaar werd geraakt, moesten de Reigers de sekte in haar eigen berg opzoeken.</p>
+<p>Scorpion Mountain</p>
+</article>
+<article><h4>Skorghijl</h4>
+<p>Een kaal, mistig rotseiland met een beschutte kraterhaven, waar wolfschepen de najaarsstormen uitzitten. Will en Evanlyn brachten er weken door aan boord van Eraks schip Wolfwind.</p>
+<p>Het ijzige land</p>
+</article>
+<article><h4>Socorro</h4>
+<p>Havenstad · Arrida</p>
+<p>Een Arridische havenstad die berucht is om haar slavenmarkt. Toen Tursgud een dorp aan de Araluaanse kust overviel en de bewoners hier verkocht, haalden Hal en de Reigers hen samen met de Grijze Jager Gilan weer weg.</p>
+<p>Slaven van Socorro</p>
+</article>
+<article><h4>Sorato</h4>
+<p>Dorp of stad · Toscana</p>
+<p>Een vallei in het noorden van Toscana, waar Will en Maddie een hinderlaag opzetten voor een verkenningsmacht van de Temujai die de grens is overgestoken. Will haalt er Genovezen bij als kruisboogschutters om de val te helpen sluiten.</p>
+<p>De hinderlaag bij Sorato</p>
+</article>
+<article><h4>Tabork</h4>
+<p>Havenstad · Arrida</p>
+<p>Havenstad aan de Arridische kust, aanloophaven voor de Reigers op hun zoektocht naar het tegengif voor Cassandra.</p>
+<p>Scorpion Mountain</p>
+</article>
+<article><h4>Veenlanden</h4>
+<p>Araluen</p>
+<p>Drassig laagland langs de oostkust; slecht begaanbaar en dun bevolkt.</p>
+</article>
+<article><h4>Vlakte der Eenzamen</h4>
+<p>Araluen</p>
+<p>Een leeg, moerassig gebied in het zuidwesten van Araluen.</p>
+</article>
+<article><h4>Vlakte van Uthal</h4>
+<p>Slagveld · Araluen</p>
+<p>Het open veld waar het leger van Araluen de Wargals opving die uit de bergen kwamen. Toen Morgarath een tweegevecht eiste, nam Arnaut de uitdaging aan — en doodde hem.</p>
+<p>De brandende brug</p>
+</article>
+<article><h4>Wensley</h4>
+<p>Dorp of stad · Araluen</p>
+<p>Het dorp onder aan de heuvel van Redmont, met een herberg, een markt en de akkers waar de mensen van het leen wonen. Voor Will is dit de eerste bewoonde wereld buiten het kasteel.</p>
+<p>De ruïnes van Gorlan, De brandende brug</p>
+</article>
+<article><h4>Westelijke kliffen</h4>
+<p>Bergen van Nacht en Ontij</p>
+<p>De kliffen langs De Spleet, aan de westkant van het gebergte.</p>
+</article>
+<article><h4>Westwoud</h4>
+<p>Araluen</p>
+<p>Uitgestrekt bosgebied in het westen van Araluen, tussen Redmont en de Celtische grens.</p>
+</article>
+<article><h4>Zeeklif</h4>
+<p>Kasteel · Araluen</p>
+<p>Een klein eilandleen voor de oostkust: Wills eerste standplaats als volwaardig Grijze Jager. Rustig, afgelegen en — tot zijn frustratie — vrijwel zonder werk voor een Jager. In de oorspronkelijke boeken heet het Seacliff.</p>
+<p>De magiër van Macindaw</p>
+</article>
+<article><h4>Zomerpaleis</h4>
+<p>Kasteel · Nihon-Ja</p>
+<p>De zomerresidentie van keizer Shigeru, een lichter en opener gebouw dan het winterpaleis in Ito. Shigeru trekt zich hier graag terug, weg van het hof; juist die voorliefde voor het buitenleven maakt hem kwetsbaar wanneer Arisaka losslaat. Het paleis is gebouwd van hout en papier, met schuifwanden die opengaan naar de tuinen — fraai om te zien, maar niet te verdedigen tegen een Senshi-leger.</p>
+<p>De keizer van Nihon-Ja</p>
+</article>
+<article><h4>Zuidelijke kliffen</h4>
+<p>Bergen van Nacht en Ontij</p>
+<p>De steile zuidkust onder het gebergte.</p>
+</article>
+<h3>Zeeën en oceanen</h3>
+<article><h4>Bloedzee</h4>
+<p>De zee in het zuidoosten, ten oosten van Arrida en het gebied van de Tualaghi, ten zuiden van dat van de Temujai. Het Assaranyaanse kanaal — in oude tijden gegraven door de Assaraniërs — verbindt hem met de Constante Zee. Wie naar Nihon-Ja vaart gaat hier doorheen en dan de Oostelijke Oceaan op.</p>
+</article>
+<article><h4>Constante Zee</h4>
+<p>De zee in het zuiden, tussen Iberion, Toscana en de kust van Arrida. Aan deze kust ligt Santorillos.</p>
+</article>
+<article><h4>Eindeloze Oceaan</h4>
+<p>De oceaan ten westen van Araluen en Iberion. In Broederband 6 drijft een storm de Reiger hier de oceaan op, weg van elke bekende kust.</p>
+</article>
+<article><h4>IJszee</h4>
+<p>De ijszee ten noorden van Skandia. Er drijft pakijs en het water is het grootste deel van het jaar dichtgevroren; alleen in de zomer is er kortstondig open vaarwater.</p>
+</article>
+<article><h4>Nauwe Zee</h4>
+<p>De zeestraat tussen Araluen en het vasteland van Gallica en Iberion. Wie van het eiland naar het zuiden vaart, steekt hem als eerste over.</p>
+</article>
+<article><h4>Oostelijke Oceaan</h4>
+<p>De open oceaan ten oosten van Nihon-Ja. Geen van de reizen op deze kaart voert er verder op dan de kust.</p>
+</article>
+<article><h4>Stormwitte Zee</h4>
+<p>De binnenzee tussen Sonderland, Skandia, Teutland en Gallica. Hallasholm ligt aan deze zee; wie er vanuit Araluen heen vaart, gaat onderweg voor anker bij Skorghijl.</p>
+</article>
+<article><h4>Westelijke Oceaan</h4>
+<p>De open oceaan ten noorden en westen van de bekende wereld. Geen van de reizen op deze kaart voert er verder op dan de kust.</p>
+</article>
+<article><h4>Zee van Rostov</h4>
+<p>De binnenzee in het oosten, met Toscana, Aslava, Baralat en de Middenrijken aan zijn oevers. Volgens de overlevering staat hij via het Assaranyaanse kanaal in verbinding met de Bloedzee.</p>
+</article>
+<h3>Reisroutes per boek</h3>
+<article><h4>De ruïnes van Gorlan (De Grijze Jager 1)</h4>
+<p>Van Redmont naar de ruïnes van Gorlan: Halt en Will volgen het spoor van de Kalkara.</p>
+</article>
+<article><h4>De brandende brug (De Grijze Jager 2)</h4>
+<p>Will, Arnaut en Evanlyn door Celtica naar De Spleet; het leger van Araluen trekt intussen naar de Vlakte van Uthal.</p>
+</article>
+<article><h4>Het ijzige land (De Grijze Jager 3)</h4>
+<p>Will en Evanlyn worden over de Stormwitte Zee gevoerd, via Skorghijl naar Hallasholm; Halt en Arnaut steken de Nauwe Zee over naar Gallica en reizen te paard naar Kasteel Montsombre.</p>
+</article>
+<article><h4>De strijd om Skandia (De Grijze Jager 4)</h4>
+<p>Halt en Arnaut reizen van Kasteel Montsombre door Teutland, over de bergpassen naar Hallasholm; daarna houden Skandiërs en Araluanen samen de bergpas tegen het Temujai-leger.</p>
+</article>
+<article><h4>De magiër van Macindaw (De Grijze Jager 5)</h4>
+<p>Will verlaat zijn post op Zeeklif en reist als jongleur naar het noorden, naar Kasteel Macindaw.</p>
+</article>
+<article><h4>Het beleg van Macindaw (De Grijze Jager 6)</h4>
+<p>Het beleg speelt zich af tussen Grimsdell Woud en Kasteel Macindaw; Malcolms bos wordt de uitvalsbasis.</p>
+</article>
+<article><h4>Losgeld voor Erak (De Grijze Jager 7)</h4>
+<p>Over de Nauwe Zee, ten westen van Iberion langs, naar de kust van Arrida, en dan de woestijn in achter de Tualaghi aan.</p>
+</article>
+<article><h4>De koning van Clonmel (De Grijze Jager 8)</h4>
+<p>Naar Hibernia, waar de Buitenstaanders koninkrijk na koninkrijk innemen: langs Mountshannon en Craikennis naar Dun Kilty.</p>
+</article>
+<article><h4>Halt in gevaar (De Grijze Jager 9)</h4>
+<p>De achtervolging op Tennyson voert per smokkelschip van Hibernia naar de westkust van Picta; vandaar over land naar Malcolm in Grimsdell, waar Halt, geraakt door een vergiftigde pijl, wordt verzorgd.</p>
+</article>
+<article><h4>De keizer van Nihon-Ja (De Grijze Jager 10)</h4>
+<p>De langste reis uit de serie. Vanaf de Toscaanse kust gaat het over de Constante Zee, door het Assaranyaanse kanaal en de Bloedzee, en dan maanden oostwaarts tot Nihon-Ja in zicht komt. Halt, Will, Evanlyn en Alyss gaan bij Iwanai aan land, zoeken Arnaut bij het zomerpaleis en trekken via het kustdorp Kawagishi het besneeuwde bergland in, naar de verscholen vesting Ran-Koshi.</p>
+</article>
+<article><h4>De verloren verhalen (De Grijze Jager 11)</h4>
+<p>De reis begint in Toscana: over de Constante Zee, door het Assaranyaanse kanaal en de Bloedzee naar het verre oosten, naar Iwanai — en dan het bergland in naar Ran-Koshi.</p>
+</article>
+<article><h4>De koninklijke leerling (De Grijze Jager 12)</h4>
+<p>Losse verhalen uit het korps, grotendeels rond Redmont en Kasteel Araluen.</p>
+</article>
+<article><h4>The Tournament at Gorlan (Vroege Jaren 1)</h4>
+<p>Maddie wordt vanaf Kasteel Araluen bij Will in Redmont geplaatst; hun eerste zaak voert het zuiden van het leen in.</p>
+</article>
+<article><h4>The Battle of Hackham Heath (Vroege Jaren 2)</h4>
+<p>De jonge Halt en Crowley trekken door Araluen naar het toernooi van Gorlan, waar Morgarath naar de macht grijpt.</p>
+</article>
+<article><h4>De Clan van de Rode Vos (De Grijze Jager 13)</h4>
+<p>De oorlog tegen Morgarath eindigt op de Heckingse Heide, waar Wills vader Daniel sneuvelt.</p>
+</article>
+<article><h4>Het duel bij Araluen (De Grijze Jager 14)</h4>
+<p>Vanuit Redmont naar Kasteel Araluen, dat door de Rode Vossenclan wordt bedreigd.</p>
+</article>
+<article><h4>De vermiste prins (De Grijze Jager 15)</h4>
+<p>Het beleg van Kasteel Araluen: Maddie rijdt heen en weer tussen de belegerde burcht en de troepen buiten.</p>
+</article>
+<article><h4>De vlucht uit Falaise (De Grijze Jager 16)</h4>
+<p>Will en Maddie steken vanaf Redmont en Kasteel Araluen over naar Gallica, vermomd als jongleurs. Via La Rivage en Les Sourges trekken ze naar het binnenland, langs Château La Lumière, tot aan Château des Falaises, waar baron Lassigny prins Giles gevangen houdt — maar hun poging om hem te bevrijden mislukt en ze worden zelf gevangengenomen.</p>
+</article>
+<article><h4>De wolven van Arazan (De Grijze Jager 17)</h4>
+<p>Halt en Arnaut steken via Cresthaven over naar Gallica om Will en Maddie te hulp te komen, die gevangenzitten in Château des Falaises. Samen weten ze te ontsnappen en alsnog prins Giles te bevrijden; baron Lassigny sneuvelt in het gevecht. Daarna brengen ze de prins naar zijn vader in Château La Lumière.</p>
+</article>
+<article><h4>De hinderlaag bij Sorato (De Grijze Jager 18)</h4>
+<p>Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.</p>
+</article>
+<article><h4>De Outsiders (Broederband 1)</h4>
+<p>Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.</p>
+</article>
+<article><h4>De indringers (Broederband 2)</h4>
+<p>Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.</p>
+</article>
+<article><h4>De jagers (Broederband 3)</h4>
+<p>Route nog niet op de kaart: de plaatsen uit dit boek moeten nog worden ingetekend.</p>
+</article>
+<article><h4>Slaven van Socorro (Broederband 4)</h4>
+<p>De Broederbandtraining langs de Skandische kust bij Hallasholm, waar de Reigers hun schip leren varen.</p>
+</article>
+<article><h4>Scorpion Mountain (Broederband 5)</h4>
+<p>De jacht op Zavac voert de Reiger het halve westen rond, tot in Limmat.</p>
+</article>
+<article><h4>The Ghostfaces (Broederband 6)</h4>
+<p>Van Limmat verder de Constante Zee op, naar het piratennest Raguza.</p>
+</article>
+<article><h4>The Caldera (Broederband 7)</h4>
+<p>Als plichtschip naar Cresthaven in Araluen, en daarvandaan achter de slavenhandelaren aan naar Socorro.</p>
+</article>
+<article><h4>De terugkeer van de Temujai (Broederband 8)</h4>
+<p>Met het tegengif voor Cassandra als inzet: van Araluen naar de Arridische kust en het binnenland in.</p>
+</article>
+<article><h4>De jacht op de Wolfswind (Broederband 9)</h4>
+<p>Een storm drijft de Reiger de Eindeloze Oceaan op, naar een onbekende kust in het westen.</p>
+</article>
+</section>
+<!-- /seo:tekst -->
+</div>
 </body>
 </html>
