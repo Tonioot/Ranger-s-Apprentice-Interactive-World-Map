@@ -393,15 +393,39 @@ function afwerking(G,T){
       h[q]+=(doel-h[q])*w*kracht;
     }
   }
+  /* Een bergmeer (Mizu Umi Bakudai): een kom in het land, met de waterspiegel
+     op de hoogte van de laagste oever — dan loopt het nergens over. De oever
+     golft een beetje, zodat het geen cirkel wordt. */
+  const meren=[];
+  for(const pl of plekken){
+    if(!pl.meer)continue;
+    const r=pl.meer.r, cx=pl.x, cy=pl.y;
+    const lees=(wx,wy)=>{ const x=Math.round((wx+M)*RES), y=Math.round((wy+M)*RES); return h[klem(y,0,RH-1)*RW+klem(x,0,RW-1)]; };
+    let L=1;
+    for(let i=0;i<96;i++){ const a=i/96*Math.PI*2; for(const f of [.8,.9,1])L=Math.min(L,lees(cx+Math.cos(a)*r*f,cy+Math.sin(a)*r*f)); }
+    L=Math.max(L,.004);
+    /* binnen de oever de kom; daarbuiten loopt het land eerst zacht op, zodat
+       het meer in een dal ligt en niet in een put */
+    const R2=r*1.7;
+    for(let y=Math.max(0,Math.floor((cy+M-R2)*RES));y<=Math.min(RH-1,Math.ceil((cy+M+R2)*RES));y++)
+      for(let x=Math.max(0,Math.floor((cx+M-R2)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+R2)*RES));x++){
+        const q=y*RW+x, wx=x/RES-M, wy=y/RES-M;
+        const oever=r*(.8+.18*T.fbm(wx*.35+11,wy*.35-7,3,0));
+        const d=Math.hypot(wx-cx,wy-cy)/oever;
+        if(d<1)h[q]=Math.min(h[q],Math.max(.002,L-pl.meer.diepte*(1-d*d)-.0015));
+        else if(h[q]>L){ const t=klem((d-1)/((R2/oever)-1),0,1); h[q]=L+.002+(h[q]-L-.002)*t*t*(3-2*t); }
+      }
+    meren.push({x:cx,y:cy,r,niveau:Yvan(L)});
+  }
   const grens=new Uint8Array(N);
   for(let y=1;y<RH-1;y++)for(let x=1;x<RW-1;x++){
     const p=y*RW+x; if(!land[p])continue; const r0=reg[p];
     if((land[p-1]&&reg[p-1]!==r0)||(land[p+1]&&reg[p+1]!==r0)||(land[p-RW]&&reg[p-RW]!==r0)||(land[p+RW]&&reg[p+RW]!==r0))grens[p]=1;
   }
-  const bos=bosVeld(G,T);
+  const bos=bosVeld({...G,meren},T);
   const normalen=bouwNormalen(R,h,bos,T);
   /* wat hier binnenkwam gaat ook weer terug: in een worker is het overgedragen */
-  return {h,grens,bos,normalen,land,rivier,reg,kust};
+  return {h,grens,bos,normalen,land,rivier,reg,kust,meren};
 }
 
 /* ---- erosie ----
@@ -493,7 +517,7 @@ function erodeer(R,h,land){
    langs rivieren, op steile rotswanden, boven de boomgrens, en rond kastelen
    en dorpen, die in hun eigen open plek met akkers liggen. */
 function bosVeld(G,T){
-  const R=G.R, {RW,RH,RES,N,M}=R, {h,land,rivier,kust,fBos,plekken}=G;
+  const R=G.R, {RW,RH,RES,N,M}=R, {h,land,rivier,kust,fBos,plekken}=G, meren=G.meren||[];
   const bos=new Uint8Array(N);
   const open=plekken.filter(p=>p.open);
   for(let y=1;y<RH-1;y++){
@@ -502,6 +526,7 @@ function bosVeld(G,T){
       const p=y*RW+x; if(!land[p]||rivier[p]>30)continue;
       const wx=x/RES-M;
       const b=leesVeld(fBos,0,R,wx,wy); if(b<.05)continue;
+      if(meren.some(m=>Math.hypot(wx-m.x,wy-m.y)<m.r))continue;
       const hh=h[p];
       const gx=(Yvan(h[p+1])-Yvan(h[p-1]))*RES*.5, gz=(Yvan(h[p+RW])-Yvan(h[p-RW]))*RES*.5;
       const steil=Math.sqrt(gx*gx+gz*gz);

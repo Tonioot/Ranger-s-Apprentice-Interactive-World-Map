@@ -456,7 +456,7 @@ export async function maak3D(ctx){
     for(const p of ctx.PLAATSEN){
       const pos=POS[p.id]; if(!pos)continue;
       const m=modelVoor(p);
-      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null});
+      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null});
     }
 
     /* --- het rekenwerk --- */
@@ -475,7 +475,7 @@ export async function maak3D(ctx){
     await adem();
     D={ids,reg:a.reg,land:a.land,rivier:a.rivier,h:a.h,kust:a.kust,grens:a.grens,bos:a.bos,normalen:a.normalen,
        pReg:v.pReg,pdReg:v.pdReg,mixA:v.mixA,mixB:v.mixB,mixF:v.mixF,SOORTEN,fKoud:v.fKoud,fBos:v.fBos,fLoof:v.fLoof,
-       info,vlekken,POS,pool:v.pool,kloven:v.kloven,sleutel:ctx.sleutel()};
+       info,vlekken,POS,pool:v.pool,kloven:v.kloven,meren:a.meren,sleutel:ctx.sleutel()};
   }
 
   /* hoogte op een willekeurige plek, uit het raster (0..1 land, -1..0 zee) */
@@ -871,11 +871,11 @@ export async function maak3D(ctx){
      dezelfde lucht in de weerspiegeling en dezelfde golfjes, maar vlak en
      overal even diep. */
   const plasMat=new THREE.ShaderMaterial({
-    uniforms:{...GEDEELD,uGolf:{value:golfTex},uOndiep:waterMat.uniforms.uOndiep,uZonKleur:waterMat.uniforms.uZonKleur},
+    uniforms:{...GEDEELD,uGolf:{value:golfTex},uOndiep:waterMat.uniforms.uOndiep,uDiep:waterMat.uniforms.uDiep,uZonKleur:waterMat.uniforms.uZonKleur},
     vertexShader:`varying vec3 vW;
       void main(){ vec4 w=modelMatrix*vec4(position,1.0); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,
     fragmentShader:NEVEL_GLSL+LUCHT_GLSL+WOLK_GLSL+`
-      uniform float uTijd; uniform sampler2D uGolf; uniform vec3 uOndiep; uniform vec3 uZonKleur; varying vec3 vW;
+      uniform float uTijd; uniform sampler2D uGolf; uniform vec3 uOndiep; uniform vec3 uDiep; uniform vec3 uZonKleur; varying vec3 vW;
       void main(){
         vec3 V=normalize(cameraPosition-vW);
         vec3 g=texture2D(uGolf,vW.xz*.5+uTijd*vec2(.01,.006)).xyz*2.0-1.0;
@@ -885,7 +885,7 @@ export async function maak3D(ctx){
         float ws=wolkSchaduw(vW);
         vec3 licht=uZonKleur*max(uZonRicht.y,0.0)*.55*ws+uZenit*.35+uNevelKleur*.25;
         vec3 Hh=normalize(uZonRicht+V);
-        vec3 kleur=mix(uOndiep*.75*licht,luchtKleur(R),fres)+uZonKleur*pow(max(dot(n,Hh),0.0),300.0)*3.0*ws;
+        vec3 kleur=mix(mix(uOndiep,uDiep,.55)*licht,luchtKleur(R),fres)+uZonKleur*pow(max(dot(n,Hh),0.0),300.0)*3.0*ws;
         gl_FragColor=vec4(kleur,1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -1251,6 +1251,12 @@ export async function maak3D(ctx){
     }
     /* vijvers, grachten en plassen: water dat de lucht weerspiegelt */
     if(m.plas){ const x=new THREE.Mesh(m.plas,plasMat); g.add(x); }
+    /* de bergmeren: een waterspiegel op de hoogte van de laagste oever (de
+       kom zelf is in 3d-grond.js uitgesleten) */
+    for(const mr of D.meren||[]){
+      const x=new THREE.Mesh(new THREE.CircleGeometry(mr.r,48).rotateX(-Math.PI/2),plasMat);
+      x.position.set(X(mr.x),mr.niveau,Z(mr.y)); g.add(x);
+    }
     wereld.add(g); gebouwen=g;
     /* 's nachts: licht achter de ramen */
     const lg=new THREE.BufferGeometry(); lg.setAttribute("position",new THREE.BufferAttribute(m.lampjes,3));

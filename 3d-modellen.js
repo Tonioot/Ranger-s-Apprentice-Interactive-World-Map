@@ -1168,7 +1168,16 @@ export const BOUWERS={
     for(let i=0;i<4;i++)b.blok(.3+i*.03,-.3,.02,.14,.02,"#8A6E50",{r:.1});   /* stapels stammen */
   }},
   /* Mizu Umi Bakudai — het uitgestrekte bergmeer (zie het meer in 3d-grond.js) */
-  "mizu-umi-bakudai":{info:{meer:{r:5.5,diepte:.5}},bouw(B,b){ b.straal=0; }},
+  "mizu-umi-bakudai":{info:{meer:{r:4.2,diepte:.035}},bouw(B,b){
+    /* een paar Kikori-hutten en een steigertje aan de oever */
+    for(let i=0;i<40;i++){
+      const a=i/40*Math.PI*2, [x,y]=b.w(Math.cos(a)*4.6,Math.sin(a)*4.6);
+      if(B.waterlijn&&b.land(Math.cos(a)*4.6,Math.sin(a)*4.6)&&b.r(i)<.15){
+        const c=B.rond(x,y,a+Math.PI/2,i); B.huis(c,0,0,"nihon-ja",{nr:i,maat:.8});
+      }
+    }
+    b.straal=0;
+  }},
 
   /* ---- Toscana ---- */
   /* Raguza — een wetteloze havenstad, bestuurd door piratenkapiteins; schepen
