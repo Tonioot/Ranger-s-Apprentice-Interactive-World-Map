@@ -47,6 +47,8 @@
   --paper:#DCDDD2; --paper-2:#E4E4DA; --edge:#B7BAAC;
   --accent:#8A2F27; --accent-soft:#B0554A; --brass:#94794A;
   --route-1:#1F5F6B; --route-2:#6B4A86; --route-3:#8A5A1F;
+  --pers-1:#1F5F6B; --pers-2:#8A4A2A; --pers-3:#4A6B2A; --pers-4:#6B4A86;
+  --pers-5:#8A2F5C; --pers-6:#2A5A8A; --pers-7:#7A6B1F; --pers-8:#3F6B60;
   --shadow:0 1px 2px rgba(35,42,38,.10),0 8px 24px rgba(35,42,38,.10);
   --font-map:"Iowan Old Style","Hoefler Text","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
   --font-ui:-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,system-ui,sans-serif;
@@ -57,12 +59,14 @@
   --sea:#0E1A1E; --sea-deep:#0A1215; --sea-line:#1A2A30;
   --zee-1:#1E3238; --zee-2:#17272C; --zee-3:#121F23; --zee-diep:#0A1216;
   --rivier:#4E7B87; --rots:#575A4B; --sneeuw:#B9BFB4; --terrein:#8C9A88;
-  --tone-a:#3A422F; --tone-b:#2B352E; --tone-c:#484D3C; --tone-d:#403926; --tone-e:#4D4330; --tone-f:#2E3B33;
+  --tone-a:#3E4A2C; --tone-b:#242F2B; --tone-c:#55594A; --tone-d:#4A3F26; --tone-e:#5B4E33; --tone-f:#2C3E37;
   --land-base:#303829; --coast:#7E8C7C; --halo:#0A1215;
   --ink:#D9DDD2; --ink-soft:#9BA497; --ink-faint:#6F7A6E;
   --paper:#151B18; --paper-2:#1C231F; --edge:#2D352F;
   --accent:#CE7264; --accent-soft:#E09183; --brass:#B9995F;
   --route-1:#5FB6C4; --route-2:#B192CE; --route-3:#D0985A;
+  --pers-1:#5FB6C4; --pers-2:#D9906A; --pers-3:#96C46A; --pers-4:#B192CE;
+  --pers-5:#DE7CA8; --pers-6:#7AAEDE; --pers-7:#C9B85F; --pers-8:#77BFB0;
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
 }}
 :root[data-theme="dark"]{
@@ -70,12 +74,14 @@
   --sea:#0E1A1E; --sea-deep:#0A1215; --sea-line:#1A2A30;
   --zee-1:#1E3238; --zee-2:#17272C; --zee-3:#121F23; --zee-diep:#0A1216;
   --rivier:#4E7B87; --rots:#575A4B; --sneeuw:#B9BFB4; --terrein:#8C9A88;
-  --tone-a:#3A422F; --tone-b:#2B352E; --tone-c:#484D3C; --tone-d:#403926; --tone-e:#4D4330; --tone-f:#2E3B33;
+  --tone-a:#3E4A2C; --tone-b:#242F2B; --tone-c:#55594A; --tone-d:#4A3F26; --tone-e:#5B4E33; --tone-f:#2C3E37;
   --land-base:#303829; --coast:#7E8C7C; --halo:#0A1215;
   --ink:#D9DDD2; --ink-soft:#9BA497; --ink-faint:#6F7A6E;
   --paper:#151B18; --paper-2:#1C231F; --edge:#2D352F;
   --accent:#CE7264; --accent-soft:#E09183; --brass:#B9995F;
   --route-1:#5FB6C4; --route-2:#B192CE; --route-3:#D0985A;
+  --pers-1:#5FB6C4; --pers-2:#D9906A; --pers-3:#96C46A; --pers-4:#B192CE;
+  --pers-5:#DE7CA8; --pers-6:#7AAEDE; --pers-7:#C9B85F; --pers-8:#77BFB0;
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
 }
 *{box-sizing:border-box}
@@ -134,6 +140,43 @@ button,input{font:inherit;color:inherit}
   border-radius:0 3px 3px 0;font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
 .rcap b{display:block;color:var(--ink);font-weight:500;font-family:var(--font-map);font-size:13.5px;margin-bottom:2px}
 .rcap[hidden]{display:none}
+/* wie er in dit boek onderweg zijn, elk met de tint waarin hun reis getekend is */
+.wielijst{list-style:none;margin:7px 0 0;padding:0;display:flex;flex-direction:column;gap:3px}
+.wielijst li{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft)}
+/* een kort, stevig streepje in de kleur van de lijn zelf: dikker dan de oude
+   haarlijn, zodat de kleur ook echt te zien is */
+.wielijst i{flex:none;width:16px;height:4px;border-radius:2px}
+/* wie er meereizen, aanvinkbaar in de bewerkstand; meer dan een tegelijk */
+/* de weg van dit traject, punt voor punt */
+.zpunten{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;
+  max-height:220px;overflow-y:auto;counter-reset:zp}
+.zpunten li{display:flex;align-items:center;gap:7px;padding:2px 4px 2px 7px;border-radius:3px;
+  font-size:12px;color:var(--ink-soft);counter-increment:zp}
+.zpunten li::before{content:counter(zp);flex:none;min-width:15px;font-family:var(--font-mono);
+  font-size:9.5px;color:var(--ink-faint);text-align:right}
+.zpunten li:hover{background:var(--paper-2)}
+.zpunten li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* een los punt is geen plaats maar een knik in de lijn: rustiger in beeld */
+.zpunten .zplos{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)}
+.zpunten li button{flex:none;padding:0 5px;background:none;border:0;cursor:pointer;
+  color:var(--ink-faint);font-size:15px;line-height:1.2;border-radius:3px;opacity:0}
+.zpunten li:hover button,.zpunten li button:focus-visible{opacity:1}
+.zpunten li button:hover{color:var(--accent);background:var(--paper)}
+/* het splitsteken staat links van het kruisje en duwt beide naar rechts */
+.zpunten li .zpsplit{margin-left:auto;font-size:13px}
+.zpunten li .zpsplit:hover{color:var(--ink)}
+.zpunten .zpleeg{color:var(--ink-faint);font-size:11.5px;padding:4px 8px}
+.zpunten .zpleeg::before{content:""}
+/* het bijbehorende stipje op de kaart oplichten bij aanwijzen in de lijst */
+.routepunt.wijs .stip{stroke-width:3}
+.zpersonages{display:flex;flex-wrap:wrap;gap:4px}
+.zpersonages button{display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 5px;
+  background:var(--paper-2);border:1px solid var(--edge);border-radius:999px;cursor:pointer;
+  font:inherit;font-size:11.5px;color:var(--ink-faint);line-height:1.3}
+.zpersonages button:hover{border-color:var(--ink-faint)}
+.zpersonages button[aria-pressed=true]{border-color:var(--pk,var(--ink));color:var(--ink)}
+.zpersonages i{flex:none;width:8px;height:8px;border-radius:50%;opacity:.3}
+.zpersonages button[aria-pressed=true] i{opacity:1}
 
 .list{flex:1;overflow-y:auto;padding:6px 0 24px;min-height:0;overscroll-behavior:contain}
 .grp{padding:14px 20px 5px;position:sticky;top:0;background:var(--paper);
@@ -146,9 +189,18 @@ button,input{font:inherit;color:inherit}
 .item.wacht b{color:var(--ink-faint)}
 .item span{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);white-space:nowrap}
 .empty{padding:20px;color:var(--ink-faint);font-size:13px}
-.railfoot{flex:none;border-top:1px solid var(--edge);padding:10px 20px 12px;display:flex;flex-direction:column;gap:8px}
-.railfoot .links{display:flex;gap:14px;align-items:center}
-.railfoot .disclaimer{font-size:10.5px;color:var(--ink-faint)}
+.railfoot{flex:none;border-top:1px solid var(--edge);padding:9px 20px 10px;display:flex;flex-direction:column;gap:5px}
+/* de knoppen mogen niet breken: "Bewerken afsluiten" is in de bewerkstand een
+   stuk breder dan "Bewerken", en met de datum ernaast werd het drie regels */
+.railfoot .links{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+.railfoot .links .link{white-space:nowrap}
+.railfoot .disclaimer{font-size:10.5px;color:var(--ink-faint);line-height:1.35}
+/* De datum staat onder de disclaimer, maar zonder de tussenruimte van de rest:
+   achter de disclaimer aan zou hij die regel laten omslaan, en dat kostte meer
+   hoogte dan deze eigen regel. */
+.railfoot .versie{margin:-3px 0 0;font-family:var(--font-mono);font-size:9.5px;
+  letter-spacing:.02em;color:var(--ink-faint);white-space:nowrap;line-height:1.3}
+.railfoot .versie[hidden]{display:none}
 .link{background:none;border:0;padding:0;cursor:pointer;font-size:12.5px;color:var(--ink-soft);
   text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--edge)}
 .link:hover{color:var(--accent)}
@@ -241,6 +293,18 @@ body.zetten .zetbalk{display:flex}
 .zfeitrij input{flex:1;min-width:0}
 .zfeitrij button{padding:3px 8px;flex:none;background:var(--paper-2);border:1px solid var(--edge);
   border-radius:4px;cursor:pointer;font-size:12.5px}
+/* De gezelschappen van deze route. Er is er altijd precies een actief: dat is
+   het gezelschap waarvoor je punten intekent, zodat een klik op de kaart nooit
+   dubbelzinnig is. De streep links toont de tint waarin die reis getekend wordt. */
+.zreizen{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
+.zreizen button{display:flex;align-items:center;gap:8px;text-align:left;width:100%;
+  padding:6px 9px;background:var(--paper-2);border:1px solid var(--edge);border-radius:4px;
+  cursor:pointer;font:inherit;font-size:12.5px;color:var(--ink-soft)}
+.zreizen button:hover{border-color:var(--ink-faint)}
+.zreizen button[aria-pressed=true]{border-color:var(--ink);color:var(--ink)}
+.zreizen i{flex:none;width:12px;height:3px;border-radius:2px}
+.zreizen em{margin-left:auto;font-style:normal;font-family:var(--font-mono);
+  font-size:10px;color:var(--ink-faint)}
 .zboeken{display:flex;flex-wrap:wrap;gap:5px}
 .zboeken button{font-size:11.5px;color:var(--ink-soft);padding:4px 9px;background:var(--paper-2);
   border:1px solid var(--edge);border-radius:999px;cursor:pointer;line-height:1.3}
@@ -466,13 +530,35 @@ text{font-family:var(--font-map);paint-order:stroke fill;stroke:var(--halo);stro
 .route path{fill:none;stroke:inherit;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:5 4;
   vector-effect:non-scaling-stroke}
 .route .end{stroke-dasharray:none}
+/* de omgekeerde hulplijn draagt alleen de naam langs een route die naar links
+   loopt; hij wordt zelf nooit getekend */
+.naampad{stroke:none!important;fill:none!important}
+/* richting: kleine punten op de lijn, zodat je ziet welke kant het op gaat */
+.pijl{stroke:none}
+.route .pijlen{opacity:.75}
+/* de namen van wie er reizen, langs de lijn zelf. Een dunne rand in de
+   papierkleur houdt ze leesbaar waar ze over land of een andere lijn vallen. */
+.reisnaam{font-family:var(--font-ui);font-weight:600;letter-spacing:.01em;
+  paint-order:stroke;stroke:var(--paper);stroke-linejoin:round;
+  pointer-events:none;transition:opacity .2s}
+/* geen ruimte op deze lijn bij deze zoom: dan liever geen naam dan een kluwen */
+.reisnaam.weg{opacity:0}
 .route.on{opacity:.95}
 .route.on path:not(.end){animation:flow 1.6s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-18}}
-.routepunt{display:none;fill:var(--paper);stroke:var(--accent);stroke-width:1.4;r:1.4;
-  vector-effect:non-scaling-stroke;cursor:grab}
+/* De greep houdt op het scherm dezelfde maat, hoe ver je ook inzoomt: de r
+   staat in kaarteenheden, dus zonder tegenschaling groeit een punt bij het
+   inzoomen mee tot een schijf van niks. Zie pas(), waar dezelfde 1/k op de
+   markeringen wordt gezet. De onzichtbare greep eromheen is ruimer dan de
+   stip zelf, want een stip van drie pixels is niet te raken. */
+.routepunt{display:none;cursor:grab}
+.routepunt .stip{fill:var(--paper);stroke:var(--accent);stroke-width:1.4;r:3.2;
+  vector-effect:non-scaling-stroke}
+.routepunt .greep{fill:transparent;stroke:none;r:8}
 body.zetten .routepunt{display:block}
-body.zetten .routepunt.pak{cursor:grabbing;fill:var(--accent)}
+body.zetten .routepunt.pak{cursor:grabbing}
+body.zetten .routepunt.pak .stip{fill:var(--accent)}
+body.zetten .routepunt:hover .stip{stroke-width:2}
 @media (prefers-reduced-motion:reduce){
   .route.on path{animation:none}
   .detail,.rail,.mlabel{transition:none}
@@ -853,6 +939,7 @@ body.zetten .routepunt.pak{cursor:grabbing;fill:var(--accent)}
         <button class="link" id="zetaan" data-t="bewerken">Bewerken</button>
       </div>
       <p class="disclaimer" data-t="footerDisclaimer">Fanproject · niet geaffilieerd met John Flanagan</p>
+      <p class="versie" id="versie" hidden></p>
     </div>
   </aside>
 
@@ -1014,11 +1101,22 @@ body.zetten .routepunt.pak{cursor:grabbing;fill:var(--accent)}
               <span class="zlbl" data-t="veldOmschrijving">Omschrijving</span>
               <textarea id="zrTekst" rows="2"></textarea>
             </div>
-            <p class="zlbl" id="zrHint" data-t="klikOmToeTeVoegen">Klik op de kaart om punten toe te voegen aan deze route.</p>
-            <div class="zgroep2">
-              <button id="zrInvoegen" type="button" data-t="puntInvoegen">Punt invoegen</button>
-              <button id="zrVolgendBeen" type="button" data-t="volgendBeen">Volgend been</button>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldGezelschappen">Gezelschappen</span>
+              <div class="zreizen" id="zrReizen"></div>
+              <button id="zrReisBij" type="button" class="zfneutraal" data-t="gezelschapToevoegen">+ Gezelschap</button>
             </div>
+            <div class="zveld" id="zrWieVeld">
+              <span class="zlbl" data-t="veldWieReist">Wie reist er</span>
+              <div class="zpersonages" id="zrWie"></div>
+            </div>
+            <div class="zveld">
+              <span class="zlbl" data-t="veldPunten">Punten van deze reis</span>
+              <ol class="zpunten" id="zrPunten"></ol>
+            </div>
+            <p class="zlbl" id="zrHint" data-t="klikOmToeTeVoegen">Klik op de kaart om punten toe te voegen aan deze route.</p>
+            <button id="zrNieuw" type="button" class="zfneutraal" data-t="nieuweRoute">+ Nieuwe route</button>
+            <button id="zrReisWeg" class="gevaar" type="button" data-t="gezelschapVerwijderen">Gezelschap verwijderen</button>
             <button id="zrVerwijder" class="gevaar" type="button" data-t="routeVerwijderen">Route verwijderen</button>
           </div>
         </div>
@@ -1247,10 +1345,9 @@ const U={
   veldReeksEnkel:{nl:"Reeks",en:"Series"},
   veldNummer:{nl:"Nummer",en:"Number"},
   puntenToevoegen:{nl:"Punten toevoegen",en:"Add points"},
-  klikOmToeTeVoegen:{nl:"Klik op de kaart om punten toe te voegen aan deze route.",
-    en:"Click the map to add points to this route."},
-  volgendBeen:{nl:"Volgend been",en:"Next leg"},
-  puntInvoegen:{nl:"Punt invoegen",en:"Insert point"},
+  klikOmToeTeVoegen:{
+    nl:"Klik op de kaart om de weg verder te tekenen. Klik op de lijn zelf om een punt ertussen te zetten.",
+    en:"Click the map to continue the route. Click on the line itself to insert a point in between."},
   routeVerwijderen:{nl:"Route verwijderen",en:"Delete route"},
   bevestigRouteVerwijderen:{nl:"Deze route verwijderen? Dit kan niet ongedaan worden gemaakt.",
     en:"Delete this route? This cannot be undone."},
@@ -1266,6 +1363,22 @@ const U={
   wachtOpLand:{nl:" — wacht op meer land in world.svg",en:" — waiting on more land in world.svg"},
   plaatsFallback:{nl:"Plaats",en:"Place"},
   bekendUit:{nl:"Bekend uit",en:"Known from"},
+  veldGezelschappen:{nl:"Trajecten",en:"Legs"},
+  veldWieReist:{nl:"Wie reist er",en:"Who travels"},
+  veldPunten:{nl:"Punten van dit traject",en:"Points of this leg"},
+  puntVerwijderen:{nl:"Dit punt verwijderen",en:"Remove this point"},
+  puntLosPunt:{nl:"los punt",en:"loose point"},
+  nogGeenPunten:{nl:"Nog geen punten. Klik op de kaart om de weg te tekenen.",
+    en:"No points yet. Click the map to draw the route."},
+  gezelschapToevoegen:{nl:"+ Afsplitsing aan het eind",en:"+ Split off at the end"},
+  splitsHier:{nl:"Hier een groep laten afsplitsen",en:"Split a group off here"},
+  nieuweRoute:{nl:"+ Nieuwe route",en:"+ New route"},
+  gezelschapVerwijderen:{nl:"Traject verwijderen",en:"Remove leg"},
+  puntenTelling:{nl:"% punten",en:"% points"},
+  bevestigReisVerwijderen:{nl:"Dit traject en zijn hele weg verwijderen?",
+    en:"Remove this leg and its whole route?"},
+  reisFallback:{nl:"Traject %",en:"Leg %"},
+  bijgewerkt:{nl:"Bijgewerkt",en:"Updated"},
   nogGeenKaartLang:{nl:"Deze plaats staat nog niet op de kaart:",en:"This place isn't on the map yet:"},
   ontbreektNog:{nl:"ontbreekt nog in",en:"is still missing from"},
   zodraLandErbij:{nl:"Zodra dat land erbij komt, verschijnt de plaats vanzelf.",
@@ -1342,6 +1455,24 @@ function pasTaalToe(){
     const [attr,key]=e.dataset.tAttr.split(":");
     e.setAttribute(attr,t(key));
   }
+  zetVersie();
+}
+/* De datum van de laatste inhoudelijke wijziging, uit data.json. Een datum
+   zegt een bezoeker meer dan een versienummer: "bijgewerkt 28 augustus 2026"
+   is meteen te plaatsen, v1.4 niet. Staat het veld er niet, dan blijft de
+   regel gewoon weg. */
+function zetVersie(){
+  const el2=document.getElementById("versie");
+  if(!el2)return;
+  const d=DATA.versie&&DATA.versie.bijgewerkt;
+  if(!d){el2.hidden=true;return;}
+  const dt=new Date(d+"T00:00:00");
+  /* kort genoteerd: voluit geschreven ("28 augustus 2026") duwde de voetregel
+     naar een derde regel, en dit is even goed te lezen */
+  const tekst=isNaN(dt)?d:dt.toLocaleDateString(TAAL==="nl"?"nl-NL":"en-GB",
+    {day:"2-digit",month:"short",year:"numeric"});
+  el2.textContent=`${t("bijgewerkt")} ${tekst}`;
+  el2.hidden=false;
 }
 pasTaalToe();
 
@@ -1589,16 +1720,16 @@ for(const z of ZEEEN){
 const gRoutes=el("g",{},world), routeEls={};
 const plaatsById={}; for(const p of PLAATSEN)plaatsById[p.id]=p;
 const opKaart=p=>!p.wacht && plek(p)!==null;
-function beenPunten(been){
+function reisPunten(punten){
   const uit=[];
-  for(const stap of been){
+  for(const stap of punten){
     if(Array.isArray(stap)){uit.push(stap);continue;}
     const p=plaatsById[stap]; if(!p||!opKaart(p))return null;
     uit.push(plek(p));
   }
   return uit;
 }
-/* Een reis loopt niet langs een liniaal. Door de punten van een been wordt een
+/* Een reis loopt niet langs een liniaal. Door de punten van een reis wordt een
    vloeiende lijn getrokken in plaats van rechte stukken met knikken: een
    Catmull-Rom-kromme, omgezet naar de bezierkrommen die SVG kent. De spanning
    staat bewust onder de volle waarde — een te losse kromme schiet in een bocht
@@ -1619,26 +1750,274 @@ function vloeiend(p){
   return d;
 }
 
+/* Een route is een boek; daarbinnen is elke reis een gezelschap dat zijn eigen
+   weg gaat. Veel code hieronder (slepen, punten invoegen, verwijderen) werkt
+   op losse benen en hoeft niet te weten van welk gezelschap ze zijn — die
+   loopt via de reis zelf. */
+/* De punten van het gezelschap dat onder handen is: daar komt een nieuw punt
+   bij. Buiten de bewerkstand bestaat dat gezelschap niet en valt het terug op
+   de laatste reis. */
+const huidigePunten=r=>{
+  const reis=(typeof huidigeReis==="function"&&zetten)?huidigeReis(r):r.reizen[r.reizen.length-1];
+  return reis.punten;
+};
+
+/* ---- personages ----
+   Een reis is een traject met een bezetting: wie lopen dit stuk samen. Reizen
+   Halt en Will samen, dan is dat een reis met allebei hun ids en teken je die
+   weg dus een keer. Splitst de groep, dan begint daar een nieuwe reis met de
+   mensen die verder gaan.
+
+   De kleur komt van het personage en niet van de route, zodat Halt door de hele
+   serie heen dezelfde kleur houdt. Bij een gedeeld traject krijgt de lijn de
+   kleur van de eerste in de rij; wie er verder meeliepen staat als namen bij de
+   lijn in het zijpaneel. */
+const PERS=DATA.personages||{};
+const persNaam=id=>{
+  const p=PERS[id];
+  return p?vertaal(p.naam):id;
+};
+const persKleur=id=>{
+  const p=PERS[id];
+  return p?`var(--pers-${p.kleur})`:"var(--route-1)";
+};
+/* De kleur van een reis: die van de eerste reiziger. Zonder bezetting valt hij
+   terug op de reekskleur, zoals bij een route waar nog niemand bij ingevuld is. */
+/* De kleur van een traject komt van de eerste persoon die meegaat, zodat Halt
+   door de hele serie heen dezelfde kleur houdt. Maar binnen één boek reist
+   dezelfde persoon vaak in meerdere trajecten mee — Will zit in dit boek in
+   vier ervan — en dan krijgen die allemaal hetzelfde streepje en is er op de
+   kaart niet meer te zien welke lijn welke is.
+
+   Daarom pakt een traject dat zijn kleur al aan een eerder traject kwijt is,
+   de kleur van de volgende persoon in zijn gezelschap die nog vrij is. Is
+   iedereen al vergeven, dan valt hij terug op een eigen tint uit de reeks, en
+   anders op de kleur van de reeks zelf. */
+function reisKleur(r,reis,gebruikt){
+  const wie=reis&&reis.wie;
+  if(Array.isArray(wie)&&wie.length){
+    if(!gebruikt)return persKleur(wie[0]);
+    for(const id of wie){
+      const k=persKleur(id);
+      if(!gebruikt.has(k)){gebruikt.add(k);return k;}
+    }
+    /* iedereen in dit gezelschap heeft zijn kleur al aan een ander traject
+       gegeven: pak de eerste personagekleur die in dit boek nog vrij is */
+    for(let n=1;n<=8;n++){
+      const k=`var(--pers-${n})`;
+      if(!gebruikt.has(k)){gebruikt.add(k);return k;}
+    }
+    return persKleur(wie[0]);
+  }
+  return RGRP[r.grp].kleur;
+}
+
+/* Wat bij het tekenen wordt uitgerekend — de paden, de gebruikte tint, de
+   groepen op het scherm — hoort niet in de data zelf thuis. Het gaat mee naar
+   data.json bij het opslaan, en erger: een SVG-element verwijst terug naar zijn
+   ouder, waardoor de terugvertaling zichzelf eindeloos in kringetjes zou
+   volgen. Daarom staat het hier, naast de data, met het route-id als sleutel. */
+const routeTeken={};   /* id -> {kanNiet, reizen:[{paden,kanNiet,kleur,g}]} */
+/* de begin- en eindstippen van elke reis; die worden net als de markeringen op
+   schermmaat gehouden, anders groeien ze bij het inzoomen uit tot schijven */
+const eindStippen=[];
+/* de pijlpunten en de namen langs de lijn: die worden net als de stippen op
+   schermmaat gehouden */
+const pijlLijnen=[], reisNamen=[];
+
 /* opnieuw op te bouwen, want een plaats die je verzet verlegt ook haar routes */
 function bouwRoutes(){
   gRoutes.textContent="";
+  eindStippen.length=0; pijlLijnen.length=0; reisNamen.length=0;
   for(const r of ROUTES){
-    r.paden=r.benen.map(beenPunten);
-    r.kanNiet=r.paden.some(p=>!p);
-    const g=el("g",{class:"route",stroke:RGRP[r.grp].kleur},gRoutes);
-    /* een been dat nog in aanbouw is (0 of 1 punt, tijdens het bewerken van
-       een nieuwe route) tekent nog niets — pas bij twee punten is er een lijn */
-    if(!r.kanNiet)for(const pad of r.paden){
-      if(pad.length<2)continue;
-      el("path",{d:vloeiend(pad)},g);
-      el("circle",{class:"end",cx:pad[0][0],cy:pad[0][1],r:1.6,fill:RGRP[r.grp].kleur},g);
-      const z=pad[pad.length-1];
-      el("circle",{class:"end",cx:z[0],cy:z[1],r:2.4,fill:"none",stroke:RGRP[r.grp].kleur,"stroke-width":1},g);
-    }
+    const g=el("g",{class:"route"},gRoutes);
+    const tk={kanNiet:false,reizen:[]};
+    routeTeken[r.id]=tk;
+    /* per boek bijhouden welke kleuren al vergeven zijn, zodat twee trajecten
+       met dezelfde hoofdpersoon toch uit elkaar te houden blijven */
+    const gebruikt=new Set();
+    r.reizen.forEach((reis,i)=>{
+      const kleur=reisKleur(r,reis,gebruikt);
+      const gr=el("g",{class:"reis",stroke:kleur},g);
+      const pad=reisPunten(reis.punten);
+      const kanNiet=!pad;
+      if(kanNiet)tk.kanNiet=true;
+      /* een reis die nog in aanbouw is (0 of 1 punt, tijdens het bewerken van
+         een nieuwe route) tekent nog niets — pas bij twee punten is er een lijn */
+      if(pad&&pad.length>=2){
+        const d=vloeiend(pad);
+        /* Het pad krijgt een id zodat de naam er met textPath langs kan lopen.
+           Het id moet uniek zijn over de hele kaart, vandaar route en volgnummer. */
+        const padId=`p-${r.id}-${i}`;
+        const lijn=el("path",{id:padId,d},gr);
+        const z=pad[pad.length-1];
+        /* de buitenste groep zet de plek, de binnenste de maat: zo blijft de
+           stip even groot op het scherm en blijft hij op zijn punt staan */
+        const beginG=el("g",{class:"end",transform:`translate(${pad[0][0]} ${pad[0][1]})`},gr);
+        eindStippen.push(el("circle",{r:1.6,fill:kleur},el("g",{},beginG)).parentNode);
+        const eindG=el("g",{class:"end",transform:`translate(${z[0]} ${z[1]})`},gr);
+        eindStippen.push(el("circle",{r:2.4,fill:"none",stroke:kleur,
+          "stroke-width":1,"vector-effect":"non-scaling-stroke"},el("g",{},eindG)).parentNode);
+        zetPijlen(gr,lijn,kleur);
+        zetReisNaam(gr,padId,reis,kleur,lijn);
+      }
+      tk.reizen.push({pad,kanNiet,kleur,g:gr});
+    });
     if(r.id===state.route)g.classList.add("on");
     routeEls[r.id]=g;
   }
+  schaalEindStippen();
 }
+/* ---- richting en naam op de lijn ----
+   Vijf trajecten die door elkaar lopen zijn zonder hulp niet te lezen: je ziet
+   niet wie waar is, en niet welke kant iemand op gaat. Daarom krijgt elke lijn
+   pijlpunten die de looprichting aangeven, en de namen van wie er reizen langs
+   de lijn zelf. */
+
+/* De pijlpunten staan op vaste afstand langs het pad. Het aantal volgt de
+   lengte, met een ondergrens: ook een kort traject verdient er een, anders is
+   juist daar de richting onduidelijk. */
+/* De pijlen staan om de zoveel schermpunten, niet om de zoveel kaarteenheden:
+   ver uitgezoomd zou dat er honderden op een lange lijn zetten, ver ingezoomd
+   geen enkele. Daarom worden ze bij elke zoomstap opnieuw uitgezet. */
+const PIJL_OM_PX=55;     /* schermpunten tussen twee pijlpunten */
+const PIJL_MAX=24;       /* daarboven wordt het een streepjeslijn van pijlen */
+function zetPijlen(gr,lijn,kleur){
+  /* alleen onthouden; het uitzetten gebeurt in verversPijlen(), die ook bij
+     elke zoomstap draait */
+  pijlLijnen.push({gr:el("g",{class:"pijlen"},gr),lijn,kleur});
+}
+/* de pijlpunten opnieuw langs elke lijn zetten, passend bij de huidige zoom */
+function verversPijlen(){
+  let k=1;
+  try{ k=view.k; }catch(e){}
+  const sc=1/k;
+  for(const it of pijlLijnen){
+    let lang=0;
+    try{ lang=it.lijn.getTotalLength(); }catch(e){ continue; }
+    it.gr.textContent="";
+    if(!lang)continue;
+    /* de lengte op het scherm bepaalt hoeveel pijlen erop passen */
+    const n=Math.max(1,Math.min(PIJL_MAX,Math.round(lang*k/PIJL_OM_PX)));
+    for(let j=0;j<n;j++){
+      /* niet op 0 of 1: daar staan de begin- en eindstip al */
+      const pos=((j+.5)/n)*lang;
+      const a=it.lijn.getPointAtLength(Math.max(0,pos-.6));
+      const b=it.lijn.getPointAtLength(Math.min(lang,pos+.6));
+      const hoek=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
+      const buiten=el("g",{transform:`translate(${b.x} ${b.y}) rotate(${hoek})`},it.gr);
+      const binnen=el("g",{transform:`scale(${sc})`},buiten);
+      el("path",{class:"pijl",d:"M-2.6 -2 L1.4 0 L-2.6 2 Z",fill:it.kleur,stroke:"none"},binnen);
+    }
+  }
+}
+
+/* De namen lopen mee met de lijn, zoals een riviernaam. startOffset zet ze een
+   stukje na het begin, waar de lijn nog niet door andere trajecten wordt
+   gekruist. */
+function zetReisNaam(gr,padId,reis,kleur,lijn){
+  const wie=Array.isArray(reis.wie)?reis.wie:[];
+  if(!wie.length)return;
+  const naam=wie.map(persNaam).join(", ");
+  const t=el("text",{class:"reisnaam",fill:kleur},gr);
+  const tp=el("textPath",{startOffset:"12%"},t);
+  tp.setAttribute("href","#"+padId);
+  /* oudere browsers kennen alleen het xlink-attribuut */
+  tp.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href","#"+padId);
+  tp.textContent=naam;
+  t.__lijn=lijn;
+  t.__tp=tp;
+  reisNamen.push(t);
+  richtReisNaam(t);
+}
+/* Een textPath loopt met het pad mee. Gaat de route naar links — en dat doet de
+   helft ervan, denk aan de terugreizen — dan staat de naam ondersteboven en van
+   rechts naar links. Dan hangen we hem aan een omgekeerde kopie van hetzelfde
+   pad, zodat de letters altijd leesbaar blijven staan. */
+function richtReisNaam(t){
+  const lijn=t.__lijn, tp=t.__tp;
+  if(!lijn||!tp)return;
+  let a,b;
+  try{
+    const L=lijn.getTotalLength();
+    if(!L)return;
+    a=lijn.getPointAtLength(0);
+    b=lijn.getPointAtLength(L);
+  }catch(e){ return; }
+  const terug=b.x<a.x;
+  if(terug===!!t.__terug)return;     /* stand klopt al */
+  t.__terug=terug;
+  const basis=lijn.getAttribute("id");
+  const omId=basis+"-om";
+  if(terug){
+    /* de omgekeerde kopie ligt in dezelfde groep als de lijn zelf, zodat hij
+       mee verdwijnt als de route opnieuw wordt opgebouwd */
+    let om=lijn.parentNode.querySelector("#"+CSS.escape(omId));
+    if(!om){
+      /* class en niet alleen een stroke-attribuut: .route path zet stroke via
+         CSS, en die wint van een presentatie-attribuut. Zonder .naampad werd
+         deze hulplijn dus gewoon meegetekend, vlak naast de echte lijn. */
+      om=el("path",{id:omId,class:"naampad",d:keerPad(lijn.getAttribute("d"))},lijn.parentNode);
+    }else om.setAttribute("d",keerPad(lijn.getAttribute("d")));
+    tp.setAttribute("href","#"+omId);
+    tp.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href","#"+omId);
+  }else{
+    tp.setAttribute("href","#"+basis);
+    tp.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href","#"+basis);
+  }
+}
+/* Het pad achterstevoren, als rechte stukken. Alleen de punten tellen: de
+   omgekeerde kopie wordt nooit getekend, hij draagt alleen de tekst. */
+function keerPad(d){
+  const m=document.createElementNS("http://www.w3.org/2000/svg","path");
+  m.setAttribute("d",d);
+  const L=m.getTotalLength();
+  if(!L)return d;
+  const n=Math.max(2,Math.min(160,Math.round(L/2)));
+  const pts=[];
+  for(let i=n;i>=0;i--){
+    const p=m.getPointAtLength(L*i/n);
+    pts.push(`${p.x.toFixed(2)} ${p.y.toFixed(2)}`);
+  }
+  return "M"+pts.join("L");
+}
+
+/* na elke zoomstap opnieuw: zie pas(). bouwRoutes() draait ook al voordat de
+   kijkstand met `let view` bestaat; die is dan nog niet aan te raken — ook niet
+   met typeof — dus vangen we dat af en valt de maat even op 1. De eerste pas()
+   zet hem daarna goed. */
+function schaalEindStippen(){
+  let k=1;
+  try{ k=view.k; }catch(e){}
+  const sc=1/k;
+  for(const g of eindStippen)g.setAttribute("transform",`scale(${sc})`);
+  /* de naam langs de lijn schaalt via de lettergrootte: een transform zou hem
+     van zijn pad af trekken. De rand eromheen moet mee, anders verslindt die
+     bij ver inzoomen de letters. */
+  /* De naam verschijnt pas als de lijn er ook echt lang genoeg voor is: bij een
+     ver uitgezoomde kaart vallen vijf namen over elkaar heen en is er van de
+     kaart niets meer te zien. De maat volgt de zoom, zodat hij op het scherm
+     even groot blijft. */
+  for(const t of reisNamen){
+    /* 11 schermpunten: klein genoeg om niet te schreeuwen, groot genoeg om te
+       lezen. Deelt door de zoom omdat de tekst in de meeschalende wereldlaag zit. */
+    t.setAttribute("font-size",(11*sc).toFixed(3));
+    t.style.strokeWidth=(2.6*sc).toFixed(3)+"px";
+    /* een versleept punt kan de lijn omgekeerd hebben laten lopen */
+    richtReisNaam(t);
+    let past=false;
+    try{
+      const lijn=t.__lijn;
+      /* past de naam binnen de lijn, met wat lucht eromheen? */
+      past=lijn&&lijn.getTotalLength()>t.getComputedTextLength()*1.15;
+    }catch(e){}
+    t.classList.toggle("weg",!past);
+  }
+  verversPijlen();
+}
+/* de tint waarin een reis getekend is, voor de lijstjes in het zijpaneel */
+const reisTint=(r,i)=>(routeTeken[r.id]&&routeTeken[r.id].reizen[i]||{}).kleur
+  ||RGRP[r.grp].kleur;
 
 /* ---- route-tussenpunten verslepen ----
    Alleen de coördinaten in benen zijn hier van belang: een been-stap die een
@@ -1646,24 +2025,47 @@ function bouwRoutes(){
    kaart niet vol te zetten met grepen tonen we dit alleen voor de route die
    nu open staat in het zijpaneel. */
 const gRoutepunten=el("g",{},world);
+/* Na het slepen van een greep komt er nog een click-event achteraan. Dat mag
+   geen nieuw punt opleveren; dit vlaggetje vangt precies die ene klik af. */
+let netGesleeptPunt=false;
 const gRivierWerk=el("g",{},world);
+/* de grepen staan hier los van elkaar in een g met een eigen tegenschaling,
+   zodat pas() ze op schermmaat kan houden zonder de plek te verzetten */
+const routepuntEls=[];
 function bouwRoutepunten(){
   gRoutepunten.textContent="";
+  routepuntEls.length=0;
   const r=ROUTES.find(x=>x.id===state.route);
   if(!r)return;
-  r.benen.forEach((been,beenIdx)=>{
-    been.forEach((stap,stapIdx)=>{
+  /* alleen de punten van het gezelschap dat onder handen is: grepen van een
+     andere reis erbij zouden je een lijn laten verslepen waar je niet aan
+     werkt, terwijl nieuwe punten wel bij het actieve gezelschap belanden */
+  const punten=huidigePunten(r);
+  if(punten)punten.forEach((stap,stapIdx)=>{
       if(!Array.isArray(stap))return;
-      const c=el("circle",{class:"routepunt",cx:stap[0],cy:stap[1]},gRoutepunten);
-      c.addEventListener("pointerdown",e=>{
+      /* de groep zet de plek, de binnenste groep de maat: zo blijft de greep
+         even groot op het scherm terwijl hij op zijn kaartpunt blijft staan */
+      const g=el("g",{class:"routepunt",transform:`translate(${stap[0]} ${stap[1]})`},gRoutepunten);
+      const binnen=el("g",{},g);
+      el("circle",{class:"greep"},binnen);
+      el("circle",{class:"stip"},binnen);
+      routepuntEls.push(binnen);
+      g.__punten=punten; g.__stapIdx=stapIdx;
+      g.addEventListener("pointerdown",e=>{
         if(!zetten||!routePuntenAan())return;
         e.stopPropagation(); e.preventDefault();
-        sleep={soort:"routepunt",been,stapIdx,c,bewogen:0};
-        c.classList.add("pak");
-        try{c.setPointerCapture(e.pointerId);}catch(err){}
+        g.__gesleept=false;
+        sleep={soort:"routepunt",punten,stapIdx,c:g,bewogen:0};
+        g.classList.add("pak");
+        try{g.setPointerCapture(e.pointerId);}catch(err){}
       });
-    });
   });
+  schaalRoutepunten();
+}
+/* na elke zoomstap opnieuw: zie pas() */
+function schaalRoutepunten(){
+  const s=1/view.k;
+  for(const g of routepuntEls)g.setAttribute("transform",`scale(${s})`);
 }
 bouwRoutes(); bouwRoutepunten();
 
@@ -1711,11 +2113,13 @@ function maakMarker(p){
   /* in de bewerkstand opent een klik geen paneel: daar kies je het onderdeel
      dat je onder handen neemt. Terwijl een route in de bouw-modus staat gaat
      een klik op een markering naar routeKlik() — die plakt de plaats-id als
-     stap in de route, in plaats van een los coördinaat. */
+     stap in de route, in plaats van een los coördinaat. De plek gaat mee: bij
+     invoegen moet ook een plaats tussen het juiste beensegment belanden, en
+     zonder coördinaat is er niets om dat mee te zoeken. */
   g.addEventListener("click",e=>{
     e.stopPropagation();
     if(gesleept())return;
-    if(zetten&&routePuntenAan()){routeKlik(p.id,null); return;}
+    if(zetten&&routePuntenAan()){routeKlik(p.id,plek(p)); return;}
     if(!zetten)kies(p.id);
   });
   g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();kies(p.id);}});
@@ -1788,18 +2192,35 @@ const RELIEF={               /* hoe hoog het land wordt, en hoe grillig */
 
    vlek gaat over de grovere afwisseling: open plekken in een woud, droge
    stukken op de steppe, kleuren die per streek een tikje verschillen. */
+/* De donkere kleuren staan verder uit elkaar dan je op het oog zou kiezen, en
+   dat is met opzet. Ze lagen eerst allemaal tussen 21% en 34% helderheid
+   gepropt — een bereik van dertien punten, terwijl het lichte thema er
+   zesendertig heeft. Tint en verzadiging waren priéma, maar zonder ruimte in
+   de helderheid vielen Aslava, Ursali en de Middle Kingdoms samen tot één
+   groene massa waar alleen de grenslijn nog verklapte waar het ene land
+   ophield. Nu loopt de reeks van 21% (jungle) tot 48% (woestijn), in dezelfde
+   volgorde als in het lichte thema, zodat een bos donkerder blijft dan een
+   steppe.
+
+   Waar twee terreinen van nature op elkaar lijken zijn ze op tint uit elkaar
+   gezet in plaats van op helderheid: grasland groen tegen steppe geel, akker
+   groener dan steppe, moeras grijzig tegen de bossen. Gemeten in CIELAB (dE,
+   waarbij onder de 5 voor het oog vrijwel gelijk is) zit nu geen enkel paar
+   meer onder de 5; daarvoor waren dat er zes, met grasland en steppe op 1,7.
+   Verander je hier een kleur, kijk dan naar het slechtste paar en niet naar
+   het gemiddelde: één samenvallend paar is precies wat je op de kaart ziet. */
 const GROEI={
-  akker:   {licht:"#D2CE96", donker:"#454F2F", korrel:.10, vlek:.13},
-  grasland:{licht:"#C0C88C", donker:"#3E4B2F", korrel:.09, vlek:.11},
-  steppe:  {licht:"#BFC985", donker:"#414E30", korrel:.10, vlek:.14},
-  heide:   {licht:"#B3A88E", donker:"#443F35", korrel:.16, vlek:.16},
-  loofbos: {licht:"#84A05C", donker:"#2C3E24", korrel:.32, vlek:.18},
-  naaldbos:{licht:"#688B5E", donker:"#26362A", korrel:.36, vlek:.19},
-  jungle:  {licht:"#6E9C4B", donker:"#24391F", korrel:.40, vlek:.20},
-  woestijn:{licht:"#E7D8A2", donker:"#564B31", korrel:.14, vlek:.16},
-  moeras:  {licht:"#94A67E", donker:"#2C3A2B", korrel:.24, vlek:.22},
-  toendra: {licht:"#C6C6AC", donker:"#464A3C", korrel:.11, vlek:.12},
-  kaal:    {licht:"#C2B698", donker:"#4A4735", korrel:.18, vlek:.15}
+  akker:   {licht:"#D2CE96", donker:"#4B5A2E", korrel:.10, vlek:.13},
+  grasland:{licht:"#C0C88C", donker:"#3F5230", korrel:.09, vlek:.11},
+  steppe:  {licht:"#BFC985", donker:"#63603A", korrel:.10, vlek:.14},
+  heide:   {licht:"#B3A88E", donker:"#4E4436", korrel:.16, vlek:.16},
+  loofbos: {licht:"#84A05C", donker:"#31461F", korrel:.32, vlek:.18},
+  naaldbos:{licht:"#688B5E", donker:"#25352A", korrel:.36, vlek:.19},
+  jungle:  {licht:"#6E9C4B", donker:"#1F3D18", korrel:.40, vlek:.20},
+  woestijn:{licht:"#E7D8A2", donker:"#7A6A45", korrel:.14, vlek:.16},
+  moeras:  {licht:"#94A67E", donker:"#39473A", korrel:.24, vlek:.22},
+  toendra: {licht:"#C6C6AC", donker:"#5E6250", korrel:.11, vlek:.12},
+  kaal:    {licht:"#C2B698", donker:"#6A6248", korrel:.18, vlek:.15}
 };
 const STD_TERREIN={relief:"heuvels",begroeiing:"grasland"};
 /* Een vorm uit world.svg hoort bij een gebied, of — zoals Skorghijl — bij een
@@ -1920,11 +2341,21 @@ const hexRGB=s=>{
 
 /* ---- het rekenwerk ---- */
 /* RES is het aantal rasterpunten per kaarteenheid van het reliëf. Hoger is
-   scherper bij het inzoomen en kost evenredig meer rekentijd en geheugen; op
-   3 blijft het onder de seconde en is het tot een stap of vier inzoomen mooi.
-   Het is het enige getal dat je hoeft te veranderen als je dat anders wilt. */
+   scherper bij het inzoomen en kost evenredig meer rekentijd en geheugen: het
+   raster is RES² punten groot, dus van 3 naar 4 is bijna twee keer zoveel
+   werk. Het is het enige getal dat je hoeft te veranderen als je dat anders
+   wilt.
+
+   Waarom 4 en niet hoger. De fijnste ruislaag van het reliëf ligt rond de
+   twee golven per kaarteenheid (zie de basis .026 in bouwGrond en de factor
+   2,07 per laag in fbm). Een raster moet ruim twee punten per golf hebben om
+   die te kunnen weergeven, en bij RES=3 zit de fijnste laag daar net onder:
+   die verscheen als korrel in plaats van als rots. Op 4 komt hij eruit zoals
+   hij bedoeld is. Daarboven valt er weinig meer te winnen — er is geen fijner
+   detail meer in het veld — terwijl de kosten wel doorlopen: gemeten kwam RES
+   5 op ruim anderhalf keer de bouwtijd van 4 zonder zichtbaar verschil. */
 let hoogte=null, RW=0, RH=0, landvlak=null;
-const RES=3;
+const RES=4;
 
 /* De hooggebergte die van de noordkust van Skandia, langs de bergpas boven
    Hallasholm, door Teutland naar Alpina loopt — een eigen kronkelende rug,
@@ -2004,11 +2435,11 @@ const reliefCache=(()=>{
       try{
         const db=await open();
         /* Licht en donker apart bewaren — wisselen van thema blijft dan aan
-           beide kanten snel. De sleutel begint met "v1-dark-" of "v1-light-"
+           beide kanten snel. De sleutel begint met "v2-dark-" of "v2-light-"
            (zie reliefSleutel), dus per kleurstelling ruimen we hier alles op
            wat niet de zojuist gezette sleutel is; anders groeit dit bij elke
            wijziging aan de kaart gewoon door. */
-        const voorvoegsel=sleutel.replace(/^(v1-(?:dark|light)).*$/,"$1");
+        const voorvoegsel=sleutel.replace(/^(v2-(?:dark|light)).*$/,"$1");
         await new Promise((res,rej)=>{
           const s=db.transaction(winkel,"readwrite").objectStore(winkel);
           const rq=s.getAllKeys();
@@ -2037,6 +2468,11 @@ function hashTekst(s){
    blok van seconden waarin niets te zien is — de laadbalk zou dan pas aan het
    eind in één klap vooruitspringen. `meld` geeft na elke stap door hoe ver we
    zijn; wie geen melding wil geeft niets mee. */
+/* Een opgeslagen reliëfbeeld is een Blob; de <image> wil een URL. Oudere
+   caches bewaarden er een dataURL-tekst in — die kan er nog liggen bij wie
+   de kaart al eens open had, en die is zelf al een bruikbare href. */
+function beeldUrl(b){ return typeof b==="string"?b:URL.createObjectURL(b); }
+
 async function bouwGrond(meld){
   const pauze=meld?(deel,sleutel)=>meld(deel,sleutel):()=>{};
   const wortel=document.documentElement, stijl=getComputedStyle(wortel);
@@ -2055,7 +2491,7 @@ async function bouwGrond(meld){
      berekend te worden. RUWDATA (nog tweetalig, vóór vertaal()) in plaats van
      DATA: het reliëf hangt niet van de taal af, dus zo blijft de cache-hit
      staan als je alleen van taal wisselt. */
-  const reliefSleutel="v1-"+(donker?"dark":"light")+"-"+hashTekst(svgTekst)+"-"+hashTekst(JSON.stringify(RUWDATA));
+  const reliefSleutel="v2-"+(donker?"dark":"light")+"-"+hashTekst(svgTekst)+"-"+hashTekst(JSON.stringify(RUWDATA));
   const [gecached,gecachedRivieren]=await Promise.all([
     reliefCache.get("png",reliefSleutel),
     reliefCache.get("rivieren",reliefSleutel),
@@ -2063,7 +2499,7 @@ async function bouwGrond(meld){
   if(gecached&&gecachedRivieren){
     await pauze(.60,"laadLicht");
     gLand.textContent="";
-    el("image",{class:"reliefbeeld",href:gecached,
+    el("image",{class:"reliefbeeld",href:beeldUrl(gecached),
       x:0,y:0,width:W,height:H,preserveAspectRatio:"none"},gLand);
     await pauze(.85,"laadRivieren");
     tekenRivieren(gecachedRivieren);
@@ -2417,8 +2853,25 @@ async function bouwGrond(meld){
          tweede schaal blijft het een egale vacht.
 
          Gestapelde ruis, geen enkele laag: één laag waardenruis is per definitie
-         een rooster van vlekken, en dat rooster is met het blote oog te zien. */
-      m*=1+(fbm(wx*.17,wy*.17,2,0)-.5)*tussen(fKorrel,ia,ib,ic,id,w0,w1,w2,w3)
+         een rooster van vlekken, en dat rooster is met het blote oog te zien.
+
+         De maat van de korrel, en waarom die zo fijn staat. Dit was eerst
+         .17 met twee lagen: kruinen van een kaarteenheid of zes breed. Ver
+         ingezoomd zijn dat geen kruinen meer maar wolken — een bos werd een
+         groene veeg zodra je er dichtbij kwam. Op .42 met vier lagen ligt de
+         grofste kruin rond de twee eenheden en de fijnste rond een kwart, en
+         dát leest van dichtbij als een dek van bomen.
+
+         Dat het hier om de maat van de ruis gaat en niet om de fijnheid van
+         het raster is de moeite van het onthouden waard: het raster kan geen
+         detail tonen dat niet in de ruis zit. RES verhogen zonder deze maat
+         mee te nemen levert alleen rekentijd op en geen scherper bos — op
+         RES 8 met de oude .17 was het beeld nog net zo wazig als op 3.
+         Andersom hoort deze maat wel bij RES te passen: vier lagen vanaf .42
+         zet de fijnste laag rond anderhalve golf per eenheid, en dat is net
+         wat een raster van vier punten per eenheid kan weergeven. Wordt RES
+         kleiner, dan hoort hier minder gestapeld te worden. */
+      m*=1+(fbm(wx*.42,wy*.42,4,0)-.5)*tussen(fKorrel,ia,ib,ic,id,w0,w1,w2,w3)
           +(ruis(wx*.085+311,wy*.085-127)-.5)*tussen(fVlek,ia,ib,ic,id,w0,w1,w2,w3);
       /* de laatste meters voor de kust lopen naar het strand toe op */
       if(kust[p]<41){
@@ -2447,8 +2900,14 @@ async function bouwGrond(meld){
     }
     ctx.setTransform(1,0,0,1,0,0);
     ctx.putImageData(beeld,0,0);
-    reliefUrl=cv.toDataURL("image/png");
-    reliefCache.set("png",reliefSleutel,reliefUrl);   /* niet afgewacht: mag op de achtergrond */
+    /* Een Blob en geen dataURL. Op dit raster is het beeld een megabyte of
+       tien; als base64-tekst wordt dat een derde groter, en die tekst moet
+       daarna in zijn geheel door de tekenlaag én door IndexedDB heen. Als
+       Blob blijven het de ruwe bytes, en de <image> krijgt er een korte
+       object-URL naar. */
+    const blob=await new Promise(res=>cv.toBlob(res,"image/png"));
+    reliefUrl=beeldUrl(blob);
+    reliefCache.set("png",reliefSleutel,blob);   /* niet afgewacht: mag op de achtergrond */
   }
   gLand.textContent="";
   el("image",{class:"reliefbeeld",href:reliefUrl,
@@ -2807,7 +3266,13 @@ function zetRivierNamen(){
 }
 
 /* ======================= zoomen en schuiven ======================= */
-let view={x:0,y:0,k:1}; const minK=.85, maxK=26;
+/* maxK is hoe ver je mag inzoomen. Waar de grens ligt bepaalt het reliëf:
+   dat is een plaatje van RES punten per kaarteenheid (zie RES bij bouwGrond),
+   en zoom je verder in dan er punten zijn, dan rek je het beeld uit tot pap.
+   Bij RES=4 en k=40 is één rasterpunt tien schermpunten breed — daar is de
+   kust nog scherp (die is vector) en het land nog niet wazig. Gaat RES omlaag,
+   dan hoort dit getal evenredig mee omlaag. */
+let view={x:0,y:0,k:1}; const minK=.85, maxK=40;
 function begrens(){
   view.k=Math.max(minK,Math.min(maxK,view.k));
   view.x=Math.min(W/2+.15*view.k*W,Math.max(W/2-1.15*view.k*W,view.x));
@@ -2842,6 +3307,8 @@ function pas(){
     m.g.classList.toggle("showlabel",view.k>=kBasis*(p.z||3)/2.4);
     m.g.classList.toggle("stil",stil&&p.id!==state.sel&&!routePlekken.has(p.id));
   }
+  schaalRoutepunten();
+  schaalEindStippen();
   ontwarGebieden();
   ontwar();
 }
@@ -3079,8 +3546,9 @@ function bouwRouteChips(){
       const b=document.createElement("button");
       b.className="chip mini"; b.type="button"; b.setAttribute("aria-pressed",String(r.id===state.route));
       b.textContent=r.nr;
-      b.title=(BOEKEN[r.id]?BOEKEN[r.id][0]:r.id)+(r.kanNiet?t("wachtOpLand"):"");
-      b.disabled=r.kanNiet;
+      const kn=(routeTeken[r.id]||{}).kanNiet;
+      b.title=(BOEKEN[r.id]?BOEKEN[r.id][0]:r.id)+(kn?t("wachtOpLand"):"");
+      b.disabled=!!kn;
       b.setAttribute("aria-label",`${t("reisrouteAria")}${BOEKEN[r.id]?BOEKEN[r.id][0]:r.id}`);
       b.onclick=()=>zetRoute(r.id);
       routeBtns[r.id]=b; box.appendChild(b);
@@ -3090,6 +3558,7 @@ function bouwRouteChips(){
 }
 bouwRouteChips();
 function zetRoute(id){
+  if(state.route!==id)actieveReis=0;
   state.route = state.route===id ? null : id;
   /* een route openen terwijl er nog een plaats/naam gekozen stond zou het
      paneel in twee standen tegelijk laten zichtbaarheid claimen */
@@ -3116,13 +3585,61 @@ function zetRoute(id){
   if(typeof toonRouteFormulier==="function")toonRouteFormulier();
   /* de plaatsen van deze route blijven zichtbaar, ook op het overzicht: een
      route die het halve werelddeel overspant past niet in één zoomstap */
-  routePlekken=new Set(r?r.benen.flat().filter(s=>typeof s==="string"):[]);
+  routePlekken=new Set(r?r.reizen.flatMap(x=>x.punten).filter(s=>typeof s==="string"):[]);
   if(!r){rcap.hidden=true;pas();return;}
+  ververRouteBijschrift(r);
+  const vak=routeVak(r);
+  if(vak)vliegVak(vak,1.8,10);
+}
+
+/* Het vak waar de route in past: alleen de getekende reislijnen tellen mee.
+   De bbox van de hele groep nemen gaat mis. Daar zitten namelijk ook in:
+   - de pijlpunten, die als klein driehoekje rond de oorsprong staan en hun
+     plek pas van een transform krijgen. Hun eigen bbox ligt dus bij (0,0) en
+     rekt het vak op tot aan de linkerbovenhoek van de kaart;
+   - de namen langs de lijn, die aan een eigen pad hangen en bij een te korte
+     lijn onzichtbaar (opacity:0, dus nog wél in de opmaak) blijven staan.
+   Beide zorgden ervoor dat een route veel te ver uitzoomde. */
+function routeVak(r){
+  const g=routeEls[r.id]; if(!g)return null;
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const p of g.querySelectorAll(".reis path")){
+    if(p.classList.contains("pijl")||p.classList.contains("end"))continue;
+    /* de omgekeerde naampaden liggen op dezelfde plek als hun lijn, maar
+       tellen niet apart mee */
+    if((p.getAttribute("id")||"").endsWith("-om"))continue;
+    let b; try{ b=p.getBBox(); }catch(e){ continue; }
+    if(!b.width&&!b.height)continue;
+    x0=Math.min(x0,b.x); y0=Math.min(y0,b.y);
+    x1=Math.max(x1,b.x+b.width); y1=Math.max(y1,b.y+b.height);
+  }
+  if(!isFinite(x0))return null;
+  return {x:x0,y:y0,width:x1-x0,height:y1-y0};
+}
+
+/* het blokje onder de boekknoppen: titel, omschrijving, wie er reizen en de
+   knop om de reis af te spelen. Apart, omdat het opnieuw moet worden opgebouwd
+   zodra je in de bewerkstand een gezelschap hernoemt of toevoegt. */
+function ververRouteBijschrift(r){
+  if(!r||r.id!==state.route)return;
   const b=BOEKEN[r.id];
-  rcap.innerHTML=`<b>${b?b[1]+" · "+b[0]:r.id}</b>${r.tekst}`;
+  /* Per traject wie het samen aflegt. Bij een boek waar iedereen de hele tijd
+     samen optrekt is dat een regel en zou het weinig toevoegen — maar het zegt
+     wel wie erbij waren, dus het blijft ook dan staan zolang er namen zijn. */
+  const heeftNamen=r.reizen.some(x=>Array.isArray(x.wie)&&x.wie.length);
+  const wielijst=heeftNamen?`<ul class="wielijst">`+r.reizen.map((reis,i)=>{
+    const wie=Array.isArray(reis.wie)?reis.wie:[];
+    if(!wie.length)return `<li><i style="background:${reisTint(r,i)}"></i>${
+      t("reisFallback").replace("%",i+1)}</li>`;
+    /* Eén kleur per traject: precies de kleur waarin die lijn op de kaart
+       staat. Eerder kreeg elke meereizende zijn eigen streepje, maar dan staan
+       er per regel drie of vier verschillende kleurtjes en is niet meer te
+       zien welke bij de lijn hoort. */
+    return `<li><i style="background:${reisTint(r,i)}"></i>${
+      wie.map(persNaam).join(", ")}</li>`;
+  }).join("")+`</ul>`:"";
+  rcap.innerHTML=`<b>${b?b[1]+" · "+b[0]:r.id}</b>${r.tekst}${wielijst}`;
   rcap.hidden=false;
-  const el2=routeEls[r.id];
-  if(el2.getBBox().width)vliegVak(el2.getBBox(),1.8,10);
 }
 
 /* lijst */
@@ -3282,7 +3799,7 @@ let zetten=false, sleep=null, keuze=null, actieveTool="select";
 function schoon(o){
   const s={};
   for(const k in o){
-    if(k==="paden"||k==="kanNiet")continue;
+    if(k==="paden"||k==="kanNiet"||k==="reisEls"||k==="kleurUit")continue;
     if((k==="lx"||k==="ly"||k==="rot")&&!o[k])continue;
     if(k==="maat"&&o[k]===1)continue;
     s[k]=o[k];
@@ -3327,13 +3844,19 @@ function schoneData(){
   terugvertaal(RUWDATA,DATA);
   const bron=RUWDATA;
   const uit={};
-  for(const k of ["_uitleg","boeken","gebieden","zeeen","detail","plaatsen","routegroepen","routes",
-    "rivieroverrides","riviersuppressies"])
+  for(const k of ["_uitleg","versie","boeken","personages","gebieden","zeeen","detail","plaatsen",
+    "routegroepen","routes","rivieroverrides","riviersuppressies"])
     if(bron[k]!==undefined)uit[k]=bron[k];
   uit.gebieden=Object.fromEntries(Object.entries(uit.gebieden).map(([k,v])=>[k,schoon(v)]));
   uit.zeeen=uit.zeeen.map(schoon);
   uit.plaatsen=uit.plaatsen.map(schoon);
-  uit.routes=uit.routes.map(schoon);
+  /* een route draagt zijn reizen mee; die krijgen dezelfde schoonmaak, anders
+     blijft er rekenwerk uit een eerdere sessie in het bestand achter */
+  uit.routes=uit.routes.map(r=>{
+    const c=schoon(r);
+    if(Array.isArray(c.reizen))c.reizen=c.reizen.map(schoon);
+    return c;
+  });
   if(uit.rivieroverrides)uit.rivieroverrides=uit.rivieroverrides.map(schoon);
   return uit;
 }
@@ -3524,27 +4047,143 @@ $("#zpVerwijder").addEventListener("click",()=>{
    punt neerzetten. */
 /* routePuntenAan volgt gewoon de actieve tool: zolang "route" de gekozen
    tool is, voegt een klik op de kaart een punt toe aan de geopende route.
-   routeInvoegAan is een losse sub-schakelaar daarbinnen (invoegen tussen
-   bestaande punten in plaats van achteraan toevoegen). */
-let routeInvoegAan=false;
+   Waar dat punt terechtkomt bepaalt de klik zelf: op de lijn ertussen, ernaast
+   erachteraan — zie dichtstbijSegment(). */
 const routePuntenAan=()=>actieveTool==="route";
+/* Welk gezelschap staat er onder handen? Een route kan er meer hebben, en een
+   klik op de kaart moet in precies een ervan landen. Dit is de index in
+   r.reizen; hij wordt teruggezet zodra je een andere route kiest. */
+let actieveReis=0;
+const huidigeReis=r=>r.reizen[Math.min(actieveReis,r.reizen.length-1)];
+
 function toonRouteFormulier(){
   const zr=$("#zetroute");
   const r=zetten?ROUTES.find(x=>x.id===state.route):null;
   zr.hidden=!r;
-  if(!r){routeInvoegAan=false; zetPaneelZichtbaar(); verversZetbezig(); return;}
+  if(!r){zetPaneelZichtbaar(); verversZetbezig(); return;}
   $("#zpKop").textContent=t("routeBewerken");
   $("#zrGroep").value=r.grp;
   $("#zrNummer").value=r.nr;
   $("#zrTekst").value=r.tekst||"";
-  $("#zrInvoegen").setAttribute("aria-pressed",String(routeInvoegAan));
+  if(actieveReis>=r.reizen.length)actieveReis=0;
+  vulReizen(r);
   zetPaneelZichtbaar();
+}
+
+/* de lijst gezelschappen, met de tint waarin ze getekend worden */
+function vulReizen(r){
+  const doos=$("#zrReizen"); doos.textContent="";
+  r.reizen.forEach((reis,i)=>{
+    const b=html("button",{type:"button","aria-pressed":String(i===actieveReis)},doos);
+    html("i",{style:`background:${reisTint(r,i)}`},b);
+    const wie=Array.isArray(reis.wie)?reis.wie:[];
+    html("span",{},b).textContent=wie.length
+      ? wie.map(persNaam).join(", ")
+      : t("reisFallback").replace("%",i+1);
+    html("em",{},b).textContent=t("puntenTelling").replace("%",(reis.punten||[]).length);
+    b.onclick=()=>{actieveReis=i; bouwRoutepunten(); toonRouteFormulier(); verversZetbezig();};
+  });
+  const reis=huidigeReis(r);
+  vulPersonages(r,reis);
+  /* wie er reizen is ook bij een enkel gezelschap zinvol — dat bepaalt de
+     kleur van de lijn en wie er in het zijpaneel bij komt te staan */
+  $("#zrWieVeld").hidden=false;
+  $("#zrReisWeg").hidden=r.reizen.length<2;
+  vulPunten(r);
+}
+
+/* Wie leggen dit traject samen af. Meer dan een tegelijk mag: dan teken je hun
+   gedeelde weg een keer, en bij de splitsing maak je een nieuw traject met de
+   mensen die verder gaan. */
+function vulPersonages(r,reis){
+  const doos=$("#zrWie"); if(!doos)return;
+  doos.textContent="";
+  const wie=(reis&&Array.isArray(reis.wie))?reis.wie:[];
+  for(const id in PERS){
+    const aan=wie.includes(id);
+    const b=html("button",{type:"button","aria-pressed":String(aan),
+      style:aan?`--pk:${persKleur(id)}`:""},doos);
+    html("i",{style:`background:${persKleur(id)}`},b);
+    html("span",{},b).textContent=persNaam(id);
+    b.onclick=()=>{
+      if(!reis)return;
+      const lijst=Array.isArray(reis.wie)?reis.wie:[];
+      const i=lijst.indexOf(id);
+      if(i>=0)lijst.splice(i,1); else lijst.push(id);
+      if(lijst.length)reis.wie=lijst; else delete reis.wie;
+      bewaar(); verversNaZet(); toonRouteFormulier();
+      ververRouteBijschrift(r);
+    };
+  }
+}
+
+/* De weg van het gekozen gezelschap, punt voor punt. Op de kaart zijn losse
+   punten kleine stipjes die dicht op elkaar kunnen liggen; hier staan ze op
+   volgorde met hun naam erbij, en is er van elk een knopje om het weg te
+   halen. Een plaats verschijnt met haar naam, een los punt met zijn ligging. */
+function vulPunten(r){
+  const doos=$("#zrPunten"); if(!doos)return;
+  doos.textContent="";
+  const reis=huidigeReis(r);
+  const punten=reis&&reis.punten;
+  if(!punten||!punten.length){
+    const leeg=html("li",{class:"zpleeg"},doos);
+    leeg.textContent=t("nogGeenPunten");
+    return;
+  }
+  punten.forEach((stap,i)=>{
+    const li=html("li",{},doos);
+    const naam=html("span",{},li);
+    if(Array.isArray(stap)){
+      naam.className="zplos";
+      naam.textContent=`${stap[0].toFixed(0)}, ${stap[1].toFixed(0)}`;
+    } else {
+      const pl=plaatsById[stap];
+      naam.textContent=pl?pl.naam:stap;
+    }
+    /* hier gaat een deel van de groep een andere kant op: een nieuw traject
+       dat op dit punt begint, met dezelfde mensen. Daarna vink je uit wie er
+       niet meegaat. Zonder dit kon je alleen afsplitsen aan het eind van het
+       traject dat je onder handen had — en een groep splitst zich juist
+       ergens onderweg. */
+    const split=html("button",{type:"button",class:"zpsplit",
+      "aria-label":t("splitsHier"),title:t("splitsHier")},li);
+    split.textContent="⑂";
+    split.onclick=()=>splitsBij(r,reis,i);
+    const weg=html("button",{type:"button","aria-label":t("puntVerwijderen"),
+      title:t("puntVerwijderen")},li);
+    weg.textContent="×";
+    weg.onclick=()=>{
+      punten.splice(i,1);
+      bewaar(); verversNaZet(); toonRouteFormulier();
+    };
+    /* aanwijzen laat zien welk stipje op de kaart hierbij hoort */
+    li.onmouseenter=()=>markeerPunt(i);
+    li.onmouseleave=()=>markeerPunt(null);
+  });
+}
+/* Een afsplitsing vanaf punt i van dit traject: het nieuwe traject begint op
+   dat punt en erft de bezetting, zodat je alleen nog hoeft uit te vinken wie
+   er niet meegaat. Het bestaande traject blijft ongemoeid — de anderen lopen
+   immers gewoon door. */
+function splitsBij(r,reis,i){
+  const punt=reis.punten[i];
+  if(punt===undefined)return;
+  r.reizen.push({wie:Array.isArray(reis.wie)?[...reis.wie]:[],
+    punten:[Array.isArray(punt)?[...punt]:punt]});
+  actieveReis=r.reizen.length-1;
+  bewaar(); verversNaZet(); toonRouteFormulier();
+}
+/* het stipje op de kaart dat bij de aangewezen regel hoort even laten opvallen */
+function markeerPunt(i){
+  const grepen=gRoutepunten.querySelectorAll(".routepunt");
+  grepen.forEach(g=>g.classList.toggle("wijs",i!=null&&g.__stapIdx===i));
 }
 function nieuweRouteAanmaken(){
   let id="route-"+Date.now();
   while(ROUTES.some(r=>r.id===id))id="route-"+Date.now();
   const r={id,grp:"GJ",nr:String(ROUTES.filter(x=>x.grp==="GJ").length+1),
-    tekst:"",benen:[[]]};
+    tekst:"",reizen:[{kleur:0,punten:[]}]};
   ROUTES.push(r);
   bouwRouteChips();
   bewaar(); verversNaZet();
@@ -3562,40 +4201,84 @@ $("#zrTekst").addEventListener("change",()=>{
   const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
   r.tekst=$("#zrTekst").value; bewaar();
 });
-$("#zrVolgendBeen").addEventListener("click",()=>{
-  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
-  r.benen.push([]); bewaar(); verversNaZet();
+/* een gezelschap erbij: krijgt de volgende tint en wordt meteen het actieve,
+   zodat je direct zijn weg kunt intekenen */
+$("#zrNieuw").addEventListener("click",()=>{
+  nieuweRouteAanmaken();
 });
-$("#zrInvoegen").addEventListener("click",()=>{
-  routeInvoegAan=!routeInvoegAan;
-  toonRouteFormulier(); verversZetbezig();
+$("#zrReisBij").addEventListener("click",()=>{
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  /* een afsplitsing begint met dezelfde mensen als waar je nu mee bezig bent:
+     bij een splitsing loopt het gezelschap meestal grotendeels door en vink je
+     er hooguit iemand uit. Ook het laatste punt gaat mee, want daar splitsen
+     ze zich af. */
+  const nu=huidigeReis(r);
+  const start=nu&&nu.punten&&nu.punten.length?[nu.punten[nu.punten.length-1]]:[];
+  r.reizen.push({wie:nu&&Array.isArray(nu.wie)?[...nu.wie]:[],punten:start});
+  actieveReis=r.reizen.length-1;
+  bewaar(); verversNaZet(); toonRouteFormulier();
+});
+$("#zrReisWeg").addEventListener("click",()=>{
+  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  if(r.reizen.length<2)return;
+  if(!confirm(t("bevestigReisVerwijderen")))return;
+  r.reizen.splice(actieveReis,1);
+  /* de tinten opnieuw op volgorde, anders houdt de waaier een gat */
+  r.reizen.forEach((reis,i)=>{reis.kleur=i;});
+  actieveReis=Math.max(0,actieveReis-1);
+  bewaar(); verversNaZet(); toonRouteFormulier();
 });
 $("#zrVerwijder").addEventListener("click",()=>{
   const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
   if(!confirm(t("bevestigRouteVerwijderen")))return;
   const idx=ROUTES.indexOf(r); if(idx>=0)ROUTES.splice(idx,1);
   delete routeEls[r.id];
-  state.route=null; routeInvoegAan=false;
+  state.route=null;
   bouwRouteChips();
   bewaar(); verversNaZet(); teken(); toonRouteFormulier();
   kiesTool("select");
 });
-/* dichtstbijzijnde beensegment vinden om een punt tussenin te zetten */
-function dichtstbijBeensegment(r,x,y){
+/* Waar hoort een klik in de lijn? Alleen als hij dicht genoeg op een stuk lijn
+   ligt telt het als "ertussen"; verder weg is het een nieuw punt aan het eind.
+   Zo hoeft niemand een stand aan of uit te zetten: klik je op de lijn, dan voeg
+   je in, klik je ernaast, dan bouw je verder.
+
+   De drempel staat in schermpunten en wordt naar kaarteenheden omgerekend, want
+   bij ver inzoomen ligt "op de lijn" in kaartmaat veel dichterbij dan bij ver
+   uitzoomen — een vaste kaartafstand zou uitgezoomd het halve werelddeel
+   beslaan. */
+const OP_LIJN_PX=12;
+function dichtstbijSegment(r,x,y,waarde){
+  const drempel=OP_LIJN_PX/view.k;
   let best=null, bd=Infinity;
-  r.benen.forEach((been,beenIdx)=>{
-    const pts=beenPunten(been); if(!pts)return;
+  /* Eerst de reis die onder handen is, daarna de andere reizen van dit boek.
+     Klik je op een lijn die zichtbaar is maar niet de actieve reis, dan hoort
+     het punt daar thuis — anders belandt het ongezien achteraan bij een ander
+     gezelschap en lijkt het alsof er niets gebeurt tot je die reis aanklikt. */
+  const actief=huidigePunten(r);
+  const reeks=[];
+  if(actief)reeks.push({punten:actief,idx:-1});
+  r.reizen.forEach((reis,i)=>{
+    if(reis.punten!==actief)reeks.push({punten:reis.punten,idx:i});
+  });
+  for(const {punten,idx} of reeks){
+    const pts=reisPunten(punten); if(!pts)continue;
     for(let i=0;i<pts.length-1;i++){
+      /* een plaats naast zichzelf zetten levert een stap van nul lengte op;
+         die segmenten slaan we over zodat de stap bij een echte buur landt */
+      if(waarde&&!Array.isArray(waarde)&&(punten[i]===waarde||punten[i+1]===waarde))continue;
       const [x1,y1]=pts[i], [x2,y2]=pts[i+1];
       const dx=x2-x1, dy=y2-y1, len2=dx*dx+dy*dy;
       let t2=len2?((x-x1)*dx+(y-y1)*dy)/len2:0;
       t2=Math.max(0,Math.min(1,t2));
       const px=x1+t2*dx, py=y1+t2*dy;
-      const d=(x-px)**2+(y-py)**2;
-      if(d<bd){bd=d; best={beenIdx,stapIdx:i+1};}
+      const d=Math.hypot(x-px,y-py);
+      /* de actieve reis wint bij gelijke afstand, vandaar het kleine voordeel */
+      const score=idx<0?d-0.001:d;
+      if(score<bd){bd=score; best={punten,stapIdx:i+1,reisIdx:idx};}
     }
-  });
-  return best;
+  }
+  return bd<=drempel?best:null;
 }
 /* klikken tijdens het bouwen/bewerken van een route: op een marker landt een
    plaats-id-stap, elders een coördinaat-stap — zo mixen bestaande routes het
@@ -3605,34 +4288,52 @@ function dichtstbijBeensegment(r,x,y){
    in plaats van achteraan. */
 function routeKlik(plaatsId,coord){
   const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  /* de waarde die in de reis komt: een plaats-id als er op een markering is
+     geklikt, anders het losse punt. coord dient in beide gevallen om te zoeken
+     waar de stap hoort — ook bij een plaats, die immers ook ergens ligt. */
   const waarde=plaatsId||coord;
-  if(routeInvoegAan&&coord){
-    const doel=dichtstbijBeensegment(r,coord[0],coord[1]);
-    if(doel)r.benen[doel.beenIdx].splice(doel.stapIdx,0,waarde);
-    else r.benen[r.benen.length-1].push(waarde);
-  } else {
-    r.benen[r.benen.length-1].push(waarde);
+  const doel=coord?dichtstbijSegment(r,coord[0],coord[1],waarde):null;
+  /* op de lijn: ertussen. ernaast: erachteraan. */
+  if(doel){
+    doel.punten.splice(doel.stapIdx,0,waarde);
+    /* Viel het punt in een andere reis dan de actieve, dan springt de
+       bewerkstand daarheen: anders zie je de nieuwe greep niet, want
+       bouwRoutepunten() toont alleen de punten van de actieve reis. */
+    if(doel.reisIdx>=0&&doel.reisIdx!==actieveReis){
+      actieveReis=doel.reisIdx;
+      toonRouteFormulier();
+    }
+  }
+  else{
+    const punten=huidigePunten(r);
+    if(punten)punten.push(waarde);
   }
   bewaar(); verversNaZet();
 }
 svg.addEventListener("click",e=>{
   if(!zetten||!routePuntenAan()||gesleept())return;
   if(e.target.closest(".marker"))return; /* die klik loopt al via de marker zijn eigen listener */
+  /* een klik op een sleepgreep hoort bij die greep: verwijderen, of het staartje
+     van een sleep. Zou hij hier ook meetellen, dan kwam er een punt bij precies
+     waar je er een wilde weghalen of verzetten. */
+  if(e.target.closest(".routepunt"))return;
+  if(netGesleeptPunt){netGesleeptPunt=false;return;}
   const w=wereldPunt(e);
   routeKlik(null,[+w.x.toFixed(2),+w.y.toFixed(2)]);
 });
-/* een routepunt verwijderen: extra knop naast het bestaande sleep-circeltje,
-   alleen zichtbaar in de bouw-modus van deze route */
+/* een routepunt verwijderen. De punten en de plek daarin hangen al aan de greep
+   sinds bouwRoutepunten(); daarmee is het punt eenduidig aan te wijzen, ook als
+   twee punten toevallig op dezelfde plek liggen. Alleen een klik die geen sleep
+   was telt — anders wist elke verschuiving het punt dat je net verzette. Dat
+   leest af aan de greep zelf en niet aan gesleept(): die telt het slepen van de
+   kaart, en de greep houdt de pointerdown van de kaart tegen, waardoor die
+   teller hier op een oude stand blijft staan. */
 gRoutepunten.addEventListener("click",e=>{
   const c=e.target.closest(".routepunt"); if(!c||!zetten)return;
-  const r=ROUTES.find(x=>x.id===state.route); if(!r)return;
+  if(!routePuntenAan()||c.__gesleept)return;
   e.stopPropagation();
-  const cx=+c.getAttribute("cx"), cy=+c.getAttribute("cy");
-  outer: for(const been of r.benen)for(let i=0;i<been.length;i++){
-    const s=been[i];
-    if(Array.isArray(s)&&s[0]===cx&&s[1]===cy){been.splice(i,1);break outer;}
-  }
-  bewaar(); verversNaZet();
+  const punten=c.__punten, i=c.__stapIdx;
+  if(punten&&i!=null&&Array.isArray(punten[i])){punten.splice(i,1); bewaar(); verversNaZet();}
 });
 
 /* ---- rivieren bewerken ----
@@ -3770,8 +4471,8 @@ addEventListener("pointermove",e=>{
   sleep.bewogen++;
   if(sleep.soort==="routepunt"){
     const x=+w.x.toFixed(2), y=+w.y.toFixed(2);
-    sleep.been[sleep.stapIdx]=[x,y];
-    sleep.c.setAttribute("cx",x); sleep.c.setAttribute("cy",y);
+    sleep.punten[sleep.stapIdx]=[x,y];
+    sleep.c.setAttribute("transform",`translate(${x} ${y})`);
     bouwRoutes();
     return;
   }
@@ -3796,8 +4497,14 @@ addEventListener("pointerup",()=>{
   const s=sleep; sleep=null;
   if(s.soort==="routepunt"){
     s.c.classList.remove("pak");
-    if(s.bewogen>=2)bewaar();
-    bouwRoutepunten();
+    s.c.__gesleept=s.bewogen>=2;
+    netGesleeptPunt=s.bewogen>=2;
+    if(s.bewogen>=2){
+      bewaar();
+      /* pas herbouwen als de klik die hierna nog komt is afgehandeld: een
+         herbouw nu gooit juist de greep weg waar dat click-event naartoe gaat */
+      setTimeout(bouwRoutepunten,0);
+    }
     return;
   }
   if(s.soort==="naam"){
@@ -3856,10 +4563,13 @@ function kiesTool(naam){
   $("#zetsoort").hidden=naam!=="plaats";
   if(naam!=="select"&&keuze)kiesDeel(null);
   if(naam==="route"&&was!=="route"){
+    /* staat er al een route open, dan ga je daaraan verder; anders begint het
+       gereedschap er meteen een nieuwe. Een route erbij terwijl je er al een
+       onder handen hebt gaat via de knop "+ Nieuwe route" in het formulier. */
     if(!state.route)nieuweRouteAanmaken();
     else toonRouteFormulier();
   }
-  if(was==="route"&&naam!=="route"){routeInvoegAan=false; toonRouteFormulier();}
+  if(was==="route"&&naam!=="route")toonRouteFormulier();
   if(naam==="rivier"&&was!=="rivier")rivierWerkReset();
   if(was==="rivier"&&naam!=="rivier")rivierWerkReset();
   if(naam==="rivier"||was==="rivier")toonRivierFormulier();
@@ -3891,12 +4601,24 @@ svg.addEventListener("click",e=>{
 });
 
 /* ---- de stand aan- en uitzetten ---- */
-function verversNaZet(){ bouwRoutes(); bouwRoutepunten(); pas(); }
+/* Na elke wijziging aan een route: de kaart opnieuw tekenen én de puntenlijst
+   in het zijpaneel bijwerken. Die lijst hoorde daar altijd al bij — stond hij
+   er niet in, dan verscheen een net toegevoegd punt pas zodra je het traject
+   opnieuw aanklikte en het formulier toevallig opnieuw werd opgebouwd. */
+function verversNaZet(){
+  bouwRoutes(); bouwRoutepunten(); pas();
+  const r=ROUTES.find(x=>x.id===state.route);
+  if(r&&zetten)vulPunten(r);
+}
 function zetModus(aan){
   zetten=aan;
   document.body.classList.toggle("zetten",aan);
   $("#zetaan").textContent = aan ? t("bewerkenAfsluiten") : t("bewerken");
   if(aan){kies(null);toonZetstand();} else kiesDeel(null);
+  /* Stond er al een boek open, dan hoort het route-formulier er meteen te
+     staan: anders moest je de route eerst opnieuw aanklikken voordat je erin
+     kon werken. Ook bij afsluiten draaien, zodat het formulier dan verdwijnt. */
+  if(typeof toonRouteFormulier==="function")toonRouteFormulier();
   verversNaZet();   /* ook bij afsluiten: de markeringen mogen weer weg */
 }
 $("#zetaan").onclick=()=>zetModus(!zetten);
