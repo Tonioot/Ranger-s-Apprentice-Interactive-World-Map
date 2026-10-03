@@ -222,6 +222,36 @@ button,input{font:inherit;color:inherit}
 .ctrl button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
 .railtoggle{display:none}
 
+/* ---------- 3D ----------
+   De 3D-weergave ligt in hetzelfde vak als de kaart, eronder in de stapel: het
+   vignet, het kompas, de knoppen en het zijpaneel blijven er gewoon overheen
+   liggen. De kaart zelf wordt onzichtbaar gemaakt, niet weggehaald, zodat hij
+   bij het terugschakelen meteen weer op dezelfde plek staat. */
+.ctrl .k3d{font-family:var(--font-map);font-size:12.5px;font-weight:600;letter-spacing:.03em;
+  color:var(--ink-soft);margin-bottom:6px}
+.ctrl .k3d:hover{color:var(--ink)}
+.ctrl .k3d[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.drie{position:absolute;inset:0;z-index:0;background:var(--sea)}
+.drie[hidden]{display:none}
+.drie canvas{display:block;touch-action:none;outline:none}
+.drie .l3laag{position:absolute;left:0;top:0;pointer-events:none;overflow:hidden}
+body.drie3d #map{visibility:hidden}
+body.drie3d .roos{opacity:.62;transition:none}
+.roos{transform-origin:50% 52.8%}
+/* de namen in 3D: dezelfde letter en dezelfde halo als op de kaart */
+.l3{pointer-events:auto;cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;
+  font-family:var(--font-map);font-size:12.5px;line-height:1.1;color:var(--ink);padding:2px 3px;
+  text-shadow:0 0 2px var(--halo),0 0 3px var(--halo),0 0 5px var(--halo),0 0 9px var(--halo);
+  transition:opacity .35s ease,color .2s}
+.l3-plaats::after{content:"";display:block;width:1px;height:7px;margin:2px auto 0;
+  background:var(--ink-soft);opacity:.55}
+.l3-natuur{font-style:italic;color:var(--ink-soft)}
+.l3-land{font-size:14.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft)}
+.l3-zee{font-size:13px;letter-spacing:.3em;font-style:italic;color:var(--ink-soft)}
+.l3:hover{color:var(--accent)}
+.l3.sel{color:var(--accent)}
+.l3.uit{opacity:0;pointer-events:none}
+
 /* ---------- licht en kompas ----------
    Deze twee liggen op het scherm, niet op de kaart: ze schuiven en zoomen niet
    mee. Hier hing eerder ook een korrellaag met een mengstand (mix-blend-mode)
@@ -899,6 +929,14 @@ body.zetten .routepunt:hover .stip{stroke-width:2}
 }
 </script>
 <!-- /seo:jsonld -->
+<!-- Voor de 3D-weergave (3d.js). Die laadt pas als iemand op 3D drukt; tot
+     die tijd haalt de browser hier niets van op. -->
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
 </head>
 <body>
 <div class="app">
@@ -970,6 +1008,7 @@ body.zetten .routepunt:hover .stip{stroke-width:2}
       <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2 4h14M2 9h14M2 14h14"/></svg>
     </button>
     <svg id="map" role="application" data-t-aria="kaartLabel" aria-label="Interactieve kaart van de wereld van De Grijze Jager en Broederband"></svg>
+    <div class="drie" id="drie" hidden></div>
     <div class="vignet" aria-hidden="true"></div>
     <svg class="roos" viewBox="-34 -38 68 72" aria-hidden="true">
       <circle class="rr" r="26"/><circle class="rr" r="19.5"/>
@@ -1135,6 +1174,7 @@ body.zetten .routepunt:hover .stip{stroke-width:2}
       </div>
     </div>
     <div class="ctrl">
+      <button id="z3d" class="k3d" type="button" aria-pressed="false" data-t-aria="drieDAan" aria-label="Bekijk in 3D" data-t-attr="title:drieDAan" title="Bekijk in 3D">3D</button>
       <button id="zin" data-t-aria="inzoomen" aria-label="Inzoomen"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></button>
       <button id="zout" data-t-aria="uitzoomen" aria-label="Uitzoomen"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button>
       <button id="zfit" data-t-aria="heleKaart" aria-label="Hele kaart tonen"><svg viewBox="0 0 16 16"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg></button>
@@ -1443,6 +1483,10 @@ const U={
   bezigThema:{nl:"Kleuren opnieuw bakken",en:"Rebaking the colors"},
   bezigTaal:{nl:"Van taal wisselen",en:"Switching language"},
   bezigRivier:{nl:"Rivier wordt uitgerekend",en:"Recalculating the river"},
+  drieDAan:{nl:"Bekijk in 3D",en:"View in 3D"},
+  drieDUit:{nl:"Terug naar de platte kaart",en:"Back to the flat map"},
+  bezig3D:{nl:"De wereld rijst op in 3D",en:"Raising the world in 3D"},
+  drieDFout:{nl:"3D werkt niet in deze browser",en:"3D is not available in this browser"},
 };
 const t=k=>{ const v=U[k]; return v?v[TAAL]:k; };
 /* Vult alle statische HTML met data-t/data-t-attr/data-t-aria in de actieve
@@ -1486,6 +1530,10 @@ const ROUTES=DATA.routes;        /* de reisroutes per boek                      
 
 /* ============================ tekenen ============================ */
 let state={q:"",series:{GJ:true,BB:true},route:null,sel:null};
+/* De 3D-weergave (3d.js), zodra iemand die een keer heeft aangezet. Staat
+   hier vooraan omdat kies() en een paar knoppen hem al aanspreken. */
+let drieD=null;
+const in3D=()=>!!(drieD&&drieD.actief);
 const NS="http://www.w3.org/2000/svg";
 const el=(n,a={},p)=>{const e=document.createElementNS(NS,n);
   for(const k in a)e.setAttribute(k,a[k]); if(p)p.appendChild(e); return e;};
@@ -3586,6 +3634,7 @@ function zetRoute(id){
   /* de plaatsen van deze route blijven zichtbaar, ook op het overzicht: een
      route die het halve werelddeel overspant past niet in één zoomstap */
   routePlekken=new Set(r?r.reizen.flatMap(x=>x.punten).filter(s=>typeof s==="string"):[]);
+  if(drieD)drieD.routes();
   if(!r){rcap.hidden=true;pas();return;}
   ververRouteBijschrift(r);
   const vak=routeVak(r);
@@ -3683,6 +3732,7 @@ $("#dclose").onclick=()=>{detail.classList.remove("open");kies(null);};
 
 function kies(id,vlieg=true){
   state.sel=id;
+  if(drieD)drieD.kies(id);
   for(const p of PLAATSEN){const m=markerEls[p.id];if(m)m.g.classList.toggle("sel",p.id===id);}
   for(const gid in gebiedEls)gebiedEls[gid].classList.toggle("sel",
     id==="gebied:"+gid || !!(byId[id]&&byId[id].vorm===gid));
@@ -3714,7 +3764,9 @@ function kies(id,vlieg=true){
   const b=listBox.querySelector(`.item[data-id="${id}"]`);
   if(b)b.scrollIntoView({block:"nearest"});
   if(vlieg&&!e.wacht){
-    if(e.isGebied)vliegVak(gebiedEls[e.vorm].getBBox(),1.7,12);
+    /* in 3D vliegt de camera; de platte kaart volgt bij het terugschakelen */
+    if(in3D())drieD.toon(id);
+    else if(e.isGebied)vliegVak(gebiedEls[e.vorm].getBBox(),1.7,12);
     /* een zee heeft geen vorm om op in te passen, alleen een naam met een plek */
     else if(e.isZee)vliegNaar(e.zee.x,e.zee.y,3.2);
     else {const p=plek(e); if(p)vliegNaar(p[0],p[1],Math.max(6,(e.z||3)*2.6));}
@@ -4611,6 +4663,8 @@ function verversNaZet(){
   if(r&&zetten)vulPunten(r);
 }
 function zetModus(aan){
+  /* bewerken gaat op de platte kaart: daar zijn de markeringen te verslepen */
+  if(aan&&in3D()){ drieD.uit(false); $("#z3d").setAttribute("aria-pressed","false"); }
   zetten=aan;
   document.body.classList.toggle("zetten",aan);
   $("#zetaan").textContent = aan ? t("bewerkenAfsluiten") : t("bewerken");
@@ -4646,9 +4700,9 @@ $("#zetbestand").onclick=()=>{
 };
 
 /* knoppen en toetsen */
-$("#zin").onclick=()=>zoomOp(W/2,H/2,1.5);
-$("#zout").onclick=()=>zoomOp(W/2,H/2,1/1.5);
-$("#zfit").onclick=()=>{kies(null);heel(true);};
+$("#zin").onclick=()=>in3D()?drieD.zoom(1.6):zoomOp(W/2,H/2,1.5);
+$("#zout").onclick=()=>in3D()?drieD.zoom(1/1.6):zoomOp(W/2,H/2,1/1.5);
+$("#zfit").onclick=()=>{kies(null); if(in3D())drieD.overzicht(); else heel(true);};
 $("#railtoggle").onclick=()=>$("#rail").classList.toggle("open");
 
 (()=>{
@@ -4691,6 +4745,8 @@ addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT")return;
   const stap=60/view.k;
   if(e.key==="Escape"){kies(null);kiesDeel(null);$("#rail").classList.remove("open");}
+  /* in 3D sturen de pijltjes de camera (dat doet 3d.js zelf) */
+  else if(in3D())return;
   else if(e.key==="+"||e.key==="=")zoomOp(W/2,H/2,1.4);
   else if(e.key==="-")zoomOp(W/2,H/2,1/1.4);
   else if(e.key==="ArrowLeft"){view.x+=stap;begrens();pas();}
@@ -4765,12 +4821,80 @@ async function herbouw(sleutel){
   await adem();
   await startGrond();
   laadScherm.weg();
+  /* de 3D-wereld heeft zijn eigen kleuren gebakken: die ook opnieuw */
+  if(drieD)await drieD.thema();
 }
 /* De kleuren zitten in de bitmap gebakken, dus als het stelsel van licht naar
    donker gaat moet het reliëf opnieuw. */
 try{
-  matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>setTimeout(startGrond,80));
+  matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>setTimeout(async()=>{
+    await startGrond(); if(drieD)await drieD.thema();
+  },80));
 }catch(e){}
+
+/* ---- 3D ----
+   De knop laadt 3d.js pas bij de eerste druk (en Three.js mee); wie nooit op
+   3D drukt, haalt er niets van op. Alles wat de 3D-weergave van de kaart nodig
+   heeft gaat hier in één pakket mee — de rekenregels van het reliëf ook, zodat
+   bergen en bossen in 3D op precies dezelfde plek staan als op de kaart. */
+function drieContext(){
+  return {
+    W,H,GEO,TAAL,t,
+    houder:$("#drie"), roos:$(".roos"),
+    GEBIEDEN,PLAATSEN,ZEEEN,SPANNING,
+    plek:p=>plek(p),
+    kies:id=>kies(id),
+    gekozen:()=>state.sel,
+    terrein:{RELIEF,GROEI,BERGKETENS,terreinVan,fbm,landruis,ruis,hash2,soep,veeg,hexRGB,afstandTotKeten},
+    rivieren:()=>[...gWater.querySelectorAll("path")].map(p=>({d:p.getAttribute("d"),klasse:p.getAttribute("class")||""})),
+    route:()=>{
+      const r=ROUTES.find(x=>x.id===state.route), tk=r&&routeTeken[r.id];
+      return tk?tk.reizen.filter(x=>x.pad&&x.pad.length>=2).map(x=>({pad:x.pad,kleur:x.kleur})):[];
+    },
+    routePlekken:()=>routePlekken,
+    /* het stuk wereld dat de platte kaart nu laat zien, in kaartmaat */
+    zicht(){
+      const r=svg.getBoundingClientRect(), a=naarUser(r.left,r.top), b=naarUser(r.right,r.bottom);
+      return [(a.x-view.x)/view.k,(a.y-view.y)/view.k,(b.x-view.x)/view.k,(b.y-view.y)/view.k];
+    },
+    /* en andersom: de platte kaart op dit punt, met deze breedte in beeld */
+    zetZicht(cx,cy,breedte){
+      const r=svg.getBoundingClientRect(), a=naarUser(r.left,r.top), b=naarUser(r.right,r.bottom);
+      const k=Math.max(minK,Math.min(maxK,(b.x-a.x)/breedte));
+      zetView(W/2-cx*k,H/2-cy*k,k,false);
+    },
+    paneelBreedte:()=>innerWidth>900&&detail.classList.contains("open")?detail.getBoundingClientRect().width:0,
+    sleutel:()=>hashTekst(svgTekst)+"-"+hashTekst(JSON.stringify(RUWDATA)),
+    laad:{aan:()=>laadScherm.aan("bezig3D"),weg:()=>laadScherm.weg()},
+    adem
+  };
+}
+$("#z3d").onclick=async()=>{
+  const knop=$("#z3d");
+  if(knop.disabled)return;
+  knop.disabled=true;
+  try{
+    if(in3D()){
+      knop.setAttribute("aria-pressed","false");
+      knop.title=t("drieDAan"); knop.setAttribute("aria-label",t("drieDAan"));
+      await drieD.uit(true);
+    }else{
+      if(zetten)zetModus(false);
+      if(!drieD){
+        laadScherm.aan("bezig3D"); await adem();
+        const m=await import("./3d.js");
+        drieD=await m.maak3D(drieContext());
+      }
+      knop.setAttribute("aria-pressed","true");
+      knop.title=t("drieDUit"); knop.setAttribute("aria-label",t("drieDUit"));
+      await drieD.aan();
+    }
+  }catch(e){
+    console.warn("3D niet beschikbaar:",e);
+    knop.setAttribute("aria-pressed","false");
+    laadScherm.aan("drieDFout"); setTimeout(()=>laadScherm.weg(),2600);
+  }finally{ knop.disabled=false; }
+};
 </script>
 <div class="seo-tekst" aria-hidden="true">
 <!-- seo:tekst -->
