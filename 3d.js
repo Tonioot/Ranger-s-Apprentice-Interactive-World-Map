@@ -671,6 +671,8 @@ export async function maak3D(ctx){
      ze geleidelijk over in het egale bosgroen van het kleurplaatje — zo
      afgesteld dat het gemiddelde even donker blijft, zodat er bij geen enkele
      afstand iets verspringt. */
+  /* op een telefoon minder stappen voor de parallax van de kruinen */
+  const KRUINSTAP=klein?3:7;
   const KRUIN_GLSL=`
   uniform sampler2D uLoof;
   vec2 kHash(vec2 c){
@@ -712,8 +714,8 @@ export async function maak3D(ctx){
     vec2 stap=-V.xz/max(V.y,.22)*(.055/.11)*sterk;
     float diep=0.0, diepV=0.0, zakV=1.0-kruin(p0,loof,helling,kleur);
     if(zakV>0.0){
-      for(int i=0;i<7;i++){
-        diep+=.15;
+      for(int i=0;i<${KRUINSTAP};i++){
+        diep+=${(1.05/KRUINSTAP).toFixed(3)};
         float zak=1.0-kruin(p0+stap*diep,loof,helling,kleur);
         if(diep>=zak){
           /* tussen de laatste twee stappen: waar de straal het oppervlak kruist */
@@ -1605,9 +1607,19 @@ export async function maak3D(ctx){
       const rechts=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0); rechts.y=0; rechts.normalize();
       naar.addScaledVector(rechts,pb/2/perEenheid);
     }
-    const afstand=van.distanceTo(naar);
     const r0=sph.radius, p0=sph.phi, a0=sph.theta;
     const [p1,a1]=vrijZicht(naar,afst,polar??p0,a0);
+    /* Op een smal scherm schuift het paneel van onderen over het beeld: dan
+       het doel naar het vrije stuk erboven. Een stap over de grond naar de
+       camera toe is op het scherm een stap omlaag, korter naarmate de blik
+       schuiner over het land gaat. */
+    const ph=ctx.paneelHoogte?ctx.paneelHoogte():0;
+    if(ph){
+      const perEenheid=houder.clientHeight/(2*afst*Math.tan(FOV*Math.PI/360));
+      const d=ph/2/perEenheid/Math.max(.35,Math.cos(p1));
+      naar.x+=Math.sin(a1)*d; naar.z+=Math.cos(a1)*d;
+    }
+    const afstand=van.distanceTo(naar);
     vlucht={t0:performance.now(),duur:minderBeweging()?1:duur,van,naar,
       r0,r1:afst,rm:Math.max(r0,afst,afstand*.55),p0,p1,a0,a1};
   }

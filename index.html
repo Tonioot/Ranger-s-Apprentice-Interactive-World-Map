@@ -4866,6 +4866,8 @@ function drieContext(){
       zetView(W/2-cx*k,H/2-cy*k,k,false);
     },
     paneelBreedte:()=>innerWidth>900&&detail.classList.contains("open")?detail.getBoundingClientRect().width:0,
+    /* op een smal scherm schuift het paneel van onderen in beeld */
+    paneelHoogte:()=>innerWidth<=900&&detail.classList.contains("open")?detail.getBoundingClientRect().height:0,
     sleutel:()=>hashTekst(svgTekst)+"-"+hashTekst(JSON.stringify(RUWDATA)),
     laad:{aan:()=>laadScherm.aan("bezig3D"),weg:()=>laadScherm.weg()},
     adem
