@@ -167,7 +167,7 @@ function verlengRand(R,land,reg,T){
    de terreinvelden op het grove rooster, de afstand tot de kust, en de plek
    voor de namen van de landen. */
 function voorbereiding(G,T){
-  const R=G.R, {RW,RH,RES,N,PW,PH,M}=R, MM=PW*PH;
+  const R=G.R, {RW,RH,RES,PW,PH,M}=R, MM=PW*PH;
   const {land,reg,info,SOORTEN,vlekken}=G;
   verlengRand(R,land,reg,T);
   const kloven=sluitKloven(R,land,reg,G.plekken||[]);
@@ -184,7 +184,7 @@ function voorbereiding(G,T){
      Precies zoals in bouwGrond(); kleur komt later (die hangt van het thema af),
      hier alleen wat er groeit en hoe hoog en grillig het wordt. */
   const fAmp=new Float32Array(MM), fRug=new Float32Array(MM), fKoud=new Float32Array(MM);
-  const fKust=new Float32Array(MM), fFijn=new Float32Array(MM), fBos=new Float32Array(MM), fLoof=new Float32Array(MM);
+  const fBos=new Float32Array(MM), fLoof=new Float32Array(MM);
   const mixA=new Uint8Array(MM), mixB=new Uint8Array(MM), mixF=new Float32Array(MM);
   fAmp.fill(.4); fRug.fill(.3); fLoof.fill(.5);
   const gras=SOORTEN.indexOf("grasland"); mixA.fill(gras); mixB.fill(gras);
@@ -223,33 +223,48 @@ function voorbereiding(G,T){
       }
   }
 
-  /* --- afstand tot de kust, aan beide kanten --- */
-  const zee=new Uint8Array(N); for(let p=0;p<N;p++)zee[p]=land[p]?0:1;
-  const kustAfst=afstandVeld(land,RW,RH,RES);
-  const zeeAfst=afstandVeld(zee,RW,RH,RES);
-  const dmax=new Float32Array(256);
-  for(let p=0;p<N;p++)if(land[p]&&kustAfst[p]>dmax[reg[p]])dmax[reg[p]]=kustAfst[p];
-  for(let p=0;p<MM;p++){ const d=dmax[pdReg[p]]||30; fKust[p]=klem(d*.55,5,26); fFijn[p]=klem(48/Math.max(8,d),.75,2.6); }
-  T.veeg(fKust,PW,PH,22); T.veeg(fFijn,PW,PH,22);
+  return {land,reg,pReg,pdReg,fAmp,fRug,fKoud,fBos,fLoof,mixA,mixB,mixF,kloven};
+}
 
+/* ======================= taak 1b: de afstanden =======================
+   Drie afstandsvelden over het hele raster, elk in een eigen worker
+   tegelijk: tot de kust (vanaf het land), tot het land (vanaf zee), en tot
+   de eigen grens — voor de plek van de namen van de landen. */
+function afstand(G,T){
+  const R=G.R, {RW,RH,RES,N,M}=R, {land,reg}=G;
+  if(G.soort==="kust"){
+    const kustAfst=afstandVeld(land,RW,RH,RES);
+    /* hoe breed het binnenland van elk gebied is */
+    const dmax=new Float32Array(256);
+    for(let p=0;p<N;p++)if(land[p]&&kustAfst[p]>dmax[reg[p]])dmax[reg[p]]=kustAfst[p];
+    return {kustAfst,dmax};
+  }
+  if(G.soort==="zee"){
+    const zee=new Uint8Array(N); for(let p=0;p<N;p++)zee[p]=land[p]?0:1;
+    return {zeeAfst:afstandVeld(zee,RW,RH,RES)};
+  }
   /* De namen van de landen: op het punt dat het verst van de eigen grenzen
      ligt — gemeten tot zee én tot elk ander land, anders wint een gemengd
      randje op een landsgrens. */
-  const pool={};
-  {
-    const binnen=zee; binnen.fill(0);
-    for(let y=1;y<RH-1;y++)for(let x=1;x<RW-1;x++){
-      const p=y*RW+x, r=reg[p];
-      binnen[p]=land[p]&&land[p-1]&&land[p+1]&&land[p-RW]&&land[p+RW]
-        &&reg[p-1]===r&&reg[p+1]===r&&reg[p-RW]===r&&reg[p+RW]===r?1:0;
-    }
-    const dg=afstandVeld(binnen,RW,RH,RES);
-    for(let p=0;p<N;p++)if(binnen[p]){
-      const r=reg[p], o=pool[r];
-      if(!o||dg[p]>o.d)pool[r]={d:dg[p],x:(p%RW)/RES-M,y:Math.floor(p/RW)/RES-M};
-    }
+  const pool={}, binnen=new Uint8Array(N);
+  for(let y=1;y<RH-1;y++)for(let x=1;x<RW-1;x++){
+    const p=y*RW+x, r=reg[p];
+    binnen[p]=land[p]&&land[p-1]&&land[p+1]&&land[p-RW]&&land[p+RW]
+      &&reg[p-1]===r&&reg[p+1]===r&&reg[p-RW]===r&&reg[p+RW]===r?1:0;
   }
-  return {land,reg,pReg,pdReg,kustAfst,zeeAfst,fAmp,fRug,fKoud,fKust,fFijn,fBos,fLoof,mixA,mixB,mixF,pool,kloven};
+  const dg=afstandVeld(binnen,RW,RH,RES);
+  for(let p=0;p<N;p++)if(binnen[p]){
+    const r=reg[p], o=pool[r];
+    if(!o||dg[p]>o.d)pool[r]={d:dg[p],x:(p%RW)/RES-M,y:Math.floor(p/RW)/RES-M};
+  }
+  return {pool};
+}
+/* de aanloop van de kust en de fijnheid van de ruis, naar de maat van elk land */
+export function kustVelden(R,dmax,pdReg,T){
+  const {PW,PH}=R, MM=PW*PH, fKust=new Float32Array(MM), fFijn=new Float32Array(MM);
+  for(let p=0;p<MM;p++){ const d=dmax[pdReg[p]]||30; fKust[p]=klem(d*.55,5,26); fFijn[p]=klem(48/Math.max(8,d),.75,2.6); }
+  T.veeg(fKust,PW,PH,22); T.veeg(fFijn,PW,PH,22);
+  return {fKust,fFijn};
 }
 
 /* ---- een kloof ----
@@ -422,10 +437,8 @@ function afwerking(G,T){
     const p=y*RW+x; if(!land[p])continue; const r0=reg[p];
     if((land[p-1]&&reg[p-1]!==r0)||(land[p+1]&&reg[p+1]!==r0)||(land[p-RW]&&reg[p-RW]!==r0)||(land[p+RW]&&reg[p+RW]!==r0))grens[p]=1;
   }
-  const bos=bosVeld({...G,meren},T);
-  const normalen=bouwNormalen(R,h,bos,T);
   /* wat hier binnenkwam gaat ook weer terug: in een worker is het overgedragen */
-  return {h,grens,bos,normalen,land,rivier,reg,kust,meren};
+  return {h,grens,land,rivier,reg,kust,meren};
 }
 
 /* ---- erosie ----
@@ -516,55 +529,58 @@ function erodeer(R,h,land){
    shader tekent er de kruinen in. Waar het ophoudt: langs de kust (strand),
    langs rivieren, op steile rotswanden, boven de boomgrens, en rond kastelen
    en dorpen, die in hun eigen open plek met akkers liggen. */
-function bosVeld(G,T){
-  const R=G.R, {RW,RH,RES,N,M}=R, {h,land,rivier,kust,fBos,plekken}=G, meren=G.meren||[];
-  const bos=new Uint8Array(N);
+function bos(G,T){
+  const R=G.R, {RW,RH,RES,M}=R, {y0,y1,hr0,hr1}=G, ho=hr0*RW;
+  const {h,land,rivier,kust,fBos,plekken}=G, meren=G.meren||[];
+  const rijen=hr1-hr0, b=new Uint8Array(rijen*RW);
   const open=plekken.filter(p=>p.open);
-  for(let y=1;y<RH-1;y++){
+  /* het bladerdak voor de strook plus een rij erboven en eronder: die zijn
+     nodig voor de normalen aan de rand */
+  for(let y=Math.max(1,y0-1,hr0+1);y<Math.min(RH-1,y1+1,hr1-1);y++){
     const wy=y/RES-M;
     for(let x=1;x<RW-1;x++){
-      const p=y*RW+x; if(!land[p]||rivier[p]>30)continue;
+      const p=y*RW+x, q=p-ho; if(!land[q]||rivier[q]>30)continue;
       const wx=x/RES-M;
-      const b=leesVeld(fBos,0,R,wx,wy); if(b<.05)continue;
+      const bw=leesVeld(fBos,G.go,R,wx,wy); if(bw<.05)continue;
       if(meren.some(m=>Math.hypot(wx-m.x,wy-m.y)<m.r))continue;
-      const hh=h[p];
-      const gx=(Yvan(h[p+1])-Yvan(h[p-1]))*RES*.5, gz=(Yvan(h[p+RW])-Yvan(h[p-RW]))*RES*.5;
+      const hh=h[q];
+      const gx=(Yvan(h[q+1])-Yvan(h[q-1]))*RES*.5, gz=(Yvan(h[q+RW])-Yvan(h[q-RW]))*RES*.5;
       const steil=Math.sqrt(gx*gx+gz*gz);
       /* open plekken en een rafelige bosrand: twee lagen ruis */
       const c=T.fbm(wx*.19+17,wy*.19-5,3,0)*.75+T.ruis(wx*.9+3,wy*.9+41)*.25;
-      let v=b*(.62+.76*(c-.5)*1.6)*(1-glad(klem((hh-.36)/.26,0,1)))*(1-glad(klem((steil-1.1)/1.2,0,1)));
-      v*=klem((kust[p]/18-.35)/.5,0,1);
-      if(rivier[p])v*=1-rivier[p]/60;
+      let v=bw*(.62+.76*(c-.5)*1.6)*(1-glad(klem((hh-.36)/.26,0,1)))*(1-glad(klem((steil-1.1)/1.2,0,1)));
+      v*=klem((kust[q]/18-.35)/.5,0,1);
+      if(rivier[q])v*=1-rivier[q]/60;
       for(const pl of open){
         const dx=wx-pl.x, dy=wy-pl.y; if(dx*dx+dy*dy>(pl.open+1.2)*(pl.open+1.2))continue;
         const d=Math.sqrt(dx*dx+dy*dy)+(T.ruis(wx*1.3,wy*1.3)-.5)*.5;
         v*=glad(klem((d-pl.open)/1.0,0,1));
       }
-      bos[p]=glad(klem((v-.30)/.08,0,1))*255;
+      b[q]=glad(klem((v-.30)/.08,0,1))*255;
     }
   }
-  return bos;
+  /* object-ruimte-normalen uit het hoogteveld, met het bladerdak erbij:
+     daarmee is elk rasterpunt scherp belicht, ook waar het 3D-net grover is
+     dan het plaatje. In de vierde waarde staat het bos, voor de kruinen in
+     de shader. */
+  const n=(y1-y0)*RW, normalen=new Uint8Array(n*4), s=2/RES;
+  const Y=(q,x,y)=>Yvan(h[q])+(b[q]?dakHoogte(b[q],x/RES-M,y/RES-M,T):0);
+  for(let y=y0;y<y1;y++)for(let x=0;x<RW;x++){
+    const q=y*RW+x-ho;
+    const l=x>0?Y(q-1,x-1,y):Y(q,x,y), r=x<RW-1?Y(q+1,x+1,y):Y(q,x,y);
+    const o=y>0?Y(q-RW,x,y-1):Y(q,x,y), d=y<RH-1?Y(q+RW,x,y+1):Y(q,x,y);
+    const nx=-(r-l)/s, nz=-(d-o)/s, len=Math.hypot(nx,1,nz), u=(y*RW+x-y0*RW)*4;
+    normalen[u]=(nx/len*.5+.5)*255; normalen[u+1]=(1/len*.5+.5)*255; normalen[u+2]=(nz/len*.5+.5)*255; normalen[u+3]=b[q];
+  }
+  return {bos:b.slice((y0-hr0)*RW,(y1-hr0)*RW),normalen};
 }
-/* hoe hoog het bladerdak op dit punt staat, in kaarteenheden */
+/* Hoe hoog het bladerdak boven de grond uitkomt (KRUIN, met wat variatie):
+   het bos is een massa die boven het land uitsteekt, met een bosrand, open
+   plekken en een boomgrens hoger op de berg. Het land in 3D komt daar mee
+   omhoog, en de shader tekent er de kruinen in. */
 export function dakHoogte(bosWaarde,wx,wy,T){
   if(!bosWaarde)return 0;
   return bosWaarde/255*KRUIN*(.8+.4*T.ruis(wx*.55+5,wy*.55-9));
-}
-
-/* object-ruimte-normalen uit het hoogteveld, met het bladerdak erbij: daarmee
-   is elk rasterpunt scherp belicht, ook waar het 3D-net grover is dan het
-   plaatje. In de vierde waarde staat het bos, voor de kruinen in de shader. */
-function bouwNormalen(R,h,bos,T){
-  const {RW,RH,RES,N,M}=R, uit=new Uint8Array(N*4), s=2/RES;
-  const Y=(p,x,y)=>Yvan(h[p])+(bos[p]?dakHoogte(bos[p],x/RES-M,y/RES-M,T):0);
-  for(let y=0;y<RH;y++)for(let x=0;x<RW;x++){
-    const p=y*RW+x;
-    const l=x>0?Y(p-1,x-1,y):Y(p,x,y), r=x<RW-1?Y(p+1,x+1,y):Y(p,x,y);
-    const o=y>0?Y(p-RW,x,y-1):Y(p,x,y), b=y<RH-1?Y(p+RW,x,y+1):Y(p,x,y);
-    const nx=-(r-l)/s, nz=-(b-o)/s, len=Math.hypot(nx,1,nz), q=p*4;
-    uit[q]=(nx/len*.5+.5)*255; uit[q+1]=(1/len*.5+.5)*255; uit[q+2]=(nz/len*.5+.5)*255; uit[q+3]=bos[p];
-  }
-  return uit;
 }
 
 /* ======================= taak 4: de kleur, per strook =======================
@@ -634,7 +650,7 @@ function kleur(G,T){
   return {kleur:uit};
 }
 
-export const TAKEN={voorbereiding,hoogte,afwerking,kleur};
+export const TAKEN={voorbereiding,afstand,hoogte,afwerking,bos,kleur};
 
 /* ---- als worker ----
    Een bericht is een taak met zijn gegevens; het antwoord gaat terug met de

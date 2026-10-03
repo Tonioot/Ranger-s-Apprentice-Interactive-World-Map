@@ -32,7 +32,7 @@ import {Line2} from "three/addons/lines/Line2.js";
 import {LineMaterial} from "three/addons/lines/LineMaterial.js";
 import {LineGeometry} from "three/addons/lines/LineGeometry.js";
 import {bouwModellen,modelInfo} from "./3d-modellen.js";
-import {TAKEN,rekenregels,rooster,groveRijen,leesVeld,MARGE,SCHAAL,ZEEDIEPTE,ZEE0,Yvan,dakHoogte} from "./3d-grond.js";
+import {TAKEN,rekenregels,rooster,groveRijen,leesVeld,kustVelden,MARGE,SCHAAL,ZEEDIEPTE,ZEE0,Yvan,dakHoogte} from "./3d-grond.js";
 
 const FOV=42;
 const WOLKHOOGTE=58;
@@ -377,7 +377,7 @@ export async function maak3D(ctx){
     p.doe=async(taak,G,mee=[])=>{
       if(!p.kapot)maak();
       if(p.kapot){ await ctx.adem(); return TAKEN[taak](G,rekenregels(BRON)); }
-      return new Promise((klaar,mis)=>{ rij.push({nr:++nr,taak,G,mee,klaar,mis}); volgende(); });
+      return new Promise((klaar,mis)=>{ rij.push({nr:++nr,taak,G,mee,klaar,mis,t0:performance.now()}); volgende(); });
     };
     p.stop=()=>{ for(const w of werkers)w.terminate(); werkers=[]; vrij.length=0; };
     return p;
@@ -401,7 +401,6 @@ export async function maak3D(ctx){
     let reg=new Uint8Array(N), land=new Uint8Array(N);
     for(let p=0,q=0;p<N;p++,q+=4){ reg[p]=rd[q]; if(rd[q+3]>120)land[p]=1; }
     rd=null; cv.width=cv.height=1;
-    await adem();
 
     /* --- de rivieren, zoals de kaart ze getekend heeft --- */
     let rivier=new Uint8Array(N);
@@ -462,20 +461,36 @@ export async function maak3D(ctx){
     /* --- het rekenwerk --- */
     const v=await ploeg.doe("voorbereiding",{R,land,reg,pReg,pdReg,info:werkInfo,SOORTEN,vlekken,plekken},[land.buffer,reg.buffer,pReg.buffer,pdReg.buffer]);
     land=v.land; reg=v.reg;
+    /* de drie afstandsvelden tegelijk */
+    const [ak,az,ap]=await Promise.all(["kust","zee","pool"].map(soort=>{
+      const G={R,soort,land:land.slice(),reg:reg.slice()};
+      return ploeg.doe("afstand",G,mee(G));
+    }));
+    const {fKust,fFijn}=kustVelden(R,ak.dmax,v.pdReg,T);
     let h=new Float32Array(N), kust=new Uint8Array(N);
     await Promise.all(stroken().map(async([y0,y1])=>{
       const [g0,g1]=groveRijen(R,y0,y1);
       const G={R,y0,y1,go:g0*PW,
-        land:snij(land,RW,y0,y1),rivier:snij(rivier,RW,y0,y1),kustAfst:snij(v.kustAfst,RW,y0,y1),zeeAfst:snij(v.zeeAfst,RW,y0,y1),
-        fAmp:snij(v.fAmp,PW,g0,g1),fRug:snij(v.fRug,PW,g0,g1),fKust:snij(v.fKust,PW,g0,g1),fFijn:snij(v.fFijn,PW,g0,g1)};
+        land:snij(land,RW,y0,y1),rivier:snij(rivier,RW,y0,y1),kustAfst:snij(ak.kustAfst,RW,y0,y1),zeeAfst:snij(az.zeeAfst,RW,y0,y1),
+        fAmp:snij(v.fAmp,PW,g0,g1),fRug:snij(v.fRug,PW,g0,g1),fKust:snij(fKust,PW,g0,g1),fFijn:snij(fFijn,PW,g0,g1)};
       const r=await ploeg.doe("hoogte",G,mee(G));
       h.set(r.h,y0*RW); kust.set(r.kust,y0*RW);
     }));
-    const a=await ploeg.doe("afwerking",{R,h,land,rivier,reg,kust,plekken,fBos:v.fBos,kloven:v.kloven},[h.buffer,land.buffer,rivier.buffer,reg.buffer,kust.buffer]);
+    const a=await ploeg.doe("afwerking",{R,h,land,rivier,reg,kust,plekken,kloven:v.kloven},[h.buffer,land.buffer,rivier.buffer,reg.buffer,kust.buffer]);
+    /* het bladerdak en de normalen, per strook (met twee rijen rand) */
+    const bos=new Uint8Array(N), normalen=new Uint8Array(N*4);
+    await Promise.all(stroken().map(async([y0,y1])=>{
+      const hr0=Math.max(0,y0-2), hr1=Math.min(RH,y1+2), [g0,g1]=groveRijen(R,hr0,hr1);
+      const G={R,y0,y1,hr0,hr1,go:g0*PW,plekken,meren:a.meren,
+        h:snij(a.h,RW,hr0,hr1),land:snij(a.land,RW,hr0,hr1),rivier:snij(a.rivier,RW,hr0,hr1),kust:snij(a.kust,RW,hr0,hr1),
+        fBos:snij(v.fBos,PW,g0,g1)};
+      const r=await ploeg.doe("bos",G,mee(G));
+      bos.set(r.bos,y0*RW); normalen.set(r.normalen,y0*RW*4);
+    }));
     await adem();
-    D={ids,reg:a.reg,land:a.land,rivier:a.rivier,h:a.h,kust:a.kust,grens:a.grens,bos:a.bos,normalen:a.normalen,
+    D={ids,reg:a.reg,land:a.land,rivier:a.rivier,h:a.h,kust:a.kust,grens:a.grens,bos,normalen,
        pReg:v.pReg,pdReg:v.pdReg,mixA:v.mixA,mixB:v.mixB,mixF:v.mixF,SOORTEN,fKoud:v.fKoud,fBos:v.fBos,fLoof:v.fLoof,
-       info,vlekken,POS,pool:v.pool,kloven:v.kloven,meren:a.meren,sleutel:ctx.sleutel()};
+       info,vlekken,POS,pool:ap.pool,kloven:v.kloven,meren:a.meren,sleutel:ctx.sleutel()};
   }
 
   /* hoogte op een willekeurige plek, uit het raster (0..1 land, -1..0 zee) */
