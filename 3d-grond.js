@@ -465,7 +465,7 @@ function bosVeld(G,T){
         const d=Math.sqrt(dx*dx+dy*dy)+(T.ruis(wx*1.3,wy*1.3)-.5)*.5;
         v*=glad(klem((d-pl.open)/1.0,0,1));
       }
-      bos[p]=glad(klem((v-.30)/.14,0,1))*255;
+      bos[p]=glad(klem((v-.30)/.08,0,1))*255;
     }
   }
   return bos;
@@ -546,7 +546,7 @@ function kleur(G,T){
       /* Bos is van boven een donker dek van kruinen; dat dek staat precies
          waar het bladerdak staat. */
       const bw=bos[q]/255;
-      if(bw>0){ m*=1-.34*bw; k[1]+=(k[1]*.08)*bw; }
+      if(bw>0){ m*=1-.40*bw; k[1]+=(k[1]*.10)*bw; k[0]-=k[0]*.06*bw; }
       m*=klem(1+holte[hp]*.07,.68,1.14);
       if(kust[q]<30){ const t=1-kust[q]/30; meng(ZAND,t*t*.85); }
       if(grens[q]){ meng(GRENS,.22); }

@@ -643,23 +643,110 @@ export async function maak3D(ctx){
     return g;
   }
   let landMat=null, vakken=[], bouwRij=[], beeldNr=0;
-  function maakLandMat(kleurTex,normTex){
+  /* ---- de kruinen ----
+     Het bladerdak is een massa in het land (zie bosVeld() in 3d-grond.js),
+     maar van dichtbij moet het uit kruinen bestaan. Die tekent de shader
+     erin: een raster van cellen met in elke cel een kruin op een eigen plek
+     (celruis, "Worley"), met een eigen maat en tint. Een loofboom is een
+     koepel, een naaldboom een kegel; tussen de kruinen valt minder licht. De
+     kruinen hangen aan de wereld, niet aan het scherm, dus ze staan stil als
+     de camera beweegt. Worden ze kleiner dan een paar beeldpunten, dan gaan
+     ze geleidelijk over in het egale bosgroen van het kleurplaatje — zo
+     afgesteld dat het gemiddelde even donker blijft, zodat er bij geen enkele
+     afstand iets verspringt. */
+  const KRUIN_GLSL=`
+  uniform sampler2D uLoof;
+  vec2 kHash(vec2 c){
+    uvec2 q=uvec2(ivec2(c)+ivec2(65536));
+    q=q*uvec2(1597334673U,3812015801U);
+    uint n=(q.x^q.y)*1597334673U;
+    return vec2(uvec2(n,n*48271U))*(1.0/4294967295.0);
+  }
+  /* p in cellen; uit: hoe hoog de kruin hier is (0 tussen de kruinen, 1 op
+     de top), de helling naar buiten, en licht en tint */
+  float kruin(vec2 p,float loof,out vec2 helling,out vec3 kleur){
+    vec2 c=floor(p), f=p-c;
+    float best=9.0; vec2 bv=vec2(0.0), bid=vec2(0.0);
+    for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){
+      vec2 g=vec2(float(i),float(j)), r=g+.2+.6*kHash(c+g)-f;
+      float d=dot(r,r);
+      if(d<best){ best=d; bv=r; bid=c+g; }
+    }
+    vec2 h2=kHash(bid+vec2(17.0,-31.0));
+    /* een kruin is geen cirkel: een paar lobben rond de rand */
+    float hoek=atan(bv.y,bv.x);
+    float lob=1.0+.13*sin(hoek*5.0+h2.y*6.28)*mix(.4,1.0,loof)+.06*sin(hoek*9.0+h2.x*6.28);
+    float afst=sqrt(best), d=afst/(mix(.58,.82,h2.x)*mix(.86,1.12,loof)*lob);
+    float binnen=1.0-smoothstep(.8,1.0,d);
+    float koepel=sqrt(max(1.0-d*d,0.0)), kegel=max(1.0-d,0.0);
+    float hoog=mix(kegel,koepel,loof)*binnen*mix(.75,1.0,h2.x);
+    float steil=mix(1.2,min(d/max(koepel,.25),2.4)*.7,loof);
+    helling=-bv/max(afst,1e-4)*steil*binnen*.55;
+    float licht=mix(.34,1.0,hoog)/mix(.60,.70,loof);
+    vec3 tint=mix(vec3(.93,1.0,1.05),vec3(1.06+.09*h2.y,1.03,.88),loof);
+    kleur=vec3(licht*(.82+.36*h2.y))*mix(vec3(1.0),tint,.8);
+    return hoog;
+  }
+  /* De kruinen steken boven de grond tussen de bomen uit. Schuin bekeken
+     verbergt een kruin wat erachter ligt: langs de kijkrichting naar binnen
+     stappen tot de straal een kruin raakt (parallax). Zo worden het bollen
+     in plaats van plaatjes op de grond. */
+  float kruinRaak(vec2 p0,vec3 V,float loof,float sterk,out vec2 helling,out vec3 kleur){
+    vec2 stap=-V.xz/max(V.y,.22)*(.055/.11)*sterk;
+    float diep=0.0, diepV=0.0, zakV=1.0-kruin(p0,loof,helling,kleur);
+    if(zakV>0.0){
+      for(int i=0;i<7;i++){
+        diep+=.15;
+        float zak=1.0-kruin(p0+stap*diep,loof,helling,kleur);
+        if(diep>=zak){
+          /* tussen de laatste twee stappen: waar de straal het oppervlak kruist */
+          float a=zakV-diepV, b=diep-zak;
+          diep=mix(diepV,diep,a/max(a+b,1e-4));
+          break;
+        }
+        diepV=diep; zakV=zak;
+      }
+    }
+    return kruin(p0+stap*diep,loof,helling,kleur);
+  }`;
+  function maakLandMat(kleurTex,normTex,loofTex){
     const m=new THREE.MeshStandardMaterial({map:kleurTex,normalMap:normTex,
       normalMapType:THREE.ObjectSpaceNormalMap,roughness:.93,metalness:0});
     m.onBeforeCompile=sh=>{
       metNevel(sh);
       sh.uniforms.uDetail={value:detailTex};
+      sh.uniforms.uLoof={value:loofTex};
       sh.vertexShader=sh.vertexShader
         .replace("#include <common>","#include <common>\nvarying vec3 vWolkW;")
         .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*vec4(transformed,1.0)).xyz;");
       sh.fragmentShader=sh.fragmentShader
-        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\n"+WOLK_GLSL)
+        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\n"+WOLK_GLSL+KRUIN_GLSL)
         /* Van dichtbij is het kleurplaatje te grof: dan een fijne korrel van
            gras, aarde en steen eroverheen, die in de verte weer wegvalt. */
         .replace("#include <map_fragment>",`#include <map_fragment>
           float dAfst=distance(vWolkW,cameraPosition);
           float korrel=texture2D(uDetail,vWolkW.xz*.83).r*.55+texture2D(uDetail,vWolkW.xz*3.1).r*.45;
-          diffuseColor.rgb*=mix(1.0,.84+.32*korrel,1.0-smoothstep(6.0,55.0,dAfst));`)
+          /* in het bos alleen een vleugje: daar doen de kruinen het werk */
+          float bosM=texture2D(normalMap,vNormalMapUv).a;
+          diffuseColor.rgb*=mix(1.0,.84+.32*korrel,(1.0-smoothstep(6.0,55.0,dAfst))*(1.0-.7*bosM));
+          float loof=texture2D(uLoof,vMapUv).r;
+          /* vaste celmaat: een maat die met het loof meeloopt zou het hele
+             patroon laten verschuiven waar het bos van soort wisselt */
+          vec2 kp=vWolkW.xz/.11;
+          float bosZicht=bosM*(1.0-smoothstep(.3,.65,length(fwidth(kp))));
+          vec2 kruinHelling=vec2(0.0);
+          /* bladclusters binnen een kruin: dezelfde korrel, fijner */
+          float blad=texture2D(uDetail,vWolkW.xz*2.4).r;
+          if(bosZicht>.002){
+            vec3 kk;
+            float hk=kruinRaak(kp,normalize(cameraPosition-vWolkW),loof,bosZicht,kruinHelling,kk);
+            kk*=mix(1.0,.8+.4*blad,hk);
+            diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht);
+          }`)
+        .replace("#include <normal_fragment_maps>",`
+          normal=texture2D(normalMap,vNormalMapUv).xyz*2.0-1.0;
+          normal.xz+=kruinHelling*bosZicht;
+          normal=normalize(normalMatrix*normalize(normal));`)
         /* nat land (rivieren) glanst: de alfa van het kleurplaatje zegt hoe nat */
         .replace("#include <roughnessmap_fragment>",`#include <roughnessmap_fragment>
           float nat=1.0-texture2D(map,vMapUv).a;
@@ -880,9 +967,174 @@ export async function maak3D(ctx){
   }
   function uWolkVakArr(){ const v=GEDEELD.uWolkVak.value; return [v.x,v.y,v.z,v.w]; }
 
-  /* ================================ bos ================================
-     (komt hieronder: het bladerdak zit in het land zelf, zie bosVeld() in
-     3d-grond.js; hier de bomen langs de bosrand) */
+  /* ================================ de bosrand ================================
+     Het bos zelf is een bladerdak in het land (bosVeld() in 3d-grond.js, de
+     kruinen in de shader hierboven). Maar waar een bos ophoudt, zie je van
+     dichtbij bomen staan: stammen en silhouetten, geen afgeronde dijk. Langs
+     de rand van het bladerdak staan daarom bomen als plaatjes die naar de
+     camera draaien, op de grond en even hoog als het dak; met hier en daar
+     een losse boom in het veld ernaast.
+
+     Zo'n boom wordt nooit kleiner of weggehaald omdat hij buiten een straal
+     valt. Hij tekent zolang hij een paar beeldpunten groot is, en lost pas
+     daarna geleidelijk op — dan is hij kleiner dan de bosrand van het land
+     zelf, die gewoon blijft staan. */
+  const RANDVAK=16, randVakken=new Map();
+  const RANDVER=klein?120:175;        /* verder weg is een boom kleiner dan een beeldpunt */
+  const RANDMAX=klein?60000:160000;
+  let randBomen=null;
+  const randStand={x:1e9,y:1e9};
+  const randU={uPixSchaal:{value:800},uRand:{value:new THREE.Vector2(1.4,3.2)},uAtlas:{value:null}};
+  function maakRandAtlas(){
+    /* vier soorten: twee naaldbomen, twee loofbomen. Grijs, met licht van
+       boven; de kleur van het bos komt er in de shader overheen */
+    const B=128, cv=document.createElement("canvas"); cv.width=B*4; cv.height=B*2;
+    const c=cv.getContext("2d");
+    const r=(i,k)=>T.hash2(i*31+7,k*17+3);
+    const stam=(x0,breed,hoog)=>{ c.fillStyle="#8a7d6c"; c.fillRect(x0-breed/2,B*2-hoog,breed,hoog); };
+    const vlek=(x,y,rad,l)=>{
+      const g=c.createRadialGradient(x-rad*.35,y-rad*.4,rad*.1,x,y,rad);
+      g.addColorStop(0,`rgb(${Math.min(255,l+30)},${Math.min(255,l+30)},${Math.min(255,l+30)})`); g.addColorStop(1,`rgb(${l-40},${l-40},${l-40})`);
+      c.fillStyle=g; c.beginPath(); c.arc(x,y,rad,0,7); c.fill();
+    };
+    for(let t=0;t<2;t++){            /* naaldbomen: lagen van takken, smal naar boven */
+      const x0=B*t+B/2, top=t?10:22, voet=B*2-22, breed=t?44:56;
+      stam(x0,7,30);
+      const lagen=t?9:7;
+      for(let i=0;i<lagen;i++){
+        const f=i/(lagen-1), y=top+(voet-top)*f, w=breed*(.18+.82*f)*(.85+.3*r(t,i));
+        const l=255-f*55;
+        const g=c.createLinearGradient(x0-w,0,x0+w,0);
+        g.addColorStop(0,`rgb(${l},${l},${l})`); g.addColorStop(1,`rgb(${l-45},${l-45},${l-45})`);
+        c.fillStyle=g; c.beginPath();
+        c.moveTo(x0,y-(voet-top)/lagen*1.6); c.lineTo(x0+w,y+6); c.lineTo(x0-w,y+6); c.closePath(); c.fill();
+      }
+    }
+    for(let t=0;t<2;t++){            /* loofbomen: een kruin van wolkjes blad */
+      const x0=B*(2+t)+B/2, cy=t?B*.95:B*.9, rx=t?44:56, ry=t?70:58;
+      stam(x0,9,B*2-cy-10);
+      for(let i=0;i<34;i++){
+        const a=r(t+5,i)*Math.PI*2, d=Math.sqrt(r(t+9,i));
+        const x=x0+Math.cos(a)*d*rx*.8, y=cy+Math.sin(a)*d*ry*.8, rad=14+r(t+3,i)*12;
+        vlek(x,y,rad,215+(cy-y)/ry*30);
+      }
+    }
+    const t=new THREE.CanvasTexture(cv);
+    t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4;
+    return t;
+  }
+  function maakRandBomen(){
+    randU.uAtlas.value=maakRandAtlas();
+    const g=new THREE.InstancedBufferGeometry();
+    const vlak=new THREE.PlaneGeometry(1,1).translate(0,.5,0);
+    g.index=vlak.index; g.setAttribute("position",vlak.getAttribute("position")); g.setAttribute("normal",vlak.getAttribute("normal"));
+    g.setAttribute("aBoom",new THREE.InstancedBufferAttribute(new Float32Array(RANDMAX*4),4).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute("aSoort",new THREE.InstancedBufferAttribute(new Float32Array(RANDMAX*2),2).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute("aKleur",new THREE.InstancedBufferAttribute(new Float32Array(RANDMAX*3),3).setUsage(THREE.DynamicDrawUsage));
+    g.instanceCount=0;
+    const m=new THREE.MeshStandardMaterial({roughness:.95,metalness:0,side:THREE.DoubleSide,alphaToCoverage:true});
+    m.onBeforeCompile=sh=>{
+      metNevel(sh); Object.assign(sh.uniforms,randU);
+      sh.vertexShader=sh.vertexShader
+        .replace("#include <common>",`#include <common>
+          attribute vec4 aBoom; attribute vec2 aSoort; attribute vec3 aKleur;
+          uniform float uPixSchaal; uniform vec2 uRand;
+          varying vec2 vAtlas; varying vec3 vBoomKleur; varying float vZicht; varying vec3 vWolkW;`)
+        .replace("#include <beginnormal_vertex>",`
+          vec3 bMidden=aBoom.xyz;
+          vec3 bNaar=cameraPosition-(modelMatrix*vec4(bMidden,1.0)).xyz;
+          vec2 bH=normalize(bNaar.xz+vec2(1e-5,0.0));
+          vec3 bRechts=vec3(bH.y,0.0,-bH.x);
+          /* een bol als normaal: de kant naar de zon licht, de andere kant donker */
+          vec3 objectNormal=normalize(vec3(bH.x,0.0,bH.y)*.35+bRechts*position.x*.9+vec3(0.0,.55+position.y*.6,0.0));`)
+        .replace("#include <begin_vertex>",`
+          float bBreed=aBoom.w*(aSoort.x<1.5?.62:.86);
+          vec3 transformed=bMidden+bRechts*position.x*bBreed+vec3(0.0,position.y*aBoom.w*1.15,0.0);
+          vZicht=smoothstep(uRand.x,uRand.y,aBoom.w*uPixSchaal/length(bNaar));
+          if(vZicht<=0.0)transformed=bMidden;
+          vAtlas=vec2((floor(aSoort.x)+position.x+.5)*.25,position.y);
+          vBoomKleur=aKleur*(1.3+.4*aSoort.y);`)
+        .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*vec4(transformed,1.0)).xyz;");
+      sh.fragmentShader=sh.fragmentShader
+        .replace("#include <common>","#include <common>\nuniform sampler2D uAtlas; varying vec2 vAtlas; varying vec3 vBoomKleur; varying float vZicht;")
+        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\n"+WOLK_GLSL)
+        .replace("#include <map_fragment>",`
+          vec4 bt=texture2D(uAtlas,vAtlas);
+          diffuseColor.rgb*=bt.rgb*vBoomKleur;
+          diffuseColor.a=bt.a*vZicht;
+          if(diffuseColor.a<.03)discard;`)
+        .replace("#include <lights_fragment_end>",`#include <lights_fragment_end>
+          float ws=wolkSchaduw(vWolkW); reflectedLight.directDiffuse*=ws; reflectedLight.directSpecular*=ws;`);
+    };
+    randBomen=new THREE.Mesh(g,m);
+    randBomen.frustumCulled=false; randBomen.receiveShadow=true;
+    wereld.add(randBomen);
+  }
+  /* de bomen van één vak: langs de rand van het bladerdak, en een enkele
+     losse boom in het veld naast een bos */
+  function randBomenIn(cx,cy){
+    const sl=cx+","+cy; let v=randVakken.get(sl); if(v)return v;
+    const {land,bos,rivier,h}=D, kl=landKleurTex.image.data, uit=[];
+    const x0=Math.max(2,Math.floor((cx*RANDVAK+MARGE)*RES)), x1=Math.min(RW-2,Math.floor(((cx+1)*RANDVAK+MARGE)*RES));
+    const y0=Math.max(2,Math.floor((cy*RANDVAK+MARGE)*RES)), y1=Math.min(RH-2,Math.floor(((cy+1)*RANDVAK+MARGE)*RES));
+    const buren=[-2,2,-2*RW,2*RW,-2-2*RW,2-2*RW,-2+2*RW,2+2*RW];
+    const lin=c=>Math.pow(c/255,2.2);
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+      const p=y*RW+x; if(!land[p])continue;
+      const b=bos[p];
+      const rand=b>10&&b<245;
+      let n=0;
+      if(rand)n=b<128?3:2;
+      else if(b===0&&!rivier[p]&&h[p]<.3&&T.hash2(x*7+13,y*11+5)<.006
+        &&leesD(D.fBos,x/RES-MARGE,y/RES-MARGE)*.5>T.hash2(x+1,y+1))n=1;
+      if(!n)continue;
+      /* de kleur van het bos ernaast, niet van het veld waar de rand op staat */
+      let q=p, bb=-1; for(const d of buren)if(bos[p+d]>bb){ bb=bos[p+d]; q=p+d; }
+      const kr=lin(kl[q*4]), kg=lin(kl[q*4+1]), kb=lin(kl[q*4+2]);
+      for(let i=0;i<n;i++){
+        const wx=x/RES-MARGE+(T.hash2(x+3+i*91,y-7)-.5)*1.4/RES, wy=y/RES-MARGE+(T.hash2(x-5,y+2+i*53)-.5)*1.4/RES;
+        const maat=(.16+.1*T.hash2(x-1+i*7,y+9))*(rand?1:1.15);
+        const loof=leesD(D.fLoof,wx,wy)>T.hash2(x+5+i,y+1);
+        uit.push(X(wx),yOp(wx,wy)-.01,Z(wy),maat,(loof?2:0)+(T.hash2(x+9,y+2+i)<.5?1:0),T.hash2(x+2+i,y+8),kr,kg,kb);
+      }
+    }
+    v=new Float32Array(uit);
+    randVakken.set(sl,v);
+    if(randVakken.size>2500){ const eerste=randVakken.keys().next().value; randVakken.delete(eerste); }
+    return v;
+  }
+  function werkRandBomenBij(dwing){
+    if(!randBomen)return;
+    const c=camera.position, [mx,my]=naarKaart(c);
+    const boven=c.y-grondY(mx,my);
+    randBomen.visible=boven<RANDVER;
+    if(!randBomen.visible)return;
+    if(!dwing&&Math.hypot(mx-randStand.x,my-randStand.y)<8)return;
+    randStand.x=mx; randStand.y=my;
+    const r=Math.sqrt(Math.max(0,RANDVER*RANDVER-boven*boven))+RANDVAK;
+    const vakken2=[];
+    for(let cy=Math.floor((my-r)/RANDVAK);cy<=Math.floor((my+r)/RANDVAK);cy++)
+      for(let cx=Math.floor((mx-r)/RANDVAK);cx<=Math.floor((mx+r)/RANDVAK);cx++){
+        if(cx*RANDVAK>W+MARGE||cy*RANDVAK>H+MARGE||(cx+1)*RANDVAK<-MARGE||(cy+1)*RANDVAK<-MARGE)continue;
+        const dx=Math.max(0,Math.abs(mx-(cx+.5)*RANDVAK)-RANDVAK/2), dy=Math.max(0,Math.abs(my-(cy+.5)*RANDVAK)-RANDVAK/2);
+        const d=Math.hypot(dx,dy); if(d>r)continue;
+        vakken2.push([d,cx,cy]);
+      }
+    vakken2.sort((a,b)=>a[0]-b[0]);
+    const g=randBomen.geometry, A=g.getAttribute("aBoom").array, S=g.getAttribute("aSoort").array, K=g.getAttribute("aKleur").array;
+    let n=0;
+    for(const [,cx,cy] of vakken2){
+      const v=randBomenIn(cx,cy);
+      for(let i=0;i<v.length&&n<RANDMAX;i+=9,n++){
+        A[n*4]=v[i]; A[n*4+1]=v[i+1]; A[n*4+2]=v[i+2]; A[n*4+3]=v[i+3];
+        S[n*2]=v[i+4]; S[n*2+1]=v[i+5];
+        K[n*3]=v[i+6]; K[n*3+1]=v[i+7]; K[n*3+2]=v[i+8];
+      }
+      if(n>=RANDMAX)break;
+    }
+    g.instanceCount=n;
+    for(const k of ["aBoom","aSoort","aKleur"]){ const at=g.getAttribute(k); at.needsUpdate=true; at.clearUpdateRanges?.(); at.addUpdateRange?.(0,n*at.itemSize); }
+  }
   const gebouwPlekken=[];        /* [x,y,straal]: de plek van elk gebouwd ding */
 
   /* ================================ gebouwen ================================
@@ -1307,7 +1559,7 @@ export async function maak3D(ctx){
   }
 
   /* ================================ thema ================================ */
-  let landKleurTex=null, landNormTex=null, wolkDek=.9, wolkSch=.4;
+  let landKleurTex=null, landNormTex=null, loofTex=null, wolkDek=.9, wolkSch=.4;
   function zetThema(){
     const th=isDonker()?THEMA.donker:THEMA.licht;
     const zr=new THREE.Vector3(...th.zon).normalize();
@@ -1355,7 +1607,11 @@ export async function maak3D(ctx){
     landNormTex.magFilter=THREE.LinearFilter; landNormTex.anisotropy=renderer.capabilities.getMaxAnisotropy();
     landNormTex.needsUpdate=true;
     await ctx.adem();
-    landMat=maakLandMat(landKleurTex,landNormTex);
+    /* hoeveel loof (en hoeveel naald) het bos heeft, op het grove rooster */
+    { const l=new Uint8Array(R.PW*R.PH); for(let i=0;i<l.length;i++)l[i]=klem(D.fLoof[i],0,1)*255;
+      loofTex=new THREE.DataTexture(l,R.PW,R.PH,THREE.RedFormat);
+      loofTex.minFilter=loofTex.magFilter=THREE.LinearFilter; loofTex.needsUpdate=true; }
+    landMat=maakLandMat(landKleurTex,landNormTex,loofTex);
     maakVakken();
     diepteTex=bouwDiepte();
     waterMat.uniforms.uDiepte.value=diepteTex;
@@ -1363,6 +1619,8 @@ export async function maak3D(ctx){
     if(!wolken)maakWolken();
     await ctx.adem();
     maakGebouwen();
+    if(!randBomen)maakRandBomen();
+    randVakken.clear(); randStand.x=1e9;
     maakNamen();
     zetThema();
     gebouwd=true;
@@ -1370,7 +1628,7 @@ export async function maak3D(ctx){
   function ruimOp(){
     for(const v of vakken){ for(const g of v.geo)if(g)g.dispose(); wereld.remove(v.mesh); }
     vakken=[]; for(const k in indexen)delete indexen[k];
-    if(landMat)landMat.dispose(); if(landKleurTex)landKleurTex.dispose(); if(landNormTex)landNormTex.dispose(); if(diepteTex)diepteTex.dispose();
+    if(landMat)landMat.dispose(); if(landKleurTex)landKleurTex.dispose(); if(landNormTex)landNormTex.dispose(); if(loofTex)loofTex.dispose(); if(diepteTex)diepteTex.dispose();
     if(gebouwen){ wereld.remove(gebouwen); gebouwen.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); gebouwen=null; }
     if(lichtjes){ wereld.remove(lichtjes); lichtjes.geometry.dispose(); lichtjes=null; }
     for(const s of schepen)scene.remove(s); schepen=[];
@@ -1542,6 +1800,7 @@ export async function maak3D(ctx){
     lucht.position.copy(camera.position); sterren.position.copy(camera.position);
     if(water){ water.position.x=camera.position.x; water.position.z=camera.position.z; }
     werkVakkenBij();
+    werkRandBomenBij(false);
     werkSchaduwBij();
     for(const s of schepen){ const f=s.userData.fase+GEDEELD.uTijd.value; s.position.y=Math.sin(f*1.3)*.008; s.rotation.z=Math.sin(f)*.05; s.rotation.x=Math.sin(f*.8)*.03; }
     for(const m of lijnMats)if(m.dashed)m.dashOffset-=dt*.9;
@@ -1554,6 +1813,7 @@ export async function maak3D(ctx){
   function maat(){
     const b=houder.clientWidth||1, h=houder.clientHeight||1;
     camera.aspect=b/h; camera.updateProjectionMatrix();
+    randU.uPixSchaal.value=h*renderer.getPixelRatio()/(2*Math.tan(FOV*Math.PI/360));
     renderer.setSize(b,h); labelRenderer.setSize(b,h);
     for(const m of lijnMats)m.resolution.set(b,h);
   }
@@ -1663,6 +1923,7 @@ export async function maak3D(ctx){
       try{
         const k=await opnieuwBijFout(bouwKleur);
         landKleurTex.image.data.set(k); landKleurTex.needsUpdate=true;
+        randVakken.clear(); werkRandBomenBij(true);
         zetThema();
       }finally{ ctx.laad.weg(); }
     },
