@@ -762,6 +762,39 @@ export async function maak3D(ctx){
             float hk=kruinRaak(kp,normalize(cameraPosition-vWolkW),loof,bosZicht,kruinHelling,kk);
             kk*=mix(1.0,.8+.4*blad,hk);
             diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht);
+          }
+          /* De lappendeken van akkers: waar het land akkerland is, liggen
+             kavels (grote cellen) met elk een eigen richting, en daarin
+             langwerpige akkers in rijen, met heggen langs de randen en een pad
+             tussen de kavels. Alles in plaatselijke coördinaten van de kavel,
+             zodat het patroon stil blijft liggen. Net als de kruinen gaan de
+             akkers in de verte over in de egale kleur, met hetzelfde gemiddelde. */
+          float akker=texture2D(uLoof,vMapUv).g*(1.0-bosM);
+          float akZicht=akker*(1.0-smoothstep(.25,.6,length(fwidth(vWolkW.xz))/.2));
+          if(akZicht>.002){
+            vec2 bp=vWolkW.xz/3.2, bc=floor(bp), bf=bp-bc;
+            float b1=9.0, b2=9.0; vec2 bid=vec2(0.0), bpos=vec2(0.0);
+            for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){
+              vec2 g=vec2(float(i),float(j)), o=.1+.8*kHash(bc+g+vec2(3.0,11.0)), r=g+o-bf;
+              float d=dot(r,r);
+              if(d<b1){ b2=b1; b1=d; bid=bc+g; bpos=bc+g+o; } else if(d<b2)b2=d;
+            }
+            vec2 h3=kHash(bid+vec2(7.0,-19.0));
+            float th=h3.x*3.1416, cs=cos(th), sn=sin(th);
+            vec2 q=vWolkW.xz-bpos*3.2; q=vec2(cs*q.x+sn*q.y,-sn*q.x+cs*q.y);
+            float w=mix(.22,.4,h3.y), L=mix(.55,1.3,fract(h3.y*7.13));
+            float rij=floor(q.y/w), sch=kHash(vec2(rij,bid.x+bid.y*17.0)).x*L;
+            float kol=floor((q.x+sch)/L);
+            vec2 hh=kHash(vec2(kol,rij)+bid*64.0);
+            float fy=fract(q.y/w), fx=fract((q.x+sch)/L);
+            float rand=min(min(fy,1.0-fy)*w,min(fx,1.0-fx)*L);
+            float heg=(1.0-smoothstep(.005,.016,rand))*step(.5,kHash(vec2(rij*3.0+kol,bid.y)).y);
+            float pad=1.0-smoothstep(.01,.035,(sqrt(b2)-sqrt(b1))*3.2);
+            vec3 gewas=hh.x<.28?vec3(1.12,1.05,.84):hh.x<.5?vec3(.9,1.04,.97):hh.x<.68?vec3(1.02,.92,.86):vec3(.95,1.01,.94);
+            vec3 veld=mix(vec3(1.0),gewas,.6)*(.96+.08*hh.y);
+            veld=mix(veld,vec3(.76,.85,.7),heg*.7);
+            veld=mix(veld,vec3(1.08,1.0,.88),pad*.7);
+            diffuseColor.rgb*=mix(vec3(1.0),veld/vec3(.985,.99,.94),akZicht);
           }`)
         /* Onder water is een schaduw zachter: het water strooit het licht. Zo
            tekenen de schaduwen van bergen zich in ondiep water niet meer als
@@ -1554,9 +1587,17 @@ export async function maak3D(ctx){
     landNormTex.magFilter=THREE.LinearFilter; landNormTex.anisotropy=renderer.capabilities.getMaxAnisotropy();
     landNormTex.needsUpdate=true;
     await ctx.adem();
-    /* hoeveel loof (en hoeveel naald) het bos heeft, op het grove rooster */
-    { const l=new Uint8Array(R.PW*R.PH); for(let i=0;i<l.length;i++)l[i]=klem(D.fLoof[i],0,1)*255;
-      loofTex=new THREE.DataTexture(l,R.PW,R.PH,THREE.RedFormat);
+    /* Op het grove rooster: hoeveel loof (en hoeveel naald) het bos heeft (R),
+       en hoeveel van het land akkerland is (G), niet op het strand */
+    { const MM=R.PW*R.PH, l=new Uint8Array(MM*2), ak=new Float32Array(MM), A=D.SOORTEN.indexOf("akker");
+      for(let i=0;i<MM;i++){
+        if(!D.pReg[i])continue;
+        const x=i%R.PW, y=(i/R.PW)|0, fp=Math.min(RH-1,Math.floor((y+.5)*RES))*RW+Math.min(RW-1,Math.floor((x+.5)*RES));
+        ak[i]=((D.mixA[i]===A?1-D.mixF[i]:0)+(D.mixB[i]===A?D.mixF[i]:0))*klem((D.kust[fp]/18-1.2)/1.2,0,1)*(1-glad(klem((D.h[fp]-.12)/.12,0,1)));
+      }
+      T.veeg(ak,R.PW,R.PH,2);
+      for(let i=0;i<MM;i++){ l[i*2]=klem(D.fLoof[i],0,1)*255; l[i*2+1]=klem(ak[i],0,1)*255; }
+      loofTex=new THREE.DataTexture(l,R.PW,R.PH,THREE.RGFormat);
       loofTex.minFilter=loofTex.magFilter=THREE.LinearFilter; loofTex.needsUpdate=true; }
     landMat=maakLandMat(landKleurTex,landNormTex,loofTex);
     maakVakken();
