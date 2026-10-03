@@ -737,7 +737,8 @@ export async function maak3D(ctx){
         .replace("#include <common>","#include <common>\nvarying vec3 vWolkW;")
         .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*vec4(transformed,1.0)).xyz;");
       sh.fragmentShader=sh.fragmentShader
-        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\n"+WOLK_GLSL+KRUIN_GLSL)
+        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\n"+WOLK_GLSL+KRUIN_GLSL
+          +"float randSchaduw(vec4 c,float s){ vec3 p=c.xyz/c.w; float r=min(min(p.x,1.0-p.x),min(p.y,1.0-p.y)); return mix(1.0,s,smoothstep(0.0,.18,r)); }")
         /* Van dichtbij is het kleurplaatje te grof: dan een fijne korrel van
            gras, aarde en steen eroverheen, die in de verte weer wegvalt. */
         .replace("#include <map_fragment>",`#include <map_fragment>
@@ -760,7 +761,18 @@ export async function maak3D(ctx){
             kk*=mix(1.0,.8+.4*blad,hk);
             diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht);
           }`)
+        /* Onder water is een schaduw zachter: het water strooit het licht. Zo
+           tekenen de schaduwen van bergen zich in ondiep water niet meer als
+           harde vlakken af op de bodem (het wateroppervlak zelf ontvangt geen
+           schaduw). */
+        /* De schaduwkaart dekt een vak rond waar je kijkt; daarbuiten valt
+           geen schaduw. Naar de rand van dat vak toe loopt de schaduw daarom
+           geleidelijk uit, anders staat er een rechte lijn in het landschap. */
+        .replace("#include <lights_fragment_begin>",THREE.ShaderChunk.lights_fragment_begin.replace(
+          "directLight.color *= ( directLight.visible && receiveShadow ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;",
+          "directLight.color *= ( directLight.visible && receiveShadow ) ? onderWater+(1.0-onderWater)*randSchaduw(vDirectionalShadowCoord[ i ],getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] )) : 1.0;"))
         .replace("#include <normal_fragment_maps>",`
+          float onderWater=.8*(1.0-smoothstep(-1.4,-.04,vWolkW.y));
           normal=texture2D(normalMap,vNormalMapUv).xyz*2.0-1.0;
           normal.xz+=kruinHelling*bosZicht;
           normal=normalize(normalMatrix*normalize(normal));`)
@@ -932,17 +944,23 @@ export async function maak3D(ctx){
     wolkTex.wrapS=wolkTex.wrapT=THREE.RepeatWrapping; wolkTex.magFilter=wolkTex.minFilter=THREE.LinearFilter;
     wolkTex.needsUpdate=true;
     GEDEELD.uWolkKaart.value=wolkTex;
-    /* het plaatje van één bol wolk: dicht in het midden, rafelig naar de rand */
-    const pc=document.createElement("canvas"); pc.width=pc.height=128;
-    const c=pc.getContext("2d");
-    for(let i=0;i<26;i++){
-      const a=T.hash2(i,5)*Math.PI*2, r=Math.sqrt(T.hash2(i,9))*34, x=64+Math.cos(a)*r, y=64+Math.sin(a)*r*.8;
-      const s=12+T.hash2(i,13)*20*(1-r/50);
-      const g=c.createRadialGradient(x,y,0,x,y,s);
-      g.addColorStop(0,"rgba(255,255,255,.5)"); g.addColorStop(.55,"rgba(255,255,255,.22)"); g.addColorStop(1,"rgba(255,255,255,0)");
-      c.fillStyle=g; c.beginPath(); c.arc(x,y,s,0,7); c.fill();
+    /* Het plaatje van één bol wolk: dicht in het midden, rafelig naar de
+       rand, met wat fijnere klontjes erin (alfa), en een tweede laagje ruis
+       voor de structuur van het licht (blauw). De belichting zelf komt in de
+       shader: een bol heeft een kant naar de zon. */
+    const P=128, pd=new Uint8Array(P*P*4);
+    /* een bol is zelf een trosje zachte deelbollen */
+    const deel=[]; for(let i=0;i<9;i++){ const a=T.hash2(i,61)*Math.PI*2, d=Math.sqrt(T.hash2(i,67))*.42; deel.push([Math.cos(a)*d,Math.sin(a)*d*.8,.28+T.hash2(i,71)*.26]); }
+    for(let y=0;y<P;y++)for(let x=0;x<P;x++){
+      const u=x/P*2-1+1/P, v=y/P*2-1+1/P, r=Math.hypot(u,v);
+      const n=herhaal(x/P,y/P,4,4,31), f=herhaal(x/P,y/P,9,3,37);
+      let leeg=1; for(const [cx,cy,cr] of deel){ const t=klem(1-Math.hypot(u-cx,v-cy)/cr,0,1); leeg*=1-t*t*(3-2*t)*.75; }
+      /* naar de rand van het plaatje altijd naar nul, anders wordt het vierkant zichtbaar */
+      const dicht=klem((1-leeg)*(.55+.9*n),0,1)*glad(klem((1-r)/.3,0,1));
+      const q=(y*P+x)*4; pd[q]=255; pd[q+1]=255; pd[q+2]=f*255; pd[q+3]=dicht*(.8+.4*f)*255*.6;
     }
-    const pufTex=new THREE.CanvasTexture(pc);
+    const pufTex=new THREE.DataTexture(pd,P,P,THREE.RGBAFormat);
+    pufTex.generateMipmaps=true; pufTex.minFilter=THREE.LinearMipmapLinearFilter; pufTex.magFilter=THREE.LinearFilter; pufTex.needsUpdate=true;
     /* Elke wolk is een tros bollen: een brede, vlakke onderkant en een bolle
        top. Een wolk staat waar het dek een top heeft. */
     const VAKW=uWolkVakArr(), posA=[], varA=[];
@@ -990,13 +1008,25 @@ export async function maak3D(ctx){
         uniform sampler2D uPuf; uniform vec3 uWolkLicht; uniform vec3 uWolkDonker; uniform float uDekking;
         varying vec2 vUv; varying vec3 vW; varying float vVar; varying float vHoog;
         void main(){
-          vec4 t=texture2D(uPuf,vUv);
+          /* elke bol een eigen draaiing van het plaatje, zodat ze niet op elkaar lijken */
+          vec2 q=vUv*2.0-1.0;
+          float hk=vVar*6.283, cs=cos(hk), sn=sin(hk);
+          vec4 t=texture2D(uPuf,vec2(cs*q.x-sn*q.y,sn*q.x+cs*q.y)*.5+.5);
           float afst=distance(vW,cameraPosition);
           float a=t.a*uDekking*smoothstep(8.0,45.0,afst);
           if(a<.004)discard;
-          /* van boven beschenen: de top licht, de onderkant van de wolk grijzer */
-          float licht=mix(.55,1.05,smoothstep(.1,.95,vUv.y))*mix(.78,1.06,vHoog)*(.94+.12*vVar);
+          /* De bol als bol belicht: de kant naar de zon licht, de andere kant
+             grijzer; en van onder, waar de wolk dik is, donkerder. */
+          vec3 rechts=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]);
+          vec3 op=vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]);
+          vec3 naar=normalize(cameraPosition-vW);
+          vec3 n=normalize(rechts*q.x+op*q.y*.8+naar*sqrt(max(1.0-dot(q,q),.05)));
+          float zon=dot(n,uZonRicht)*.5+.5;
+          float licht=mix(.42,1.12,zon)*mix(.72,1.06,vHoog)*mix(.9,1.06,t.b)*(.95+.1*vVar);
           vec3 c=mix(uWolkDonker,uWolkLicht,clamp(licht,0.0,1.2));
+          /* tegen de zon in: een lichte rand waar de wolk dun is */
+          float tegen=pow(max(dot(-naar,uZonRicht),0.0),5.0);
+          c+=uZonGloed*tegen*(1.0-smoothstep(.0,.5,t.a))*.9;
           gl_FragColor=vec4(c,a);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -1027,7 +1057,7 @@ export async function maak3D(ctx){
   const RANDMAX=klein?60000:160000;
   let randBomen=null;
   const randStand={x:1e9,y:1e9};
-  const randU={uPixSchaal:{value:800},uRand:{value:new THREE.Vector2(1.4,3.2)},uAtlas:{value:null}};
+  const randU={uPixSchaal:{value:800},uRand:{value:new THREE.Vector2(2.4,5)},uAtlas:{value:null}};
   function maakRandAtlas(){
     /* vier soorten: twee naaldbomen, twee loofbomen. Grijs, met licht van
        boven; de kleur van het bos komt er in de shader overheen */
@@ -1124,7 +1154,13 @@ export async function maak3D(ctx){
           vBoomKleur=aKleur*(1.3+.4*aSoort.y);`)
         .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*vec4(transformed,1.0)).xyz;");
       sh.fragmentShader=sh.fragmentShader
-        .replace("#include <common>","#include <common>\nuniform sampler2D uAtlas; varying vec2 vAtlas; varying vec3 vBoomKleur; varying float vZicht;")
+        .replace("#include <common>","#include <common>\nuniform sampler2D uAtlas; uniform float uGebouwLicht; varying vec2 vAtlas; varying vec3 vBoomKleur; varying float vZicht;")
+        /* licht van rondom, en tegen de zon in schijnt het blad wat door: anders
+           wordt een boom met de zon erachter een zwarte stip */
+        .replace("#include <emissivemap_fragment>",`#include <emissivemap_fragment>
+          vec3 bV=-normalize(vViewPosition);   /* van de camera naar de boom */
+          float bTegen=pow(max(dot(normalize((viewMatrix*vec4(uZonRicht,0.0)).xyz),bV),0.0),3.0);
+          totalEmissiveRadiance+=diffuseColor.rgb*(uGebouwLicht*1.6+bTegen*.45);`)
         .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\n"+WOLK_GLSL)
         .replace("#include <map_fragment>",`
           vec4 bt=texture2D(uAtlas,vAtlas);
