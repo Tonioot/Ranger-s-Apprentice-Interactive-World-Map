@@ -4845,7 +4845,9 @@ function drieContext(){
     plek:p=>plek(p),
     kies:id=>kies(id),
     gekozen:()=>state.sel,
-    terrein:{RELIEF,GROEI,BERGKETENS,terreinVan,fbm,landruis,ruis,hash2,soep,veeg,hexRGB,afstandTotKeten},
+    /* zeepzacht en LAAG ook: 3d.js stuurt de ruisfuncties als broncode naar
+       zijn Web Workers, en daar moeten ze alles hebben waar ze van afhangen */
+    terrein:{RELIEF,GROEI,BERGKETENS,terreinVan,fbm,landruis,ruis,hash2,soep,zeepzacht,LAAG,veeg,hexRGB,afstandTotKeten},
     rivieren:()=>[...gWater.querySelectorAll("path")].map(p=>({d:p.getAttribute("d"),klasse:p.getAttribute("class")||""})),
     route:()=>{
       const r=ROUTES.find(x=>x.id===state.route), tk=r&&routeTeken[r.id];
