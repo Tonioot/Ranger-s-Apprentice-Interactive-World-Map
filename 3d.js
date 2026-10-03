@@ -31,6 +31,7 @@ import {mergeGeometries} from "three/addons/utils/BufferGeometryUtils.js";
 import {Line2} from "three/addons/lines/Line2.js";
 import {LineMaterial} from "three/addons/lines/LineMaterial.js";
 import {LineGeometry} from "three/addons/lines/LineGeometry.js";
+import {bouwModellen,modelInfo} from "./3d-modellen.js";
 import {TAKEN,rekenregels,rooster,groveRijen,leesVeld,MARGE,SCHAAL,ZEEDIEPTE,ZEE0,Yvan,dakHoogte} from "./3d-grond.js";
 
 const FOV=42;
@@ -224,7 +225,7 @@ export async function maak3D(ctx){
     uNevelKleur:{value:new THREE.Color()}, uNevelDicht:{value:.003}, uNevelVal:{value:.03},
     uZenit:{value:new THREE.Color()}, uTijd:{value:0},
     uWolkKaart:{value:null}, uWind:{value:new THREE.Vector2()}, uWolkVak:{value:new THREE.Vector4(-W,-H,2*W,2*H)},
-    uWolkSterkte:{value:0}
+    uWolkSterkte:{value:0}, uGebouwLicht:{value:.12}
   };
   const metNevel=sh=>Object.assign(sh.uniforms,GEDEELD);
 
@@ -455,11 +456,11 @@ export async function maak3D(ctx){
     for(const p of ctx.PLAATSEN){
       const pos=POS[p.id]; if(!pos)continue;
       const m=modelVoor(p);
-      plekken.push({x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0});
+      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null});
     }
 
     /* --- het rekenwerk --- */
-    const v=await ploeg.doe("voorbereiding",{R,land,reg,pReg,pdReg,info:werkInfo,SOORTEN,vlekken},[land.buffer,reg.buffer,pReg.buffer,pdReg.buffer]);
+    const v=await ploeg.doe("voorbereiding",{R,land,reg,pReg,pdReg,info:werkInfo,SOORTEN,vlekken,plekken},[land.buffer,reg.buffer,pReg.buffer,pdReg.buffer]);
     land=v.land; reg=v.reg;
     let h=new Float32Array(N), kust=new Uint8Array(N);
     await Promise.all(stroken().map(async([y0,y1])=>{
@@ -470,11 +471,11 @@ export async function maak3D(ctx){
       const r=await ploeg.doe("hoogte",G,mee(G));
       h.set(r.h,y0*RW); kust.set(r.kust,y0*RW);
     }));
-    const a=await ploeg.doe("afwerking",{R,h,land,rivier,reg,kust,plekken,fBos:v.fBos},[h.buffer,land.buffer,rivier.buffer,reg.buffer,kust.buffer]);
+    const a=await ploeg.doe("afwerking",{R,h,land,rivier,reg,kust,plekken,fBos:v.fBos,kloven:v.kloven},[h.buffer,land.buffer,rivier.buffer,reg.buffer,kust.buffer]);
     await adem();
     D={ids,reg:a.reg,land:a.land,rivier:a.rivier,h:a.h,kust:a.kust,grens:a.grens,bos:a.bos,normalen:a.normalen,
        pReg:v.pReg,pdReg:v.pdReg,mixA:v.mixA,mixB:v.mixB,mixF:v.mixF,SOORTEN,fKoud:v.fKoud,fBos:v.fBos,fLoof:v.fLoof,
-       info,vlekken,POS,pool:v.pool,sleutel:ctx.sleutel()};
+       info,vlekken,POS,pool:v.pool,kloven:v.kloven,sleutel:ctx.sleutel()};
   }
 
   /* hoogte op een willekeurige plek, uit het raster (0..1 land, -1..0 zee) */
@@ -583,12 +584,13 @@ export async function maak3D(ctx){
     return uit;
   }
 
-  /* de waterdiepte voor de zee-shader, op half raster */
+  /* De waterdiepte voor de zee-shader, op het volle raster. Op een grover
+     raster loopt de kustlijn van het water een halve eenheid scheef ten
+     opzichte van het land, en staan huizen aan de haven met hun voeten in zee. */
   function bouwDiepte(){
-    const w=RW>>1, hh=RH>>1, uit=new Uint16Array(w*hh);
-    for(let y=0;y<hh;y++)for(let x=0;x<w;x++)
-      uit[y*w+x]=THREE.DataUtils.toHalfFloat(yOp(x*2/RES-MARGE,y*2/RES-MARGE));
-    const t=new THREE.DataTexture(uit,w,hh,THREE.RedFormat,THREE.HalfFloatType);
+    const uit=new Uint16Array(N), h=D.h;
+    for(let p=0;p<N;p++)uit[p]=THREE.DataUtils.toHalfFloat(Yvan(h[p]));
+    const t=new THREE.DataTexture(uit,RW,RH,THREE.RedFormat,THREE.HalfFloatType);
     t.minFilter=t.magFilter=THREE.LinearFilter; t.needsUpdate=true;
     return t;
   }
@@ -801,7 +803,8 @@ export async function maak3D(ctx){
   let water=null, diepteTex=null;
   const waterMat=new THREE.ShaderMaterial({
     uniforms:{...GEDEELD,uDiepte:{value:null},uGolf:{value:golfTex},
-      uVak:{value:new THREE.Vector4(-W/2-MARGE,-H/2-MARGE,W+2*MARGE,H+2*MARGE)},
+      /* het raster van de diepte; een rasterpunt ligt midden in zijn texel */
+      uVak:{value:new THREE.Vector4(-W/2-MARGE-.5/RES,-H/2-MARGE-.5/RES,W+2*MARGE,H+2*MARGE)},
       uMaxDiep:{value:ZEEDIEPTE+ZEE0},uOndiep:{value:new THREE.Color()},uDiep:{value:new THREE.Color()},
       uSchuim:{value:new THREE.Color()},uZonKleur:{value:new THREE.Color()}},
     vertexShader:`varying vec3 vW;
@@ -864,6 +867,31 @@ export async function maak3D(ctx){
      is zo groot dat de rand ver voorbij het verste punt ligt dat de nevel nog
      doorlaat. Een aparte bodem eronder is er niet: verder dan het raster is
      het water diep, en diep water is ondoorzichtig. */
+  /* Water dat niet de zee is (vijvers, grachten, plassen en het bergmeer):
+     dezelfde lucht in de weerspiegeling en dezelfde golfjes, maar vlak en
+     overal even diep. */
+  const plasMat=new THREE.ShaderMaterial({
+    uniforms:{...GEDEELD,uGolf:{value:golfTex},uOndiep:waterMat.uniforms.uOndiep,uZonKleur:waterMat.uniforms.uZonKleur},
+    vertexShader:`varying vec3 vW;
+      void main(){ vec4 w=modelMatrix*vec4(position,1.0); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,
+    fragmentShader:NEVEL_GLSL+LUCHT_GLSL+WOLK_GLSL+`
+      uniform float uTijd; uniform sampler2D uGolf; uniform vec3 uOndiep; uniform vec3 uZonKleur; varying vec3 vW;
+      void main(){
+        vec3 V=normalize(cameraPosition-vW);
+        vec3 g=texture2D(uGolf,vW.xz*.5+uTijd*vec2(.01,.006)).xyz*2.0-1.0;
+        vec3 n=normalize(vec3(g.x*.3,2.4,g.y*.3));
+        float fres=.04+.96*pow(1.0-max(dot(n,V),0.0),5.0);
+        vec3 R=reflect(-V,n); R.y=abs(R.y);
+        float ws=wolkSchaduw(vW);
+        vec3 licht=uZonKleur*max(uZonRicht.y,0.0)*.55*ws+uZenit*.35+uNevelKleur*.25;
+        vec3 Hh=normalize(uZonRicht+V);
+        vec3 kleur=mix(uOndiep*.75*licht,luchtKleur(R),fres)+uZonKleur*pow(max(dot(n,Hh),0.0),300.0)*3.0*ws;
+        gl_FragColor=vec4(kleur,1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+        gl_FragColor.rgb=nevel(gl_FragColor.rgb,vW);
+      }`
+  });
   function maakWater(){
     water=new THREE.Mesh(new THREE.PlaneGeometry(1,1),waterMat);
     water.rotation.x=-Math.PI/2; water.scale.set(120000,120000,1);
@@ -988,7 +1016,7 @@ export async function maak3D(ctx){
   function maakRandAtlas(){
     /* vier soorten: twee naaldbomen, twee loofbomen. Grijs, met licht van
        boven; de kleur van het bos komt er in de shader overheen */
-    const B=128, cv=document.createElement("canvas"); cv.width=B*4; cv.height=B*2;
+    const B=128, cv=document.createElement("canvas"); cv.width=B*8; cv.height=B*2;
     const c=cv.getContext("2d");
     const r=(i,k)=>T.hash2(i*31+7,k*17+3);
     const stam=(x0,breed,hoog)=>{ c.fillStyle="#8a7d6c"; c.fillRect(x0-breed/2,B*2-hoog,breed,hoog); };
@@ -1019,6 +1047,30 @@ export async function maak3D(ctx){
         vlek(x,y,rad,215+(cy-y)/ry*30);
       }
     }
+    /* en vier bomen die bij een plaats horen, in hun eigen kleur:
+       een palm (Arrida, Indus), een dode kromme boom (Grimsdell, de
+       Vlakte der Eenzamen), een esdoorn (de tuinen van Nihon-Ja) en een
+       cipres (Toscana, Rovo) */
+    { const x0=B*4+B/2;           /* palm */
+      c.strokeStyle="#8A7254"; c.lineWidth=7; c.beginPath(); c.moveTo(x0+6,B*2); c.quadraticCurveTo(x0-10,B*1.2,x0+4,B*.55); c.stroke();
+      for(let i=0;i<9;i++){
+        const a=-Math.PI*.95+i/8*Math.PI*.9, l=48+r(40,i)*14;
+        c.strokeStyle=i%2?"#6E8E3A":"#7FA046"; c.lineWidth=9;
+        c.beginPath(); c.moveTo(x0+4,B*.55); c.quadraticCurveTo(x0+4+Math.cos(a)*l*.6,B*.55+Math.sin(a)*l*.6-14,x0+4+Math.cos(a)*l,B*.55+Math.sin(a)*l*.4+18); c.stroke();
+      } }
+    { const x0=B*5+B/2;           /* dode boom */
+      c.strokeStyle="#6A5E52"; c.lineCap="round";
+      const tak=(x,y,a,l,w,d)=>{ if(d>5||l<5)return; const x2=x+Math.cos(a)*l, y2=y+Math.sin(a)*l; c.lineWidth=w; c.beginPath(); c.moveTo(x,y); c.lineTo(x2,y2); c.stroke();
+        tak(x2,y2,a-.45-r(d,l|0)*.3,l*.72,w*.66,d+1); tak(x2,y2,a+.4+r(l|0,d)*.3,l*.68,w*.62,d+1); };
+      tak(x0,B*2,-Math.PI/2+.08,70,10,0); }
+    { const x0=B*6+B/2;           /* esdoorn, rood in de tuin */
+      stam(x0,8,70);
+      for(let i=0;i<30;i++){ const a=r(50,i)*Math.PI*2, d=Math.sqrt(r(51,i)); const x=x0+Math.cos(a)*d*46, y=B*1.05+Math.sin(a)*d*38, rad=14+r(52,i)*10;
+        const g=c.createRadialGradient(x-rad*.3,y-rad*.4,rad*.1,x,y,rad); g.addColorStop(0,"#E06A4E"); g.addColorStop(1,"#9E3A2C"); c.fillStyle=g; c.beginPath(); c.arc(x,y,rad,0,7); c.fill(); } }
+    { const x0=B*7+B/2;           /* cipres: smal, hoog, donker */
+      stam(x0,6,16);
+      const g=c.createLinearGradient(x0-18,0,x0+18,0); g.addColorStop(0,"#5E7A4A"); g.addColorStop(1,"#2E4228");
+      c.fillStyle=g; c.beginPath(); c.moveTo(x0,6); c.quadraticCurveTo(x0+26,B*.9,x0+12,B*2-14); c.lineTo(x0-12,B*2-14); c.quadraticCurveTo(x0-26,B*.9,x0,6); c.fill(); }
     const t=new THREE.CanvasTexture(cv);
     t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4;
     return t;
@@ -1048,11 +1100,12 @@ export async function maak3D(ctx){
           /* een bol als normaal: de kant naar de zon licht, de andere kant donker */
           vec3 objectNormal=normalize(vec3(bH.x,0.0,bH.y)*.35+bRechts*position.x*.9+vec3(0.0,.55+position.y*.6,0.0));`)
         .replace("#include <begin_vertex>",`
-          float bBreed=aBoom.w*(aSoort.x<1.5?.62:.86);
+          float bSoort=floor(aSoort.x);
+          float bBreed=aBoom.w*(bSoort<1.5?.62:bSoort>6.5?.4:.86);
           vec3 transformed=bMidden+bRechts*position.x*bBreed+vec3(0.0,position.y*aBoom.w*1.15,0.0);
           vZicht=smoothstep(uRand.x,uRand.y,aBoom.w*uPixSchaal/length(bNaar));
           if(vZicht<=0.0)transformed=bMidden;
-          vAtlas=vec2((floor(aSoort.x)+position.x+.5)*.25,position.y);
+          vAtlas=vec2((floor(aSoort.x)+position.x+.5)*.125,position.y);
           vBoomKleur=aKleur*(1.3+.4*aSoort.y);`)
         .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*vec4(transformed,1.0)).xyz;");
       sh.fragmentShader=sh.fragmentShader
@@ -1098,6 +1151,15 @@ export async function maak3D(ctx){
         uit.push(X(wx),yOp(wx,wy)-.01,Z(wy),maat,(loof?2:0)+(T.hash2(x+9,y+2+i)<.5?1:0),T.hash2(x+2+i,y+8),kr,kg,kb);
       }
     }
+    /* de bomen die bij een plaats horen: palmen, cipressen, tuinbomen */
+    const KLEUR={4:[.8,.8,.8],5:[.85,.85,.85],6:[.8,.8,.8],7:[.8,.8,.8]};
+    for(let i=0;i<losseBomen.length;i+=4){
+      const x=losseBomen[i], y=losseBomen[i+1];
+      if(x<cx*RANDVAK||x>=(cx+1)*RANDVAK||y<cy*RANDVAK||y>=(cy+1)*RANDVAK)continue;
+      const soort=losseBomen[i+2], maat=losseBomen[i+3]*(.2+.06*T.hash2(i,7));
+      const k=KLEUR[soort]||[.12,.2,.07];
+      uit.push(X(x),yOp(x,y)-.01,Z(y),maat,soort,T.hash2(i,11),k[0],k[1],k[2]);
+    }
     v=new Float32Array(uit);
     randVakken.set(sl,v);
     if(randVakken.size>2500){ const eerste=randVakken.keys().next().value; randVakken.delete(eerste); }
@@ -1138,193 +1200,60 @@ export async function maak3D(ctx){
   const gebouwPlekken=[];        /* [x,y,straal]: de plek van elk gebouwd ding */
 
   /* ================================ gebouwen ================================
-   Alles wat gebouwd is wordt samengevoegd tot twee vormen (stevig en doek),
-   met de kleur per stukje in de hoekpunten. Zo kost een hele wereld vol
-   kastelen en dorpen maar een handvol tekenopdrachten. */
-  /* per plaats: hoe breed de grond eronder vlak wordt [binnen, buiten, kracht]
-     en hoe groot de open plek in het bos eromheen is */
-  function modelVoor(p){
-    return {
-      kasteel:{vlak:[.75,1.7,1],open:1.8},
-      stad:{vlak:[.7,1.7,.8],open:2.1},
-      haven:{vlak:[.7,1.6,.8],open:1.9},
-      ruine:{vlak:[.45,1.1,.8],open:.9},
-      slagveld:{open:1.2}
-    }[p.soort]||{};
-  }
-  let gebouwen=null, lichtjes=null, schepen=[];
+   Wat er gebouwd staat komt uit 3d-modellen.js: per plaats een eigen model
+   (of een standaard naar soort en bouwstijl), alles samengevoegd tot een
+   paar vormen met de kleur in de hoekpunten. Zo kost een hele wereld vol
+   kastelen, steden en schepen maar een handvol tekenopdrachten. */
+  const modelVoor=p=>modelInfo(p);
+  let gebouwen=null, lichtjes=null, losseBomen=[];
   const plekBoven={};            /* plaats-id → hoogte van de top (voor het naambordje) */
+  const rivierOp=(wx,wy)=>{
+    const x=Math.floor((wx+MARGE)*RES), y=Math.floor((wy+MARGE)*RES);
+    return x>=0&&y>=0&&x<RW&&y<RH?D.rivier[y*RW+x]:0;
+  };
   function maakGebouwen(){
-    const vast=[], doek=[], lampjes=[];
-    const BOX=new THREE.BoxGeometry(1,1,1).translate(0,.5,0).toNonIndexed();
-    const CYL=new THREE.CylinderGeometry(1,1,1,10).translate(0,.5,0).toNonIndexed();
-    const KEGEL=new THREE.ConeGeometry(1,1,10).translate(0,.5,0).toNonIndexed();
-    const PIRAMIDE=new THREE.ConeGeometry(Math.SQRT1_2,1,4).rotateY(Math.PI/4).translate(0,.5,0).toNonIndexed();
-    const GEVEL=veelvlak([[-.5,0,-.5],[.5,0,-.5],[.5,0,.5],[-.5,0,.5],[-.5,1,0],[.5,1,0]],
-      [[0,1,5,4],[3,2,5,4],[0,3,4],[1,2,5],[0,1,2,3]]);
-    const VLAK=new THREE.PlaneGeometry(1,1).translate(.5,0,0).toNonIndexed();
-    for(const g of [BOX,CYL,KEGEL,PIRAMIDE,VLAK])g.deleteAttribute("uv");
-    const m4=new THREE.Matrix4(), q=new THREE.Quaternion(), e=new THREE.Euler(), sv=new THREE.Vector3(), pv=new THREE.Vector3();
-    const kl=new THREE.Color();
-    /* een stukje neerzetten, in wereldcoördinaten (x,z op de kaart, y de hoogte) */
-    function stuk(lijst,geo,x,y,z,sx,sy,sz,ry,kleur,rx=0,rz=0){
-      const g=geo.clone();
-      /* hoeken gaan in de draairichting van de kaart; three.js draait om Y de andere kant op */
-      m4.compose(pv.set(x,y,z),q.setFromEuler(e.set(rx,-ry,rz)),sv.set(sx,sy,sz));
-      g.applyMatrix4(m4);
-      kl.set(kleur);
-      const n=g.getAttribute("position").count, c=new Float32Array(n*3);
-      for(let i=0;i<n;i++){ c[i*3]=kl.r; c[i*3+1]=kl.g; c[i*3+2]=kl.b; }
-      g.setAttribute("color",new THREE.BufferAttribute(c,3));
-      lijst.push(g);
-    }
-    const STEEN=["#D8D1BF","#CFC6B0","#DCD6C6","#C9C0A8"];
-    const DAKEN=["#9C4A33","#8A3F2C","#6E5B4A","#5A6170","#A65C3B","#7B5A3A"];
-    const TORENDAK=["#46586E","#3E4E63","#7A3328","#4B5563"];
-    const MUREN=["#EAE2CF","#E2D6BC","#D9CDB1","#EFE8D8","#CDBF9F"];
-    for(const p of ctx.PLAATSEN){
-      const pos=D.POS[p.id]; if(!pos)continue;
-      const [cx,cy]=pos;
-      const r=i=>T.hash2((cx*131+i*17)|0,(cy*71+i*29)|0);
-      const rot=r(0)*Math.PI*2, co=Math.cos(rot), si=Math.sin(rot);
-      /* van een plek rond het midden (lokaal, gedraaid) naar de kaart */
-      const w=(lx,lz)=>[cx+lx*co-lz*si, cy+lx*si+lz*co];
-      const grond=(x,y)=>yOp(x,y);
-      const laagste=(R)=>{ let m=grond(cx,cy); for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; m=Math.min(m,grond(cx+Math.cos(a)*R,cy+Math.sin(a)*R)); } return Math.max(m,.03); };
-      const huis=(lx,lz,schaal,dakKleur,muurKleur,draai=0)=>{
-        const [x,y]=w(lx,lz); if(!opLand(x,y))return;
-        const g0=Math.max(grond(x,y),.05);
-        const bw=(.07+r(lx*9+lz*7)*.05)*schaal, bd=(.055+r(lx*3+lz*11)*.03)*schaal, bh=(.05+r(lx*5+lz*13)*.035)*schaal;
-        stuk(vast,BOX,X(x),g0-.03,Z(y),bw,bh+.03,bd,rot+draai,muurKleur);
-        stuk(vast,GEVEL,X(x),g0+bh,Z(y),bw*1.08,bd*.75,bd*1.12,rot+draai,dakKleur);
-        /* het licht net boven het dak: in het huis zou de muur het verbergen */
-        if(r(lx*31+lz*17)<.7)lampjes.push(X(x),g0+bh+bd*.9,Z(y));
-      };
-      let boven=.3, straal=.6;
-      if(p.soort==="kasteel"){
-        const basis=laagste(.62);
-        const steen=p.id==="redmont"?"#B98A72":STEEN[Math.floor(r(1)*STEEN.length)];
-        const dak=TORENDAK[Math.floor(r(2)*TORENDAK.length)];
-        const S=.9, hw=S/2, mh=.17, dk=.05;
-        const [bx,by]=[cx,cy];
-        const P=(lx,lz)=>{ const [x,y]=w(lx,lz); return [X(x),Z(y)]; };
-        /* een voet tot onder de grond, zodat het kasteel nergens zweeft */
-        { const [x,z]=P(0,0); stuk(vast,BOX,x,basis-.7,z,S+.14,.72,S+.14,rot,steen); }
-        /* de ringmuur met kantelen */
-        for(let zijde=0;zijde<4;zijde++){
-          const a=zijde*Math.PI/2, ca=Math.cos(a), sa=Math.sin(a);
-          const [x,z]=P(ca*hw,sa*hw);
-          const lang=zijde%2?S:S;
-          stuk(vast,BOX,x,basis,z,zijde%2?lang:dk,mh,zijde%2?dk:lang,rot,steen);
-          for(let k=-5;k<=5;k+=2){
-            const t=k/11*S;
-            const [kx,kz]=P(ca*hw-sa*t,sa*hw+ca*t);
-            stuk(vast,BOX,kx,basis+mh,kz,.035,.03,.035,rot,steen);
-          }
-        }
-        for(const [lx,lz] of [[-hw,-hw],[hw,-hw],[hw,hw],[-hw,hw]]){
-          const [x,z]=P(lx,lz);
-          stuk(vast,CYL,x,basis,z,.075,.29,.075,0,steen);
-          stuk(vast,KEGEL,x,basis+.29,z,.092,.17,.092,0,dak);
-        }
-        /* poortgebouw */
-        { const [x,z]=P(0,hw); stuk(vast,BOX,x,basis,z,.16,.24,.1,rot,steen); }
-        /* de burcht: een vierkante toren en een hoge ronde */
-        { const [x,z]=P(-.08,-.06); stuk(vast,BOX,x,basis,z,.3,.42,.26,rot,steen);
-          for(const [lx,lz] of [[-.13,-.11],[.13,-.11],[.13,.11],[-.13,.11]]){ const [tx,tz]=P(-.08+lx,-.06+lz); stuk(vast,BOX,tx,basis+.42,tz,.045,.04,.045,rot,steen); } }
-        { const [x,z]=P(.14,.08); stuk(vast,CYL,x,basis,z,.07,.62,.07,0,steen); stuk(vast,KEGEL,x,basis+.62,z,.09,.22,.09,0,dak);
-          stuk(vast,CYL,x,basis+.84,z,.004,.14,.004,0,"#5A4632");
-          stuk(doek,VLAK,x,basis+.94,z,.12,.07,1,rot+Math.PI/2,"#8E2B2B");
-          lampjes.push(x,basis+.66,z,x+.02,basis+.48,z+.02); }
-        /* een paar huisjes op de binnenplaats en eromheen */
-        for(let i=0;i<3;i++)huis(-.25+i*.2,.24,.85,DAKEN[Math.floor(r(10+i)*DAKEN.length)],MUREN[Math.floor(r(20+i)*MUREN.length)]);
-        for(let i=0;i<7;i++){ const a=r(30+i)*Math.PI*2, d=.85+r(40+i)*.6; huis(Math.cos(a)*d,Math.sin(a)*d,1,DAKEN[Math.floor(r(50+i)*DAKEN.length)],MUREN[Math.floor(r(60+i)*MUREN.length)],r(70+i)); }
-        { const [x,z]=P(0,hw+.08); lampjes.push(x,basis+.28,z); }
-        boven=basis+1.15; straal=1.0;
-      }else if(p.soort==="stad"||p.soort==="haven"){
-        /* Een dorp of stad: huizen dicht opeen rond een plein, alleen waar
-           land is — een havenstad ligt aan het water en groeit dus alleen
-           landinwaarts. Wat het dichtst bij het midden ligt komt eerst. */
-        const R=p.soort==="stad"?.9:.95, aantal=p.soort==="stad"?30:24;
-        const kand=[];
-        for(let gz=-R;gz<=R;gz+=.14)for(let gx=-R;gx<=R;gx+=.14){
-          const i=Math.round(gx*71+gz*13+400), lx=gx+(r(i)-.5)*.07, lz=gz+(r(i+700)-.5)*.07;
-          const d=Math.hypot(lx,lz); if(d>R)continue;
-          const [x,y]=w(lx,lz); if(!opLand(x,y))continue;
-          kand.push([lx,lz,d+r(i+900)*.3]);
-        }
-        kand.sort((a,b)=>a[2]-b[2]);
-        const plein=kand.shift();
-        for(const [lx,lz] of kand.slice(0,aantal)){
-          /* de huizen staan grofweg in het gelid, met een kleine afwijking */
-          const a=Math.round(Math.atan2(lz,lx)/(Math.PI/2))*(Math.PI/2)+(r(lx*53+lz*19)-.5)*.3;
-          huis(lx,lz,1.15,DAKEN[Math.floor(r(lx*97+lz*31+5)*DAKEN.length)],MUREN[Math.floor(r(lz*91+lx*37+9)*MUREN.length)],a);
-        }
-        /* een kerk of hal met toren op het plein */
-        const [px,pz]=plein||[0,0];
-        const [x,y]=w(px,pz), g0=Math.max(grond(x,y),.03);
-        stuk(vast,BOX,X(x),g0-.03,Z(y),.19,.12,.09,rot,"#D8D0BC");
-        stuk(vast,GEVEL,X(x),g0+.09,Z(y),.2,.08,.1,rot,"#6E5B4A");
-        const [tx,ty]=w(px-.12,pz);
-        stuk(vast,BOX,X(tx),g0-.03,Z(ty),.06,.3,.06,rot,"#D8D0BC");
-        stuk(vast,PIRAMIDE,X(tx),g0+.27,Z(ty),.08,.15,.08,rot,"#4B5563");
-        lampjes.push(X(tx),g0+.2,Z(ty)+.04);
-        /* een steiger het water in */
-        if(p.soort==="haven"){
-          let sx=0,sz=0;
-          for(let i=0;i<16;i++){ const a=i/16*Math.PI*2; if(hNorm(cx+Math.cos(a)*1.3,cy+Math.sin(a)*1.3)<0){sx+=Math.cos(a);sz+=Math.sin(a);} }
-          const l=Math.hypot(sx,sz);
-          if(l>0){
-            sx/=l; sz/=l;
-            let t=0; while(t<2&&hNorm(cx+sx*t,cy+sz*t)>=0)t+=.04;
-            for(const zij of [-.18,.18]){
-              const ox=-sz*zij, oz=sx*zij, mx=cx+sx*(t+.18)+ox, my=cy+sz*(t+.18)+oz;
-              stuk(vast,BOX,X(mx),-.05,Z(my),.5,.09,.045,Math.atan2(sz,sx),"#6B5138");
-            }
-          }
-        }
-        boven=g0+.5; straal=1.05;
-      }else if(p.soort==="ruine"){
-        const basis=laagste(.5);
-        for(let i=0;i<7;i++){
-          const a=i/7*Math.PI*2+r(i)*.3, [x,y]=w(Math.cos(a)*.38,Math.sin(a)*.38);
-          stuk(vast,BOX,X(x),basis-.1,Z(y),.05,.12+r(i+9)*.22,.24,rot+a,"#8F8A7A");
-        }
-        { const [x,y]=w(.06,-.05); stuk(vast,CYL,X(x),basis-.1,Z(y),.08,.36+r(30)*.15,.08,0,"#8F8A7A"); }
-        for(let i=0;i<6;i++){ const [x,y]=w((r(40+i)-.5)*.9,(r(50+i)-.5)*.9); stuk(vast,BOX,X(x),grond(x,y)-.02,Z(y),.04,.03,.05,r(i),"#7E796B"); }
-        boven=basis+.55; straal=.6;
-      }else if(p.soort==="slagveld"){
-        const basis=laagste(.4);
-        { const [x,y]=w(0,0); stuk(vast,BOX,X(x),basis-.1,Z(y),.06,.32,.06,rot,"#A7A190"); stuk(vast,PIRAMIDE,X(x),basis+.22,Z(y),.065,.05,.065,rot,"#A7A190"); }
-        const VLAGGEN=["#8E2B2B","#2B4C7E","#8E2B2B","#C9A94A","#2B4C7E"];
-        for(let i=0;i<5;i++){
-          const a=r(i)*Math.PI*2, d=.25+r(i+5)*.35, [x,y]=w(Math.cos(a)*d,Math.sin(a)*d), g0=grond(x,y);
-          stuk(vast,CYL,X(x),g0,Z(y),.005,.28,.005,0,"#5A4632");
-          stuk(doek,VLAK,X(x),g0+.2,Z(y),.09,.06,1,r(i+11)*6,VLAGGEN[i]);
-        }
-        /* tenten van een legerkamp */
-        for(let i=0;i<4;i++){ const a=r(i+20)*Math.PI*2, d=.5+r(i+25)*.3, [x,y]=w(Math.cos(a)*d,Math.sin(a)*d);
-          stuk(vast,PIRAMIDE,X(x),grond(x,y)-.01,Z(y),.09,.07,.09,a,"#D9CFB4"); }
-        boven=basis+.45; straal=.7;
-      }else{
-        boven=Math.max(yOp(cx,cy),0)+.18; straal=0;
-      }
-      plekBoven[p.id]=boven;
-      if(straal)gebouwPlekken.push([cx,cy,straal]);
-      /* schepen bij een haven: op het dichtstbijzijnde water */
-      if(p.soort==="haven")maakSchepen(p,cx,cy,r);
-    }
-    const mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,metalness:0});
-    mat.onBeforeCompile=metNevel;
-    const matDoek=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,side:THREE.DoubleSide});
-    matDoek.onBeforeCompile=metNevel;
+    const m=bouwModellen({PLAATSEN:ctx.PLAATSEN,POS:D.POS,X,Z,yOp,hNorm,opLand,hash2:T.hash2,rivierOp,kloven:D.kloven});
+    Object.assign(plekBoven,m.boven);
+    gebouwPlekken.push(...m.plekken);
+    losseBomen=m.bomen;
     const g=new THREE.Group();
-    if(vast.length){ const m=new THREE.Mesh(mergeGeometries(vast),mat); m.castShadow=m.receiveShadow=true; g.add(m); }
-    if(doek.length){ const m=new THREE.Mesh(mergeGeometries(doek),matDoek); m.castShadow=true; g.add(m); }
-    for(const x of [...vast,...doek])x.dispose();
+    /* Een gebouw is klein en heeft geen eigen hemel om zich heen: de
+       schaduwkant zou zwart worden. Een vleugje eigen licht (uGebouwLicht,
+       per thema) houdt muren en daken leesbaar. */
+    const mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,metalness:0});
+    mat.onBeforeCompile=sh=>{
+      metNevel(sh);
+      sh.fragmentShader=sh.fragmentShader
+        .replace("#include <common>","#include <common>\nuniform float uGebouwLicht;")
+        .replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuseColor.rgb*uGebouwLicht;");
+    };
+    if(m.vast){ const x=new THREE.Mesh(m.vast,mat); x.castShadow=x.receiveShadow=true; g.add(x); }
+    if(m.doek){
+      const md=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,side:THREE.DoubleSide});
+      md.onBeforeCompile=metNevel;
+      const x=new THREE.Mesh(m.doek,md); x.castShadow=true; x.receiveShadow=true; g.add(x);
+    }
+    /* de schepen deinen: elk om zijn eigen middelpunt, met zijn eigen fase */
+    if(m.schepen){
+      const ms=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,side:THREE.DoubleSide});
+      ms.onBeforeCompile=sh=>{
+        metNevel(sh);
+        sh.vertexShader=sh.vertexShader
+          .replace("#include <common>","#include <common>\nattribute vec4 aDobber; uniform float uTijd;")
+          .replace("#include <begin_vertex>",`#include <begin_vertex>
+            float df=aDobber.z+uTijd, dz=sin(df)*.05, dx=sin(df*.8)*.03;
+            vec3 dp=vec3(aDobber.x,0.0,aDobber.y), dq=transformed-dp;
+            dq=vec3(dq.x*cos(dz)-dq.y*sin(dz),dq.x*sin(dz)+dq.y*cos(dz),dq.z);
+            dq=vec3(dq.x,dq.y*cos(dx)-dq.z*sin(dx),dq.y*sin(dx)+dq.z*cos(dx));
+            transformed=dp+dq; transformed.y+=sin(df*1.3)*.008;`);
+      };
+      const x=new THREE.Mesh(m.schepen,ms); x.castShadow=true; x.receiveShadow=true; g.add(x);
+    }
+    /* vijvers, grachten en plassen: water dat de lucht weerspiegelt */
+    if(m.plas){ const x=new THREE.Mesh(m.plas,plasMat); g.add(x); }
     wereld.add(g); gebouwen=g;
     /* 's nachts: licht achter de ramen */
-    const lg=new THREE.BufferGeometry(); lg.setAttribute("position",new THREE.Float32BufferAttribute(lampjes,3));
+    const lg=new THREE.BufferGeometry(); lg.setAttribute("position",new THREE.BufferAttribute(m.lampjes,3));
     const gloed=document.createElement("canvas"); gloed.width=gloed.height=64;
     { const c=gloed.getContext("2d"), gr=c.createRadialGradient(32,32,0,32,32,32);
       gr.addColorStop(0,"rgba(255,214,150,1)"); gr.addColorStop(.18,"rgba(255,170,80,.6)"); gr.addColorStop(1,"rgba(255,140,60,0)");
@@ -1333,48 +1262,6 @@ export async function maak3D(ctx){
       depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,fog:false});
     lichtjes=new THREE.Points(lg,lm); lichtjes.renderOrder=4;
     wereld.add(lichtjes);
-  }
-  /* Een schip: een romp die naar de punten toe smaller en hoger wordt, een mast
-     en een vierkant zeil — het silhouet van een wolfschip. */
-  let scheepsVormen=null;
-  function maakSchepen(p,cx,cy,r){
-    if(!scheepsVormen){
-      const romp=new THREE.BoxGeometry(1,1,1,6,1,1);
-      const ps=romp.getAttribute("position");
-      for(let i=0;i<ps.count;i++){
-        const x=ps.getX(i), t=Math.abs(x)*2;
-        ps.setZ(i,ps.getZ(i)*(1-t*t*.85)); ps.setY(i,ps.getY(i)+t*t*.35+(ps.getY(i)<0?t*.25:0));
-      }
-      romp.computeVertexNormals();
-      scheepsVormen={
-        romp,
-        mast:new THREE.CylinderGeometry(.004,.005,1,5).translate(0,.5,0),
-        zeil:new THREE.PlaneGeometry(1,1),
-        rompMat:new THREE.MeshStandardMaterial({color:0x5B4330,roughness:.8}),
-        mastMat:new THREE.MeshStandardMaterial({color:0x4A3826,roughness:.8}),
-        zeilMat:[new THREE.MeshStandardMaterial({color:0xEDE4CF,roughness:.9,side:THREE.DoubleSide}),
-                 new THREE.MeshStandardMaterial({color:0xA83A2C,roughness:.9,side:THREE.DoubleSide})]
-      };
-      for(const m of [scheepsVormen.rompMat,scheepsVormen.mastMat,...scheepsVormen.zeilMat])m.onBeforeCompile=metNevel;
-    }
-    const V=scheepsVormen, n=1+Math.floor(r(200)*3);
-    for(let i=0;i<n;i++){
-      /* zoek water binnen anderhalve eenheid */
-      let best=null;
-      for(let k=0;k<40&&!best;k++){
-        const a=r(210+k+i*40)*Math.PI*2, d=.7+r(260+k)*1.6, x=cx+Math.cos(a)*d, y=cy+Math.sin(a)*d;
-        if(hNorm(x,y)<-.05)best=[x,y];
-      }
-      if(!best)continue;
-      const g=new THREE.Group();
-      const romp=new THREE.Mesh(V.romp,V.rompMat); romp.scale.set(.3,.04,.07); romp.position.y=.01; g.add(romp);
-      const mast=new THREE.Mesh(V.mast,V.mastMat); mast.scale.set(1,.22,1); g.add(mast);
-      const zeil=new THREE.Mesh(V.zeil,V.zeilMat[r(300+i)<.5?1:0]); zeil.scale.set(.13,.12,1); zeil.position.y=.15; zeil.rotation.y=Math.PI/2; g.add(zeil);
-      g.position.set(X(best[0]),0,Z(best[1])); g.rotation.y=r(320+i)*Math.PI*2;
-      g.traverse(o=>{ if(o.isMesh){o.castShadow=true;} });
-      g.userData.fase=r(340+i)*10;
-      scene.add(g); schepen.push(g);
-    }
   }
 
   /* ================================ namen ================================ */
@@ -1584,6 +1471,7 @@ export async function maak3D(ctx){
       GEDEELD.uWolkSterkte.value=intro?0:wolkSch;
     }
     if(lichtjes)lichtjes.visible=!!th.lichtjes;
+    GEDEELD.uGebouwLicht.value=isDonker()?.04:.13;
     if(D)tekenRoutes();
   }
 
@@ -1631,7 +1519,6 @@ export async function maak3D(ctx){
     if(landMat)landMat.dispose(); if(landKleurTex)landKleurTex.dispose(); if(landNormTex)landNormTex.dispose(); if(loofTex)loofTex.dispose(); if(diepteTex)diepteTex.dispose();
     if(gebouwen){ wereld.remove(gebouwen); gebouwen.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); gebouwen=null; }
     if(lichtjes){ wereld.remove(lichtjes); lichtjes.geometry.dispose(); lichtjes=null; }
-    for(const s of schepen)scene.remove(s); schepen=[];
     gebouwPlekken.length=0;
     for(const n of namen)wereld.remove(n.obj); namen.length=0;
     ruimLijnen(routeGroep); ruimLijnen(keuzeGroep);
@@ -1802,7 +1689,6 @@ export async function maak3D(ctx){
     werkVakkenBij();
     werkRandBomenBij(false);
     werkSchaduwBij();
-    for(const s of schepen){ const f=s.userData.fase+GEDEELD.uTijd.value; s.position.y=Math.sin(f*1.3)*.008; s.rotation.z=Math.sin(f)*.05; s.rotation.x=Math.sin(f*.8)*.03; }
     for(const m of lijnMats)if(m.dashed)m.dashOffset-=dt*.9;
     if(ringLijn)ringLijn.material.opacity=.65+.35*Math.sin(nu/260);
     if(!intro){ if(beeldNr%3===0)werkVerborgenBij(); werkNamenBij(); }

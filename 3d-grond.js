@@ -170,6 +170,7 @@ function voorbereiding(G,T){
   const R=G.R, {RW,RH,RES,N,PW,PH,M}=R, MM=PW*PH;
   const {land,reg,info,SOORTEN,vlekken}=G;
   verlengRand(R,land,reg,T);
+  const kloven=sluitKloven(R,land,reg,G.plekken||[]);
   /* het grove rooster volgt het fijne waar de kaart ophoudt; binnen de kaart
      komt het uit zijn eigen tekening (zoals op de platte kaart) */
   const pReg=G.pReg, pdReg=G.pdReg;
@@ -248,7 +249,40 @@ function voorbereiding(G,T){
       if(!o||dg[p]>o.d)pool[r]={d:dg[p],x:(p%RW)/RES-M,y:Math.floor(p/RW)/RES-M};
     }
   }
-  return {land,reg,pReg,pdReg,kustAfst,zeeAfst,fAmp,fRug,fKoud,fKust,fFijn,fBos,fLoof,mixA,mixB,mixF,pool};
+  return {land,reg,pReg,pdReg,kustAfst,zeeAfst,fAmp,fRug,fKoud,fKust,fFijn,fBos,fLoof,mixA,mixB,mixF,pool,kloven};
+}
+
+/* ---- een kloof ----
+   De Spleet, de kloof tussen Araluen en Morgaraths hoogvlakte, is op de
+   kaart een haarfijne kier tussen twee landvormen: één rasterpunt zee. In 3D
+   werd dat een laag dal met een draadje water erin, want naast zee loopt het
+   land af. Daarom wordt zo'n kier hier eerst land (dan loopt het land er
+   gewoon overheen), en slijt afwerking() er daarna een smalle, diepe kloof in.
+   Alleen rond een plaats die erom vraagt (kloof in 3d-modellen.js), zodat een
+   echte smalle zee-engte nergens dichtgaat. */
+function sluitKloven(R,land,reg,plekken){
+  const {RW,RH,RES,M}=R, uit=[];
+  for(const pl of plekken){
+    if(!pl.kloof)continue;
+    const r=pl.kloof.r, x0=Math.max(2,Math.floor((pl.x+M-r)*RES)), x1=Math.min(RW-3,Math.ceil((pl.x+M+r)*RES));
+    const y0=Math.max(2,Math.floor((pl.y+M-r)*RES)), y1=Math.min(RH-3,Math.ceil((pl.y+M+r)*RES));
+    const w=Math.max(2,Math.round(RES)), dicht=[];
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+      const p=y*RW+x; if(land[p])continue;
+      let zee=0,n=0;
+      for(let dy=-w;dy<=w;dy++)for(let dx=-w;dx<=w;dx++){ n++; if(!land[p+dy*RW+dx])zee++; }
+      if(zee/n<.4)dicht.push(p);
+    }
+    const pts=[];
+    for(const p of dicht){
+      /* het gebied van een buurpunt op het land */
+      let r0=0; for(const d of [-1,1,-RW,RW,-2,2,-2*RW,2*RW])if(land[p+d]&&reg[p+d]){ r0=reg[p+d]; break; }
+      land[p]=1; reg[p]=r0||reg[p];
+      pts.push((p%RW)/RES-M,Math.floor(p/RW)/RES-M);
+    }
+    uit.push({x:pl.x,y:pl.y,breed:pl.kloof.breed,pts});
+  }
+  return uit;
 }
 
 /* ======================= taak 2: de hoogte, per strook =======================
@@ -322,6 +356,22 @@ function afwerking(G,T){
   const R=G.R, {RW,RH,RES,N,M}=R;
   const {h,land,rivier,reg,kust,plekken}=G;
   erodeer(R,h,land);
+  /* de kloven: steile wanden, een bodem net boven zee */
+  for(const k of G.kloven||[]){
+    if(!k.pts.length)continue;
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    for(let i=0;i<k.pts.length;i+=2){ x0=Math.min(x0,k.pts[i]); x1=Math.max(x1,k.pts[i]); y0=Math.min(y0,k.pts[i+1]); y1=Math.max(y1,k.pts[i+1]); }
+    const B=k.breed*2.2;
+    for(let y=Math.max(0,Math.floor((y0+M-B)*RES));y<=Math.min(RH-1,Math.ceil((y1+M+B)*RES));y++)
+      for(let x=Math.max(0,Math.floor((x0+M-B)*RES));x<=Math.min(RW-1,Math.ceil((x1+M+B)*RES));x++){
+        const q=y*RW+x; if(!land[q])continue;
+        const wx=x/RES-M, wy=y/RES-M;
+        let d=1e9; for(let i=0;i<k.pts.length;i+=2){ const dx=wx-k.pts[i], dy=wy-k.pts[i+1]; const dd=dx*dx+dy*dy; if(dd<d)d=dd; }
+        d=Math.sqrt(d);
+        const t=klem(1-(d-k.breed*.35)/(k.breed*1.3),0,1), w=t*t*(3-2*t);
+        h[q]=h[q]*(1-w)+.001*w;
+      }
+  }
   /* Een kasteel staat niet scheef op een helling: de grond eronder is
      geëgaliseerd, en loopt daarbuiten zacht over in het land eromheen.
      Dorpen krijgen hetzelfde, iets minder streng. */
