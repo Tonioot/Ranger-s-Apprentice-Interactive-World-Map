@@ -31,6 +31,11 @@ import {mergeGeometries} from "three/addons/utils/BufferGeometryUtils.js";
 import {Line2} from "three/addons/lines/Line2.js";
 import {LineMaterial} from "three/addons/lines/LineMaterial.js";
 import {LineGeometry} from "three/addons/lines/LineGeometry.js";
+import {EffectComposer} from "three/addons/postprocessing/EffectComposer.js";
+import {RenderPass} from "three/addons/postprocessing/RenderPass.js";
+import {GTAOPass} from "three/addons/postprocessing/GTAOPass.js";
+import {OutputPass} from "three/addons/postprocessing/OutputPass.js";
+import {ShaderPass} from "three/addons/postprocessing/ShaderPass.js";
 import {bouwModellen,bouwGehuchten,gehuchtBomen,modelInfo,stijlVan,GEBOUW_GLSL_V,GEBOUW_GLSL_V_MAIN,GEBOUW_GLSL_F,GEBOUW_GLSL_KLEUR,GEBOUW_GLSL_GLOED} from "./3d-modellen.js";
 import {TAKEN,rekenregels,rooster,groveRijen,leesVeld,kustVelden,wegLijnen,SEGBREED,LIJSTBREED,METER,MARGE,SCHAAL,ZEEDIEPTE,ZEE0,Yvan,dakHoogte} from "./3d-grond.js";
 
@@ -197,7 +202,9 @@ float nevelHoeveel(vec3 wp){
   float n=uNevelDicht*exp(-uNevelVal*max(cameraPosition.y,0.0))*afst*f;
   return 1.0-exp(-max(n,0.0));
 }
-/* Kleurcorrectie, zoals een fotograaf die doet: echte landschapsfoto's zijn
+/* Kleurcorrectie, zoals een fotograaf die doet (bij de nabewerking, zie
+   naBewerking in 3d.js, gebeurt dit in de laatste stap over het hele beeld;
+   zonder nabewerking in elk materiaal): echte landschapsfoto's zijn
    minder verzadigd dan een kaart, met wat meer verschil tussen licht en donker.
    Iets minder kleur (12%), en een zachte S-curve rond het midden die de
    schaduwen dieper maakt zonder het licht uit te branden. Ze geldt voor alles
@@ -211,7 +218,10 @@ vec3 kleurCorrectie(vec3 c){
 }
 vec3 nevel(vec3 schermKleur,vec3 wp){
   vec3 rd=normalize(wp-cameraPosition);
-  return mix(kleurCorrectie(schermKleur),naarScherm(nevelKleurVoor(rd)),nevelHoeveel(wp));
+  #ifdef TONE_MAPPING
+    schermKleur=kleurCorrectie(schermKleur);
+  #endif
+  return mix(schermKleur,naarScherm(nevelKleurVoor(rd)),nevelHoeveel(wp));
 }`;
 const LUCHT_GLSL=`
 uniform vec3 uZenit;
@@ -351,6 +361,41 @@ export async function maak3D(ctx){
   const scene=new THREE.Scene();
   scene.fog=new THREE.FogExp2(0xffffff,0.001);   /* alleen om USE_FOG aan te zetten; de echte nevel staat hierboven */
   const camera=new THREE.PerspectiveCamera(FOV,1,.05,60000);
+  /* ---- nabewerking: ambient occlusion ----
+     Waar twee vlakken dicht bij elkaar komen (een muur op de grond, de
+     hoek van een binnenplaats, een steeg tussen twee huizen, de grond onder
+     een boom) valt minder licht van de hemel. GTAO berekent dat uit de
+     diepte van het beeld; zonder dat zien gebouwen eruit als plastic. Op
+     een kleine of trage machine niet: dan tekent de renderer direct. De
+     afstanden staan in wereldmaat (een eenheid is ~650 m): de schaduw reikt
+     zo'n 15 m, dus alleen gebouwen, bomen en muren krijgen hem. */
+  let naBewerking=null;
+  function maakNaBewerking(b,h){
+    const c=new EffectComposer(renderer);
+    c.addPass(new RenderPass(scene,camera));
+    const ao=new GTAOPass(scene,camera,b,h);
+    ao.updateGtaoMaterial({radius:.022,distanceExponent:1.6,thickness:.012,scale:1.15,samples:12,distanceFallOff:.6,screenSpaceRadius:false});
+    ao.updatePdMaterial({lumaPhi:10,depthPhi:2,normalPhi:3,radius:6,rings:2,samples:12});
+    /* ver weg is de diepte te grof voor occlusie (de zee aan de horizon werd
+       zwart), en de schaduw reikt toch maar ~15 m: tussen 3 en 8 eenheden
+       (2 en 5 km) van de camera loopt hij uit */
+    ao.gtaoMaterial.defines.FRAGMENT_OUTPUT="vec4(vec3(mix(ao,1.0,smoothstep(3.0,8.0,-viewPos.z))),1.0)";
+    ao.gtaoMaterial.needsUpdate=true;
+    ao.blendIntensity=1;
+    c.addPass(ao);
+    c.addPass(new OutputPass());
+    /* de kleurcorrectie (zie kleurCorrectie bij de nevel), nu over het hele beeld */
+    c.addPass(new ShaderPass({uniforms:{tDiffuse:{value:null}},
+      vertexShader:"varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
+      fragmentShader:`uniform sampler2D tDiffuse; varying vec2 vUv;
+        void main(){
+          vec3 c=texture2D(tDiffuse,vUv).rgb;
+          float l=dot(c,vec3(.2126,.7152,.0722));
+          c=clamp(mix(vec3(l),c,.88),0.0,1.0);
+          gl_FragColor=vec4(mix(c,c*c*(3.0-2.0*c),.22),1.0);
+        }`}));
+    return {c,ao};
+  }
   const wereld=new THREE.Group();                 /* alles wat met het land mee omhoog komt */
   scene.add(wereld);
 
@@ -1769,14 +1814,29 @@ export async function maak3D(ctx){
     const delen=[], merk=(g,deel)=>{ g=g.index?g.toNonIndexed():g; const n=g.getAttribute("position").count; g.setAttribute("aDeel",new THREE.Float32BufferAttribute(new Float32Array(n).fill(deel),1)); if(g.getAttribute("uv"))g.deleteAttribute("uv"); delen.push(g); };
     merk(new THREE.CylinderGeometry(.035,.06,naald?.35:.5,6,1,true).translate(0,naald?.175:.25,0),0);
     const hobbel=(g,k)=>{ const p=g.getAttribute("position"); for(let i=0;i<p.count;i++){ const x=p.getX(i),y=p.getY(i),z=p.getZ(i); const f=1+(T.hash2(Math.round(x*97+k*13),Math.round((y+z)*89))-.5)*.28; p.setXYZ(i,x*f,y*f,z*f); } return g; };
+    /* Een kruin is geen bol maar een wolk van trossen blad: een loofboom
+       zeven onregelmatige trossen rond het hart van de kruin, een naaldboom
+       vijf rafelige lagen die naar boven toe smaller worden. */
+    let hart;
     if(naald){
-      [[.36,.42,.2],[.28,.38,.45],[.18,.36,.68]].forEach(([r,h,y],i)=>merk(new THREE.ConeGeometry(r,h,9,1,false).translate(0,y+h/2,0),1));
+      hart=new THREE.Vector3(0,.5,0);
+      for(let i=0;i<5;i++){ const r=.34-i*.06, h=.28, y=.14+i*.15;
+        merk(hobbel(new THREE.ConeGeometry(r,h,8,1,false),10+i).rotateY(i*.7).translate(0,y+h/2,0),1); }
     }else{
-      merk(hobbel(new THREE.IcosahedronGeometry(.3,1),1).translate(0,.72,0),1);
-      merk(hobbel(new THREE.IcosahedronGeometry(.22,1),2).translate(.16,.56,.06),1);
-      merk(hobbel(new THREE.IcosahedronGeometry(.2,1),3).translate(-.12,.6,-.12),1);
+      hart=new THREE.Vector3(0,.66,0);
+      merk(hobbel(new THREE.IcosahedronGeometry(.24,1),1).translate(0,.74,0),1);
+      for(let i=0;i<6;i++){ const a=i/6*Math.PI*2+.4, r=.17+.05*T.hash2(i,3), y=.6+(i%2?.12:-.02);
+        merk(hobbel(new THREE.IcosahedronGeometry(.15+.05*T.hash2(i,7),1),2+i).translate(Math.cos(a)*r,y,Math.sin(a)*r),1); }
     }
     const g=mergeGeometries(delen); g.computeVertexNormals();
+    /* het licht valt over de kruin als geheel: de normaal van het blad wijst
+       grotendeels van het hart van de kruin af, niet van elk facet */
+    const P=g.getAttribute("position"), N=g.getAttribute("normal"), D=g.getAttribute("aDeel"), v=new THREE.Vector3(), n=new THREE.Vector3();
+    for(let i=0;i<P.count;i++){
+      if(D.getX(i)<.5)continue;
+      v.fromBufferAttribute(P,i).sub(hart).normalize(); n.fromBufferAttribute(N,i);
+      n.lerp(v,.7).normalize(); N.setXYZ(i,n.x,n.y,n.z);
+    }
     return g;
   }
   function maakBomen3D(){
@@ -2833,7 +2893,7 @@ export async function maak3D(ctx){
     if(ringLijn)ringLijn.material.opacity=.65+.35*Math.sin(nu/260);
     if(!intro){ if(beeldNr%3===0)werkVerborgenBij(); werkNamenBij(); }
     draaiRoos();
-    renderer.render(scene,camera);
+    if(naBewerking)naBewerking.c.render(dt); else renderer.render(scene,camera);
     labelRenderer.render(scene,camera);
   }
   function maat(){
@@ -2841,6 +2901,12 @@ export async function maak3D(ctx){
     camera.aspect=b/h; camera.updateProjectionMatrix();
     randU.uPixSchaal.value=h*renderer.getPixelRatio()/(2*Math.tan(FOV*Math.PI/360));
     renderer.setSize(b,h); labelRenderer.setSize(b,h);
+    if(!klein){
+      if(!naBewerking)naBewerking=maakNaBewerking(b,h);
+      naBewerking.c.setPixelRatio(renderer.getPixelRatio()); naBewerking.c.setSize(b,h);
+      /* de occlusie op halve resolutie: het verschil zie je niet, de tijd wel */
+      naBewerking.ao.setSize(Math.ceil(b*renderer.getPixelRatio()/2),Math.ceil(h*renderer.getPixelRatio()/2));
+    }
     for(const m of lijnMats)m.resolution.set(b,h);
   }
   new ResizeObserver(()=>{ if(actief)maat(); }).observe(houder);
