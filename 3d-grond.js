@@ -456,21 +456,27 @@ function afwerking(G,T){
         if(doel>h[q])h[q]+=(doel-h[q])*w;
       }
   }
-  /* Een hoogvlakte (Morgaraths Hoogvlakte): binnen de straal wordt het land
-     een vlak plateau op één hoogte, met nog maar een zweem van wat er lag;
-     de rand breekt steil af (de Noordelijke kliffen), en daarachter liggen
-     de bergen gewoon door. De rand golft, zodat het geen cirkel wordt. */
+  /* Een hoogvlakte (Morgaraths Hoogvlakte): een kale, golvende hoogte boven
+     Araluen, met een rand die op de meeste plekken steil afbreekt (de
+     Noordelijke kliffen), en daarachter de bergen. Niet rond en niet als een
+     tafel: de rand heeft uitlopers en inhammen (ruis op twee schalen), is hier
+     een loodrechte wand en daar een puinhelling, en het bovenvlak golft en
+     loopt naar de bergen in het zuiden wat op. */
   for(const pl of plekken){
     if(!pl.plateau)continue;
-    const {r,hoogte}=pl.plateau, cx=pl.x+(pl.plateau.dx||0), cy=pl.y+(pl.plateau.dy||0), R2=r*1.15;
+    const {r,hoogte}=pl.plateau, cx=pl.x+(pl.plateau.dx||0), cy=pl.y+(pl.plateau.dy||0), R2=r*1.6;
     for(let y=Math.max(0,Math.floor((cy+M-R2)*RES));y<=Math.min(RH-1,Math.ceil((cy+M+R2)*RES));y++)
       for(let x=Math.max(0,Math.floor((cx+M-R2)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+R2)*RES));x++){
         const q=y*RW+x; if(!land[q])continue;
         const wx=x/RES-M, wy=y/RES-M;
-        const rand=r*(.85+.25*T.fbm(wx*.12+5,wy*.12-9,3,.3));
+        /* de rand: grote lobben en kleine inhammen */
+        const rand=r*(.72+.45*T.fbm(wx*.16+5,wy*.16-9,3,.3)+.16*(T.fbm(wx*.7-2,wy*.7+4,2,.2)-.5));
         const d=Math.hypot(wx-cx,wy-cy);
-        const w=1-glad(klem((d-rand)/(r*.08),0,1)); if(w<=0)continue;
-        const vlak=hoogte*(1+.08*(T.fbm(wx*.35-3,wy*.35+8,3,.2)-.5));
+        /* hoe breed de afbraak is: smal (wand) of breed (puinhelling) */
+        const breed=r*(.035+.14*glad(klem(T.fbm(wx*.3+21,wy*.3-13,2,.2)*2.4-1.1,0,1)));
+        const w=1-glad(klem((d-rand)/breed,0,1)); if(w<=0)continue;
+        const helling=klem((wy-cy)/r,-1,1);
+        const vlak=hoogte*(1+.16*(T.fbm(wx*.22-3,wy*.22+8,3,.3)-.5)+.07*(T.fbm(wx*.9+7,wy*.9-1,2,.2)-.5)+.07*helling);
         /* het plateau komt niet hoger dan de bergen eromheen het toelaten:
            waar het land al hoger lag, blijft er een rotsige rand staan */
         h[q]=h[q]>vlak*1.25?h[q]*(1-w*.5)+vlak*w*.5:h[q]+(vlak-h[q])*w;
@@ -482,7 +488,7 @@ function afwerking(G,T){
       for(let x=Math.max(0,Math.floor((cx+M-bg.r)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+bg.r)*RES));x++){
         const q=y*RW+x; if(!land[q])continue;
         const wx=x/RES-M, wy=y/RES-M, d=Math.hypot(wx-cx,wy-cy);
-        const rand=r*(.85+.25*T.fbm(wx*.12+5,wy*.12-9,3,.3));
+        const rand=r*(.72+.45*T.fbm(wx*.16+5,wy*.16-9,3,.3)+.16*(T.fbm(wx*.7-2,wy*.7+4,2,.2)-.5));
         /* niet aan de noordkant: daar breekt het plateau naar Araluen af */
         const wz=glad(klem((wy-cy+1.5)/3.5,0,1));
         const wr=glad(klem((d-rand-.6)/2.5,0,1))*(1-glad(klem((d-bg.r*.8)/(bg.r*.2),0,1)))*wz;

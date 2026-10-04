@@ -1678,12 +1678,44 @@ export const BOUWERS={
     b.straal=.25;
   }},
   /* Morgaraths Hoogvlakte — het kale plateau waar de Wargals verzamelden */
-  hoogvlakte:{info:{plateau:{r:6.5,hoogte:.2,dx:-1,dy:-3,bergen:{r:17,hoogte:.36}}},bouw(B,b){
+  hoogvlakte:{info:{plateau:{r:4.2,hoogte:.2,dx:-1,dy:-3,bergen:{r:15,hoogte:.36}}},bouw(B,b){
     /* het kamp van de Wargals: groepjes tenten verspreid over het plateau */
-    for(let i=0;i<60;i++){ const g=Math.floor(i/10), ga=b.r(g+90)*Math.PI*2, gd=(.2+b.r(g+95)*1.6)/K, a=b.r(i)*Math.PI*2, d=b.r(i+5)*.12/K;
+    for(let i=0;i<60;i++){ const g=Math.floor(i/10), ga=b.r(g+90)*Math.PI*2, gd=(.2+b.r(g+95)*1.2)/K, a=b.r(i)*Math.PI*2, d=b.r(i+5)*.12/K;
       const u=Math.cos(ga)*gd+Math.cos(a)*d, v=Math.sin(ga)*gd+Math.sin(a)*d; b.tent(u,v,2.6*M,3*M,"#3E3830",{}); }
     b.vlag(0,0,b.grond(0,0),12*M,"#1E1E22"); b.vlag(.1,.05,b.grond(.1,.05),10*M,"#5A1E1E");
     b.straal=.45;
+  }},
+  /* Morgaraths Burcht — zijn hoofdkwartier op de hoogvlakte. De boeken
+     zeggen er weinig over: een burcht bovenop het plateau, van waaruit hij
+     de Wargals aanstuurde. Hier: grimmig en anders dan de leenkastelen, een
+     onregelmatige vijfhoek van donkere breuksteen op een rotsbult, met platte
+     vierkante torens, een hoge smalle donjon en een nog hogere uitkijktoren
+     (hij overziet het plateau en de kliffen), barakken langs de muur en een
+     zwarte banier. */
+  "morgarath-burcht":{info:{vlak:[.5,1.1,1],open:.8,heuvel:{r:.6,hoogte:.006}},bouw(B,b){
+    const steen="#3A3633", donker="#2A2725", f=M;
+    const pts=[[-34,-30],[22,-38],[44,4],[16,36],[-38,22]].map(([u,v])=>[u*f,v*f]);
+    const basis=b.voet(0,0,40*f,36*f);
+    b.stuk("vast",B.S.blok,0,basis-.4,0,90*f,.4,80*f,0,steen,{mat:"breuk"});
+    b.blok(0,0,70*f,60*f,.4*M,"#5E5850",{y:basis-.3*M,mat:"aarde",var:0});
+    /* de ringmuur, met de poort in de zijde naar het kamp (zuidoost) */
+    b.ring(pts,14*f,3.4*f,steen,{kantelen:"blok",y:basis-.02,top:basis+14*f,mat:"breuk",gat:[3,12*f]});
+    for(const [u,v] of pts)b.toren(u,v,5*f,20*f,steen,{vierkant:true,dak:"plat",y:basis-.02,mat:"breuk",kantelen:"blok",ramen:0});
+    const [g0,g1]=[pts[3],pts[4]], gu=(g0[0]+g1[0])/2, gv=(g0[1]+g1[1])/2;
+    b.poort(gu,gv,Math.atan2(gv,gu),14*f,18*f,steen,null,{mat:"breuk",kantelen:"blok"});
+    /* de donjon: hoog, smal, zonder sier */
+    const dtop=b.blok(-8*f,-10*f,18*f,16*f,40*f,steen,{y:basis-.01,mat:"breuk",verd:5*f,vloer:basis});
+    for(const [u0,v0,u1,v1,nu,nv] of [[-17,-18,1,-18,0,-1],[1,-18,1,-2,1,0],[1,-2,-17,-2,0,1],[-17,-2,-17,-18,-1,0]])
+      b.kantelen(u0*f,v0*f,u1*f,v1*f,dtop,1.4*f,steen,{buiten:[nu,nv],mat:"breuk",kantelen:"blok"});
+    b.toren(4*f,-16*f,3.6*f,54*f,donker,{vierkant:true,dak:"plat",y:basis,mat:"breuk",kantelen:"blok",plint:false,ramen:7*f});
+    b.vlag(4*f,-16*f,basis+54*f,9*f,"#141414");
+    /* barakken tegen de muur */
+    for(const [u,v,L,r] of [[18*f,-14*f,30*f,1.0],[-24*f,4*f,26*f,1.9],[10*f,16*f,24*f,-.6]]){
+      const top=b.blok(u,v,L,8*f,5*f,donker,{r,y:basis-.01,mat:"breuk",verd:-1});
+      b.zadel(u,v,top-.2*f,L+.6*f,8.8*f,3*f,"#3E3A38",{r,mat:"lei"});
+    }
+    b.top=Math.max(b.top,basis+54*f);
+    b.straal=Math.hypot(44,38)*f*1.2;
   }},
   /* De Veenlanden — drassig laagland: plassen en riet */
   veenlanden:{wereld:true,info:{},bouw(B,b){

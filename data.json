@@ -2646,6 +2646,43 @@
    "geenSnap": 1
   },
   {
+   "id": "morgarath-burcht",
+   "naam": {
+    "nl": "Morgaraths Burcht",
+    "en": "Morgarath's Castle"
+   },
+   "soort": "kasteel",
+   "gebied": "mountains-of-rain-and-night",
+   "z": 4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ1",
+    "GJ2"
+   ],
+   "tekst": {
+    "nl": "Het hoofdkwartier van Morgarath op zijn hoogvlakte: een grimmige burcht van donkere steen. Van hieruit stuurde hij zijn Wargals aan, die zijn wil als een gedachte voelden.",
+    "en": "Morgarath's headquarters on his plateau: a grim castle of dark stone. From here he commanded his Wargals, who felt his will as a thought."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Heer",
+      "en": "Lord"
+     },
+     {
+      "nl": "Morgarath",
+      "en": "Morgarath"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 102.6,
+   "y": 419.4,
+   "geenSnap": 1
+  },
+  {
    "id": "spleet",
    "naam": {
     "nl": "De Spleet",
