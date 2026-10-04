@@ -423,7 +423,7 @@ const matVan=n=>typeof n==="number"?n:(MAT[n]??0);
 export function maakBouwer(omg){
   const S=vormen();
   const {X,Z,yOp,hNorm,opLand,hash2}=omg;
-  const bakken={vast:new Bak(),doek:new Bak(),schip:new Bak(true),plas:new Bak()};
+  const bakken={vast:new Bak(),doek:new Bak(),schip:new Bak(true),plas:new Bak(),wiek:new Bak(true)};
   const lampjes=[], bomen=[], wegen=[];
   const m4=new THREE.Matrix4(), nm=new THREE.Matrix3(), q=new THREE.Quaternion(), e=new THREE.Euler(), sv=new THREE.Vector3(), pv=new THREE.Vector3();
   const kl=new THREE.Color(), klG=new THREE.Color();
@@ -598,7 +598,7 @@ export function maakBouwer(omg){
       b.kantelen(u+Math.cos(r)*breed*.33-Math.sin(r)*breed*.28,v+Math.sin(r)*breed*.33+Math.cos(r)*breed*.28,
                  u+Math.cos(r)*breed*.33+Math.sin(r)*breed*.28,v+Math.sin(r)*breed*.33-Math.cos(r)*breed*.28,top,1.2*M,kleur,{buiten:[Math.cos(r),Math.sin(r)],mat,kantelen:o.kantelen});
       /* de poortopening: donker, met de valhekkleur erin */
-      b.blok(u+Math.cos(r)*breed*.355,v+Math.sin(r)*breed*.355,.5*M,3.6*M,Math.min(h*.5,5.5*M),"#1E1A16",{r,var:0,y:g-.01});
+      b.blok(u+Math.cos(r)*breed*.355,v+Math.sin(r)*breed*.355,.5*M,3.4*M,Math.min(h*.45,4.8*M),"#3A2E24",{r,var:0,y:g-.01,mat:"hout",verd:-1});
     };
     /* een tent: rond (kegel) of met een nok */
     b.tent=(u,v,rad,h,kleur,o={})=>{
@@ -991,12 +991,15 @@ export function maakBouwer(omg){
     b.stuk("vast",S.afgeknot,u,g-.01,v,3.4*M,10*M+.01,3.4*M,0,"#C9C1AE",{mat:"pleister",var:.06});
     const top=g+10*M;
     b.koepel(u,v,top-.2*M,3.1*M,3.2*M,"#6E5A44",{mat:"schindel"});
-    /* de as wijst naar lokaal r; de wieken in een vlak loodrecht erop */
+    /* de as wijst naar lokaal r; de wieken in een vlak loodrecht erop. Ze
+       draaien: elk hoekpunt weet waar de naaf zit en hoe de as loopt
+       (aDobber), de shader in 3d.js draait ze daaromheen. */
     const c=Math.cos(r), s=Math.sin(r), au=u+c*3.4*M, av=v+s*3.4*M, ay=top+1.6*M;
+    const [nx,ny]=b.w(au,av), dob=[X(nx),Z(ny),ay,b.rot+r];
     for(let i=0;i<4;i++){
       const hk=i*Math.PI/2+.35;
-      b.stuk("vast",S.blok,au,ay,av,.35*M,9.5*M,.35*M,r+Math.PI/2,"#5E4A38",{rz:hk,mat:"hout"});
-      b.stuk("doek",S.vlak,au,ay,av,1.6*M,8*M,1,r+Math.PI/2,"#D8CFB8",{rz:hk+Math.PI,var:.04});
+      b.stuk("wiek",S.blok,au,ay,av,.35*M,9.5*M,.35*M,r+Math.PI/2,"#5E4A38",{rz:hk,mat:"hout",dob});
+      b.stuk("wiek",S.vlak,au,ay,av,1.6*M,8*M,1,r+Math.PI/2,"#D8CFB8",{rz:hk+Math.PI,var:.04,dob});
     }
   }
   /* ---- een boerenerf: het woonhuis, een schuur, een hooiberg, een omheinde wei ---- */
@@ -1008,8 +1011,8 @@ export function maakBouwer(omg){
     /* de schuur: haaks op het huis, met de erf ertussen */
     const su=-s*15*M+c*4*M, sv=c*15*M+s*4*M;
     if(b.land(su,sv)&&st.huis!=="plat"&&st.huis!=="japans"){
-      const g=b.kruin(su,sv,8*M,5*M), top=b.blok(su,sv,16*M,9*M,4.6*M,stijl==="skandia"?st.muur[0]:"#8A7058",{r:a+Math.PI/2,mat:"hout",verd:-1,vloer:g});
-      b.zadel(su,sv,top-.2*M,16.8*M,10.6*M,6*M,st.dak[Math.floor(b.r(3)*st.dak.length)],{r:a+Math.PI/2,mat:st.dakMat[0]==="pannen"?"pannen":st.dakMat[0],gevel:{kleur:"#8A7058",mat:"hout",verd:-1}});
+      const g=b.kruin(su,sv,8*M,5*M), top=b.blok(su,sv,16*M,9*M,4.6*M,stijl==="skandia"?st.muur[0]:"#9C8266",{r:a+Math.PI/2,mat:"hout",verd:-1,vloer:g});
+      b.zadel(su,sv,top-.2*M,16.8*M,10.6*M,6*M,st.dak[Math.floor(b.r(3)*st.dak.length)],{r:a+Math.PI/2,mat:st.dakMat[0]==="pannen"?"pannen":st.dakMat[0],gevel:{kleur:"#9C8266",mat:"hout",verd:-1}});
     }else if(b.land(su,sv)){
       huis(b,su,sv,stijl,{r:a+Math.PI/2,nr:zaad+7,maat:.8,aanbouw:false});
     }
@@ -1081,8 +1084,8 @@ function kasteel(B,b,stijl,o={}){
     return top+D*.75;
   };
   const schuur=(u,v,L,D,h,r,dk)=>{
-    const top=b.blok(u,v,L,D,h,"#8A7058",{r,y:basis-.01,mat:"hout",verd:-1});
-    b.lessenaar(u,v,top-.2*f,L+.6*f,D+.8*f,h*.4,dk,{r,mat:"schindel",gevel:{kleur:"#8A7058",mat:"hout"}});
+    const top=b.blok(u,v,L,D,h,"#9C8266",{r,y:basis-.01,mat:"hout",verd:-1});
+    b.lessenaar(u,v,top-.2*f,L+.6*f,D+.8*f,h*.4,dk,{r,mat:"schindel",gevel:{kleur:"#9C8266",mat:"hout"}});
   };
   /* een donjon: hoog en vierkant, met een borstwering en hoektorentjes */
   const donjon=(u,v,w,d,h,o2={})=>{
@@ -1315,7 +1318,7 @@ export const BOUWERS={
   /* Kasteel Araluen — de koninklijke burcht: slanke witte torens,
      uitgestrekte tuinen, de zetel van koning Duncan */
   "kasteel-araluen":{info:{vlak:[.7,1.5,1],open:2.4},bouw(B,b){
-    const wit="#DDD8CC", blauw="#5C6878", f=M, hw=60*f, hd=52*f;
+    const wit="#DDD8CC", blauw="#646C78", f=M, hw=60*f, hd=52*f;
     const basis=b.voet(0,0,hw,hd);
     b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+4*f,.4,hd*2+4*f,0,wit,{mat:"steen"});
     b.blok(0,0,hw*2,hd*2,.4*M,"#B7AD94",{y:basis-.3*M,mat:"kassei",var:0});
@@ -1877,7 +1880,7 @@ export function bouwGehuchten(omg,plekken,gebiedStijl){
   for(const p of plekken){
     try{ B.gehucht(p,gebiedStijl(p[5])); }catch(e){ console.warn("gehucht",e); }
   }
-  return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo()};
+  return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo(),wiek:B.bakken.wiek.geo()};
 }
 /* De bomen bij een nederzetting: een boomgaard bij een boerderij, wat
    bomen rond een gehucht of dorp (niet op de straat). Los van de huizen
