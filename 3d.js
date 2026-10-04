@@ -104,10 +104,8 @@ const RELIEF3D={
   ],
   /* de vulkanen van Nihon-Ja */
   kegels:[{x:872,y:386,r:10,hoogte:.9},{x:896,y:430,r:8,hoogte:.7},{x:852,y:422,r:7,hoogte:.6}],
-  /* heuvelland rond Montsombre, en ten zuiden van Gorlan */
-  heuvels:[{x:202.2,y:365.1,r:11,amp:.2},
-    /* het heuvelland ten zuiden van Gorlan, rond Kolendal (de kaart in de boeken) */
-    {x:92.5,y:398,r:10,amp:.28}]
+  /* heuvelland rond Montsombre (het midden van Araluen is glooiend, niet heuvelachtig) */
+  heuvels:[{x:202.2,y:365.1,r:11,amp:.2}]
 };
 for(const r of RELIEF3D.ruggen){ const m=r.breed+r.uitloop*1.6+4; r.doos=[Math.min(...r.pts.map(p=>p[0]))-m,Math.min(...r.pts.map(p=>p[1]))-m,Math.max(...r.pts.map(p=>p[0]))+m,Math.max(...r.pts.map(p=>p[1]))+m]; }
 /* plekken met een eigen begroeiing die alleen in 3D bestaan: het bos rond
