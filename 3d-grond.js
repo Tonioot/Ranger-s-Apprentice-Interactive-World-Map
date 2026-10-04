@@ -426,12 +426,16 @@ function afwerking(G,T){
       const q=y*RW+x; if(land[q]&&Math.hypot(x/RES-M-cx,y/RES-M-cy)<R0){s+=h[q];n++;}
     }
     if(!n)continue;
+    /* een plaats aan zee: het vlak komt niet lager dan het land er al
+       lag, anders zakt de kust onder water */
     const doel=s/n;
+    const nooitLager=Math.max(doel,0);
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
       const q=y*RW+x; if(!land[q])continue;
       const d=Math.hypot(x/RES-M-cx,y/RES-M-cy); if(d>=R1)continue;
       const w=d<R0?1:1-glad((d-R0)/(R1-R0));
-      h[q]+=(doel-h[q])*w*kracht;
+      const nh=h[q]+(doel-h[q])*w*kracht;
+      h[q]=doel<.02?Math.max(nh,Math.min(h[q],nooitLager+.02)):nh;
     }
   }
   /* Een bergmeer (Mizu Umi Bakudai): een kom in het land, met de waterspiegel

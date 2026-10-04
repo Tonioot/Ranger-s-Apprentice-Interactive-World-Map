@@ -1050,7 +1050,7 @@ export function maakBouwer(omg){
     }
   }
 
-  return {rond,huis,dorp,pleinGebouw,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
+  return {opLand,rond,huis,dorp,pleinGebouw,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
 }
 
 /* ======================= generieke modellen per soort ======================= */
@@ -1511,9 +1511,12 @@ export const BOUWERS={
      begint */
   hallasholm:{info:{vlak:[.55,1.3,.7],open:1.8},bouw(B,b){
     const a=B.zeeRichting(b.cx,b.cy,2.5)??Math.PI/2;
-    const t=B.waterlijn(b.cx,b.cy,a);
-    /* het midden ligt een eindje van de waterlijn: daartussen het strand */
-    const mx=b.cx+Math.cos(a)*(t-.45), my=b.cy+Math.sin(a)*(t-.45);
+    /* De markering ligt in zee. Landinwaarts (tegen a in) tot het land
+       echt land is, een halve eenheid aan één stuk; daar begint het strand,
+       en het midden van de stad ligt daar nog een eind achter. */
+    let t=0, aaneen=0;
+    while(t<4&&aaneen<.5){ t+=.02; aaneen=B.opLand(b.cx-Math.cos(a)*t,b.cy-Math.sin(a)*t)?aaneen+.02:0; }
+    const strand=t-.5, mx=b.cx-Math.cos(a)*(strand+.55), my=b.cy-Math.sin(a)*(strand+.55);
     const c=B.rond(mx,my,a+Math.PI/2,31);
     /* de Grote Zaal: lang, hoog, van hout, met gekruiste drakenkoppen op de
        nokken en een trap ervoor */
