@@ -472,13 +472,23 @@ function afwerking(G,T){
   for(const pl of plekken){
     if(!pl.plateau||!pl.regio)continue;
     const rid=pl.regio, {r,hoogte}=pl.plateau, cx=pl.x+(pl.plateau.dx||0), cy=pl.y+(pl.plateau.dy||0);
-    /* de omhullende rechthoek van het gebied */
+    /* Het gebied: alleen de cellen die vanaf de hoogvlakte aaneengesloten
+       bij het gebied horen. De gebieden zijn met zachte randen getekend, en
+       een vermengde randpixel elders (langs de kust van Araluen) kan toevallig
+       hetzelfde nummer krijgen; die hoort er niet bij. */
+    const deel=new Uint8Array(N), stapel=[];
+    { const sx=Math.round((pl.x+M)*RES), sy=Math.round((pl.y+M)*RES); if(sx>0&&sy>0&&sx<RW-1&&sy<RH-1)stapel.push(sy*RW+sx); }
     let bx0=RW,by0=RH,bx1=-1,by1=-1;
-    for(let y=0;y<RH;y++)for(let x=0;x<RW;x++){ const q=y*RW+x; if(land[q]&&reg[q]===rid){ if(x<bx0)bx0=x; if(x>bx1)bx1=x; if(y<by0)by0=y; if(y>by1)by1=y; } }
+    while(stapel.length){
+      const q=stapel.pop(); if(deel[q]||!land[q]||reg[q]!==rid)continue;
+      deel[q]=1; const x=q%RW, y=(q-x)/RW;
+      if(x<bx0)bx0=x; if(x>bx1)bx1=x; if(y<by0)by0=y; if(y>by1)by1=y;
+      if(x>1)stapel.push(q-1); if(x<RW-2)stapel.push(q+1); if(y>1)stapel.push(q-RW); if(y<RH-2)stapel.push(q+RW);
+    }
     if(bx1<0)continue;
     bx0=Math.max(1,bx0-1); by0=Math.max(1,by0-1); bx1=Math.min(RW-2,bx1+1); by1=Math.min(RH-2,by1+1);
     const bw=bx1-bx0+1, bh=by1-by0+1, af=new Float32Array(bw*bh);
-    const binnen=(x,y)=>{ const q=y*RW+x; return land[q]&&reg[q]===rid; };
+    const binnen=(x,y)=>deel[y*RW+x]===1;
     for(let y=0;y<bh;y++)for(let x=0;x<bw;x++)af[y*bw+x]=binnen(x+bx0,y+by0)?1e9:0;
     /* twee keer vegen (3-4 chamfer), in rasterpunten */
     for(let y=1;y<bh;y++)for(let x=1;x<bw-1;x++){ const i=y*bw+x; if(af[i]===0)continue;

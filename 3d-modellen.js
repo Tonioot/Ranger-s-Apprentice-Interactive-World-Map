@@ -2451,7 +2451,14 @@ export function bouwModellen(omg){
   for(const p of omg.PLAATSEN){
     const pos=omg.POS[p.id]; if(!pos)continue;
     const def=BOUWERS[p.id]||SOORTEN[p.soort];
-    const [cx,cy]=pos;
+    let [cx,cy]=pos;
+    /* Een stad of kasteel aan een rivier staat op de oever, niet in het
+       water: ligt het midden te dicht bij de rivier, dan schuift het
+       loodrecht van de rivier af, naar de kant waar het op de kaart al lag. */
+    if(omg.rivierBij&&/^(stad|kasteel)$/.test(p.soort)){
+      const r=omg.rivierBij(cx,cy);
+      if(r){ const nodig=r.h+(p.soort==="stad"?.45:.14)+.03; if(r.d<nodig){ cx+=r.nx*(nodig-r.d); cy+=r.ny*(nodig-r.d); } }
+    }
     const rot=def&&def.draai?def.draai(omg.POS):omg.hash2((cx*131)|0,(cy*71)|0)*Math.PI*2;
     const b=B.rond(cx,cy,rot,p.id.length*13,def&&def.wereld?{schaal:1}:{});
     b.top=b.my(Math.max(omg.yOp(cx,cy),0)+.04);

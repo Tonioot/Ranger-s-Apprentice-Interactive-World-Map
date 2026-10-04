@@ -1188,7 +1188,11 @@ export async function maak3D(ctx){
              weg smaller dan een beeldpunt, dan dekt hij maar een deel ervan;
              langs de rand een strookje berm, in het midden de sporen van de
              karren. Straten (soort 1) zijn wat grijzer: daar ligt grind; een
-             voetpad (soort 2) heeft geen karrensporen. */
+             voetpad (soort 2) heeft geen karrensporen. Soort 3 is water: de
+             rivieren liggen in hetzelfde stelsel, zodat ze precies op de
+             grond liggen, op elke afstand even scherp, met een donkere natte
+             oever langs de rand. */
+          float rivWater=0.0;
           vec2 wKp=vWolkW.xz+vec2(${(W/2).toFixed(1)},${(H/2).toFixed(1)});
           float wCel=texelFetch(uWegCel,ivec2(floor(wKp+${MARGE.toFixed(1)})),0).r;
           if(wCel>0.0){
@@ -1205,7 +1209,17 @@ export async function maak3D(ctx){
               float e=length(wKp-sa.xy-ab*t)-sb.x;
               if(e<wE){ wE=e; wS=sb.y; wH=sb.x; }
             }
-            if(wE<.05){
+            if(wE<.05&&wS>2.5){
+              float wPx=length(fwidth(wKp));
+              float wAA=wPx*.6+1e-5;
+              float dek=clamp(2.0*wH/max(wPx,1e-5),0.0,1.0);
+              float wat=(1.0-smoothstep(-wAA,wAA,wE))*dek*(1.0-smoothstep(.6,.95,bosM));
+              float oever=(1.0-smoothstep(0.0,.012+wAA,wE))*(1.0-wat)*.3;
+              float rimpel=texture2D(uDetail,wKp*9.0).r*.5+texture2D(uDetail,wKp*31.0).r*.5;
+              vec3 wk=mix(vec3(.13,.22,.25),vec3(.2,.3,.32),rimpel);
+              diffuseColor.rgb=mix(diffuseColor.rgb*(1.0-oever),wk,wat);
+              rivWater=wat;
+            }else if(wE<.05){
               float wPx=length(fwidth(wKp));
               float wAA=wPx*.6+1e-5;
               float dek=clamp(2.6*wH/max(wPx,1e-5),0.0,1.0);
@@ -1238,7 +1252,8 @@ export async function maak3D(ctx){
            streep. Zo glimt het, zonder te verblinden. */
         .replace("#include <roughnessmap_fragment>",`#include <roughnessmap_fragment>
           float nat=1.0-texture2D(map,vMapUv).a;
-          roughnessFactor=mix(roughnessFactor,.42,nat*nat);`)
+          roughnessFactor=mix(roughnessFactor,.42,nat*nat);
+          roughnessFactor=mix(roughnessFactor,.55,rivWater);`)
         .replace("#include <lights_fragment_end>",`#include <lights_fragment_end>
           float ws=wolkSchaduw(vWolkW);
           reflectedLight.directDiffuse*=ws; reflectedLight.directSpecular*=ws;`);
@@ -2050,8 +2065,26 @@ export async function maak3D(ctx){
     }
     return best;
   };
+  /* de dichtstbijzijnde rivier (binnen ~1 eenheid): afstand tot de
+     middenlijn, de richting van de rivier naar het punt, en de halve breedte */
+  const rivierBij=(wx,wy)=>{
+    rivierIndex();
+    let best=null;
+    for(let gy=Math.floor(wy)-1;gy<=Math.floor(wy)+1;gy++)for(let gx=Math.floor(wx)-1;gx<=Math.floor(wx)+1;gx++)
+      for(const [x0,y0,x1,y1,h] of rivierVak.get(gx+","+gy)||[]){
+        const dx=x1-x0, dy=y1-y0, l2=dx*dx+dy*dy||1e-9, t=klem(((wx-x0)*dx+(wy-y0)*dy)/l2,0,1);
+        const px=x0+dx*t, py=y0+dy*t, d=Math.hypot(wx-px,wy-py);
+        if(!best||d<best.d){
+          /* staat het punt (bijna) op de lijn, dan de kant links van de stroom */
+          let nx=wx-px, ny=wy-py; const l=Math.hypot(nx,ny);
+          if(l<1e-4){ const ll=Math.sqrt(l2); nx=-dy/ll; ny=dx/ll; } else { nx/=l; ny/=l; }
+          best={d,nx,ny,h};
+        }
+      }
+    return best;
+  };
   function maakGebouwen(){
-    const m=bouwModellen({PLAATSEN:ctx.PLAATSEN,POS:D.POS,X,Z,yOp,hNorm,opLand,hash2:T.hash2,rivierOp,kloven:D.kloven});
+    const m=bouwModellen({PLAATSEN:ctx.PLAATSEN,POS:D.POS,X,Z,yOp,hNorm,opLand,hash2:T.hash2,rivierOp,rivierBij,kloven:D.kloven});
     Object.assign(plekBoven,m.boven); Object.assign(plekMidden,m.midden);
     gebouwPlekken.push(...m.plekken);
     losseBomen=m.bomen;
@@ -2216,7 +2249,9 @@ export async function maak3D(ctx){
      texturen voor de shader van het land: de lijnstukken, per cel de lijst
      van lijnstukken, en waar die lijst begint. */
   function maakWegen(){
-    const alle=D.wegen.map(w=>({pts:w.p,breed:w.b,soort:w.s})).concat(wegenVanPlaatsen);
+    /* de rivieren als soort 3: water, getekend door dezelfde shader */
+    rivierIndex();
+    const alle=D.wegen.map(w=>({pts:w.p,breed:w.b,soort:w.s})).concat(wegenVanPlaatsen,rivierLijnenC.map(l=>({pts:l.pts,breed:l.breed,soort:3})));
     const L=wegL=wegLijnen(R,alle);
     const tex=(data,b,h,fmt)=>{ const t=new THREE.DataTexture(data,b,h,fmt,THREE.FloatType); t.minFilter=t.magFilter=THREE.NearestFilter; t.generateMipmaps=false; t.needsUpdate=true; return t; };
     wegU.uWegSeg.value=tex(L.seg,SEGBREED*2,L.segRijen,THREE.RGBAFormat);
@@ -2318,11 +2353,15 @@ export async function maak3D(ctx){
       pad.setAttribute("d",r.d); hulpSvg.appendChild(pad);
       const L=pad.getTotalLength(), n=Math.max(2,Math.ceil(L/.12));
       let stuk=[], vorige=null;
+      /* op het hoogland van Morgarath geen rivieren van de kaart: daar is
+         alles klif en hoogvlakte */
+      const hoogRid=D.ids.indexOf("mountains-of-rain-and-night")+1;
+      const opHoogland=(x,y)=>{ if(!hoogRid)return false; const fx=Math.floor((x+MARGE)*RES), fy=Math.floor((y+MARGE)*RES); return fx>=0&&fy>=0&&fx<RW&&fy<RH&&D.reg[fy*RW+fx]===hoogRid; };
       const sluit=()=>{ if(stuk.length>1)uit.push({pts:stuk,breed}); stuk=[]; };
       for(let i=0;i<=n;i++){
         const q=pad.getPointAtLength(i/n*L), x=q.x, y=q.y;
         /* een sprong in het pad (een tweede stuk), of de zee: daar stopt het lint */
-        if((vorige&&Math.hypot(x-vorige[0],y-vorige[1])>1)||hNorm(x,y)<-.02){ sluit(); vorige=null; if(hNorm(x,y)<-.02)continue; }
+        if((vorige&&Math.hypot(x-vorige[0],y-vorige[1])>1)||hNorm(x,y)<-.02||opHoogland(x,y)){ sluit(); vorige=null; if(hNorm(x,y)<-.02||opHoogland(x,y))continue; }
         stuk.push(vorige=[x,y]);
       }
       sluit(); pad.remove();
@@ -2354,7 +2393,9 @@ export async function maak3D(ctx){
       sh.fragmentShader=sh.fragmentShader
         .replace("#include <normal_fragment_begin>","#include <normal_fragment_begin>\nnormal=normalize((viewMatrix*vec4(0.0,1.0,0.0,0.0)).xyz);")
         .replace("#include <lights_fragment_end>","#include <lights_fragment_end>\nreflectedLight.directSpecular*=.12;"); };
-    rivierWater=new THREE.Mesh(g,m); rivierWater.receiveShadow=true; wereld.add(rivierWater);
+    /* het lint zelf wordt niet meer getekend: het water ligt nu in de grond
+       (soort 3 in de wegen). De geometrie blijft voor de bruggen-logica. */
+    rivierWater=new THREE.Mesh(g,m); rivierWater.visible=false;
     /* de bruggen: waar een weg de middenlijn kruist */
     const vak=new Map(), VK=2;
     lijnen.forEach((ln,li)=>{ for(let i=1;i<ln.pts.length;i++){ const [x,y]=ln.pts[i]; const k=Math.floor(x/VK)+","+Math.floor(y/VK); if(!vak.has(k))vak.set(k,[]); vak.get(k).push([li,i]); } });
