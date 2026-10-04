@@ -1870,7 +1870,7 @@ export const BOUWERS={
     b.straal=.25;
   }},
   /* Morgaraths Hoogvlakte — het kale plateau waar de Wargals verzamelden */
-  hoogvlakte:{info:{plateau:{r:4.2,hoogte:.2,dx:-1,dy:-3,bergen:{r:15,hoogte:.36}}},bouw(B,b){
+  hoogvlakte:{info:{plateau:{r:4.2,hoogte:.13,dx:-1,dy:-3,bergen:{r:15,hoogte:.3}}},bouw(B,b){
     /* het kamp van de Wargals: groepjes tenten verspreid over het plateau */
     for(let i=0;i<60;i++){ const g=Math.floor(i/10), ga=b.r(g+90)*Math.PI*2, gd=(.2+b.r(g+95)*1.2)/K, a=b.r(i)*Math.PI*2, d=b.r(i+5)*.12/K;
       const u=Math.cos(ga)*gd+Math.cos(a)*d, v=Math.sin(ga)*gd+Math.sin(a)*d; b.tent(u,v,2.6*M,3*M,"#3E3830",{}); }

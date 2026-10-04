@@ -456,48 +456,81 @@ function afwerking(G,T){
         if(doel>h[q])h[q]+=(doel-h[q])*w;
       }
   }
-  /* Een hoogvlakte (Morgaraths Hoogvlakte): een kale, golvende hoogte boven
-     Araluen, met een rand die op de meeste plekken steil afbreekt (de
-     Noordelijke kliffen), en daarachter de bergen. Niet rond en niet als een
-     tafel: de rand heeft uitlopers en inhammen (ruis op twee schalen), is hier
-     een loodrechte wand en daar een puinhelling, en het bovenvlak golft en
-     loopt naar de bergen in het zuiden wat op. */
+  /* De Bergen van Nacht en Ontij (Morgaraths gebied): een hoogland dat aan
+     alle kanten door kliffen wordt afgesloten — naar Araluen de Noordelijke
+     kliffen, naar Celtica De Spleet, naar zee de kustkliffen. De enige weg
+     erin is de Driestappas: drie treden in de klifwand. Op het hoogland een
+     kale, golvende hoogvlakte met een grillige rand, en eromheen de bergen.
+     Zo gaat het:
+     1. per punt van het gebied de afstand tot de rand (een chamfer-
+        afstandstransformatie binnen de omhullende rechthoek);
+     2. binnen ~150-350 m van de rand de klif: daar gaat het land van de
+        hoogte buiten steil naar de hoogte van het hoogland;
+     3. het hoogland zelf: de hoogvlakte, met een rand die met ruis is
+        vervormd zodat hij nergens rond is, en daarbuiten bergkammen;
+     4. de Driestappas: een gang door de klif met drie vlakke treden. */
   for(const pl of plekken){
-    if(!pl.plateau)continue;
-    const {r,hoogte}=pl.plateau, cx=pl.x+(pl.plateau.dx||0), cy=pl.y+(pl.plateau.dy||0), R2=r*1.6;
-    for(let y=Math.max(0,Math.floor((cy+M-R2)*RES));y<=Math.min(RH-1,Math.ceil((cy+M+R2)*RES));y++)
-      for(let x=Math.max(0,Math.floor((cx+M-R2)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+R2)*RES));x++){
-        const q=y*RW+x; if(!land[q])continue;
-        const wx=x/RES-M, wy=y/RES-M;
-        /* de rand: grote lobben en kleine inhammen */
-        const rand=r*(.72+.45*T.fbm(wx*.16+5,wy*.16-9,3,.3)+.16*(T.fbm(wx*.7-2,wy*.7+4,2,.2)-.5));
-        const d=Math.hypot(wx-cx,wy-cy);
-        /* hoe breed de afbraak is: smal (wand) of breed (puinhelling) */
-        const breed=r*(.035+.14*glad(klem(T.fbm(wx*.3+21,wy*.3-13,2,.2)*2.4-1.1,0,1)));
-        const w=1-glad(klem((d-rand)/breed,0,1)); if(w<=0)continue;
-        const helling=klem((wy-cy)/r,-1,1);
-        const vlak=hoogte*(1+.16*(T.fbm(wx*.22-3,wy*.22+8,3,.3)-.5)+.07*(T.fbm(wx*.9+7,wy*.9-1,2,.2)-.5)+.07*helling);
-        /* het plateau komt niet hoger dan de bergen eromheen het toelaten:
-           waar het land al hoger lag, blijft er een rotsige rand staan */
-        h[q]=h[q]>vlak*1.25?h[q]*(1-w*.5)+vlak*w*.5:h[q]+(vlak-h[q])*w;
+    if(!pl.plateau||!pl.regio)continue;
+    const rid=pl.regio, {r,hoogte}=pl.plateau, cx=pl.x+(pl.plateau.dx||0), cy=pl.y+(pl.plateau.dy||0);
+    /* de omhullende rechthoek van het gebied */
+    let bx0=RW,by0=RH,bx1=-1,by1=-1;
+    for(let y=0;y<RH;y++)for(let x=0;x<RW;x++){ const q=y*RW+x; if(land[q]&&reg[q]===rid){ if(x<bx0)bx0=x; if(x>bx1)bx1=x; if(y<by0)by0=y; if(y>by1)by1=y; } }
+    if(bx1<0)continue;
+    bx0=Math.max(1,bx0-1); by0=Math.max(1,by0-1); bx1=Math.min(RW-2,bx1+1); by1=Math.min(RH-2,by1+1);
+    const bw=bx1-bx0+1, bh=by1-by0+1, af=new Float32Array(bw*bh);
+    const binnen=(x,y)=>{ const q=y*RW+x; return land[q]&&reg[q]===rid; };
+    for(let y=0;y<bh;y++)for(let x=0;x<bw;x++)af[y*bw+x]=binnen(x+bx0,y+by0)?1e9:0;
+    /* twee keer vegen (3-4 chamfer), in rasterpunten */
+    for(let y=1;y<bh;y++)for(let x=1;x<bw-1;x++){ const i=y*bw+x; if(af[i]===0)continue;
+      af[i]=Math.min(af[i],af[i-1]+1,af[i-bw]+1,af[i-bw-1]+1.414,af[i-bw+1]+1.414); }
+    for(let y=bh-2;y>=0;y--)for(let x=bw-2;x>=1;x--){ const i=y*bw+x; if(af[i]===0)continue;
+      af[i]=Math.min(af[i],af[i+1]+1,af[i+bw]+1,af[i+bw+1]+1.414,af[i+bw-1]+1.414); }
+    const bg=pl.plateau.bergen||{hoogte:.36};
+    const pas=plekken.find(p=>p.id==="driestappas");
+    /* de richting van de pas: van buiten (de rand) naar binnen (het plateau) */
+    let px=0,py=0,pdx=0,pdy=1;
+    if(pas){
+      /* de pas ligt op de kaart een eindje binnen het gebied: de gang begint
+         op het dichtstbijzijnde punt van de rand en loopt van daar naar binnen */
+      const sx=Math.round((pas.x+M)*RES)-bx0, sy=Math.round((pas.y+M)*RES)-by0;
+      let best=1e9, ex=pas.x, ey=pas.y;
+      for(let y=Math.max(0,sy-24);y<Math.min(bh,sy+25);y++)for(let x=Math.max(0,sx-24);x<Math.min(bw,sx+25);x++){
+        if(af[y*bw+x]!==0)continue; const dd=(x-sx)*(x-sx)+(y-sy)*(y-sy); if(dd<best){ best=dd; ex=(x+bx0)/RES-M; ey=(y+by0)/RES-M; }
       }
-    /* en eromheen een gebergte: kale kammen (ruis met omgeklapte dalen), die
-       naar de kust toe aflopen in de kliffen */
-    const bg=pl.plateau.bergen; if(!bg)continue;
-    for(let y=Math.max(0,Math.floor((cy+M-bg.r)*RES));y<=Math.min(RH-1,Math.ceil((cy+M+bg.r)*RES));y++)
-      for(let x=Math.max(0,Math.floor((cx+M-bg.r)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+bg.r)*RES));x++){
-        const q=y*RW+x; if(!land[q])continue;
-        const wx=x/RES-M, wy=y/RES-M, d=Math.hypot(wx-cx,wy-cy);
-        const rand=r*(.72+.45*T.fbm(wx*.16+5,wy*.16-9,3,.3)+.16*(T.fbm(wx*.7-2,wy*.7+4,2,.2)-.5));
-        /* niet aan de noordkant: daar breekt het plateau naar Araluen af */
-        const wz=glad(klem((wy-cy+1.5)/3.5,0,1));
-        const wr=glad(klem((d-rand-.6)/2.5,0,1))*(1-glad(klem((d-bg.r*.8)/(bg.r*.2),0,1)))*wz;
-        if(wr<=0)continue;
-        const wk=glad(klem((kust[q]/18)/3.5,0,1));
-        const f=T.fbm(wx*.16+31,wy*.16-17,4,.5), kam=1-Math.abs(2*f-1);
-        const m=bg.hoogte*(.35+.65*kam*kam)*wr*wk;
-        if(m>h[q])h[q]=m;
+      px=ex; py=ey; const l=Math.hypot(pas.x-ex,pas.y-ey);
+      if(l>1e-3){ pdx=(pas.x-ex)/l; pdy=(pas.y-ey)/l; } else { const k=Math.hypot(cx-px,cy-py)||1; pdx=(cx-px)/k; pdy=(cy-py)/k; }
+    }
+    for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){
+      const e=af[y*bw+x]/RES; if(!(e>0)||e>1e8)continue;
+      const gx=x+bx0, gy=y+by0, q=gy*RW+gx, wx=gx/RES-M, wy=gy/RES-M;
+      /* het hoogland: de hoogvlakte, of bergkammen daarbuiten */
+      const vlak=hoogte*(1+.16*(T.fbm(wx*.22-3,wy*.22+8,3,.3)-.5)+.07*(T.fbm(wx*.9+7,wy*.9-1,2,.2)-.5));
+      const rand=r*(.62+.7*T.fbm(wx*.13+5,wy*.13-9,3,.4)+.25*(T.fbm(wx*.6-2,wy*.6+4,2,.3)-.5));
+      const d=Math.hypot(wx-cx,wy-cy);
+      /* bergen pas een eind achter de klifrand, en alleen aan de zuidkant:
+         naar het noorden loopt de hoogvlakte door tot de Noordelijke kliffen */
+      const berg=glad(klem((d-rand)/2.2,0,1))*glad(klem((wy-cy+.5)/3,0,1))*glad(klem((e-.7)/1.4,0,1));
+      const f=T.fbm(wx*.16+31,wy*.16-17,4,.5), kam=1-Math.abs(2*f-1);
+      /* de hoogte van het kaartreliëf telt hier niet mee: dat noemt het hele
+         gebied 'bergen' en zou alles even hoog maken (een krater met wanden
+         als torenflats) */
+      const boven=vlak+bg.hoogte*(.25+.75*kam*kam)*berg;
+      /* de klif: smal waar het een wand is, iets breder waar puin ligt */
+      const kb=.22+.18*T.fbm(wx*.4+11,wy*.4-6,2,.2);
+      let w=glad(klem(e/kb,0,1));
+      /* de Driestappas: een gang van ~250 m breed door de klif, met drie
+         vlakke treden tussen het land buiten en de hoogvlakte */
+      if(pas){
+        const rx=wx-px, ry=wy-py, t=rx*pdx+ry*pdy, dw=Math.abs(rx*pdy-ry*pdx);
+        const gang=(1-glad(klem((dw-.22)/.18,0,1)))*(1-glad(klem((t-1.6)/.6,0,1)))*glad(klem((t+.6)/.3,0,1));
+        if(gang>0){
+          const stap=klem(((t+.1)/.45)%1,0,1);
+          const tw=(klem(Math.floor((t+.1)/.45),0,3)+glad(klem((stap-.8)/.2,0,1))*(Math.floor((t+.1)/.45)<3?1:0))/3;
+          w=w*(1-gang)+klem(tw,0,1)*gang;
+        }
       }
+      h[q]=h[q]*(1-w)+boven*w;
+    }
   }
   /* de kloven: steile wanden, een bodem net boven zee */
   for(const k of G.kloven||[]){

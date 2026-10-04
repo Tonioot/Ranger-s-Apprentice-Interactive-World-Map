@@ -633,7 +633,7 @@ export async function maak3D(ctx){
     for(const p of ctx.PLAATSEN){
       const pos=POS[p.id]; if(!pos)continue;
       const m=modelVoor(p);
-      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null,plateau:m.plateau||null,haven:m.haven||null,heuvel:m.heuvel||null});
+      plekken.push({id:p.id,x:pos[0],y:pos[1],regio:ids.indexOf(p.gebied)+1,vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null,plateau:m.plateau||null,haven:m.haven||null,heuvel:m.heuvel||null});
     }
     /* op een hoogvlakte loopt in 3D geen rivier (de platte kaart tekent er
        wel een, als lijntje op het reliëf) */
