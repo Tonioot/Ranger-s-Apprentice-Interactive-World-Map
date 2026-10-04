@@ -48,10 +48,10 @@ const WOLKHOOGTE=58;
    Donker: dezelfde richting, maar dan de maan, met sterren en verlichte dorpen. */
 const THEMA={
   licht:{
-    zon:[-.56,.40,-.72], zonKleur:"#FFE2BE", zonSterkte:3.2,
-    hemelLicht:"#BCCFDD", grondLicht:"#80765E", hemiSterkte:1.3,
-    zenit:"#36679C", nevel:"#B6C3CB", gloed:"#FFC88A",
-    nevelDicht:.0026, nevelVal:.030,
+    zon:[-.56,.48,-.72], zonKleur:"#FFEEDA", zonSterkte:3.3,
+    hemelLicht:"#A9C1DA", grondLicht:"#7A735E", hemiSterkte:1.25,
+    zenit:"#3D6EA6", nevel:"#A9BBCB", gloed:"#F3D9B6",
+    nevelDicht:.0085, nevelVal:.022,
     ondiep:"#4FA3A3", diep:"#123F55", schuim:"#F4F0E4",
     belichting:.80, sterren:0, lichtjes:0,
     wolkLicht:"#FFFFFF", wolkDonker:"#A9B4C2", wolkDekking:.9, wolkSchaduw:.42,
@@ -216,9 +216,10 @@ float nevelHoeveel(vec3 wp){
    zoals ze zijn, zodat de horizon blijft aansluiten. */
 vec3 kleurCorrectie(vec3 c){
   float l=dot(c,vec3(.2126,.7152,.0722));
-  c=mix(vec3(l),c,.88);
+  c=mix(vec3(l),c,.80);
   c=clamp(c,0.0,1.0);
-  return mix(c,c*c*(3.0-2.0*c),.22);
+  c=mix(c,c*c*(3.0-2.0*c),.25);
+  return c*mix(vec3(.96,.99,1.04),vec3(1.02,1.0,.97),smoothstep(.15,.6,l));
 }
 vec3 nevel(vec3 schermKleur,vec3 wp){
   vec3 rd=normalize(wp-cameraPosition);
@@ -388,15 +389,19 @@ export async function maak3D(ctx){
     ao.blendIntensity=1;
     c.addPass(ao);
     c.addPass(new OutputPass());
-    /* de kleurcorrectie (zie kleurCorrectie bij de nevel), nu over het hele beeld */
+    /* de kleurcorrectie (zie kleurCorrectie bij de nevel), nu over het hele
+       beeld, met daarbij wat een lens doet: de hoeken iets donkerder (vignet) */
     c.addPass(new ShaderPass({uniforms:{tDiffuse:{value:null}},
       vertexShader:"varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
       fragmentShader:`uniform sampler2D tDiffuse; varying vec2 vUv;
         void main(){
           vec3 c=texture2D(tDiffuse,vUv).rgb;
           float l=dot(c,vec3(.2126,.7152,.0722));
-          c=clamp(mix(vec3(l),c,.88),0.0,1.0);
-          gl_FragColor=vec4(mix(c,c*c*(3.0-2.0*c),.22),1.0);
+          c=clamp(mix(vec3(l),c,.80),0.0,1.0);
+          c=mix(c,c*c*(3.0-2.0*c),.25);
+          c*=mix(vec3(.96,.99,1.04),vec3(1.02,1.0,.97),smoothstep(.15,.6,l));
+          vec2 d=vUv-.5;
+          gl_FragColor=vec4(c*(1.0-.28*dot(d,d)),1.0);
         }`}));
     return {c,ao};
   }
