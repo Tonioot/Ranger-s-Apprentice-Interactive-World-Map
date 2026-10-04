@@ -565,7 +565,23 @@ export function maakBouwer(omg){
       return [nu,nv];
     };
     /* een muur rond een veelhoek van punten */
-    b.ring=(punten,h,dik,kleur,o={})=>{ for(let i=0;i<punten.length;i++){ const a=punten[i], c=punten[(i+1)%punten.length]; if(o.open&&o.open.includes(i))continue; b.muur(a[0],a[1],c[0],c[1],h,dik,kleur,o); } };
+    /* een ringmuur langs punten. open: zijden die helemaal wegblijven.
+       gat: [zijde, breedte] — die zijde krijgt in het midden een opening
+       voor een poortgebouw, en loopt aan weerszijden door tot de hoeken
+       (anders gaapt er naast de poort een gat tot aan de hoektoren) */
+    b.ring=(punten,h,dik,kleur,o={})=>{
+      for(let i=0;i<punten.length;i++){
+        const a=punten[i], c=punten[(i+1)%punten.length];
+        if(o.open&&o.open.includes(i))continue;
+        if(o.gat&&o.gat[0]===i){
+          const L=Math.hypot(c[0]-a[0],c[1]-a[1]), t=Math.max(0,.5-o.gat[1]/2/L);
+          const p1=[a[0]+(c[0]-a[0])*t,a[1]+(c[1]-a[1])*t], p2=[c[0]+(a[0]-c[0])*t,c[1]+(a[1]-c[1])*t];
+          if(t>0){ b.muur(a[0],a[1],p1[0],p1[1],h,dik,kleur,o); b.muur(p2[0],p2[1],c[0],c[1],h,dik,kleur,o); }
+          continue;
+        }
+        b.muur(a[0],a[1],c[0],c[1],h,dik,kleur,o);
+      }
+    };
     /* Een toren: rond of vierkant, met een schuine plint aan de voet, een
        uitkragende borstwering (de krans) met kantelen, en een dak naar
        keuze. h is de hoogte van de schacht tot de borstwering. */
@@ -1214,7 +1230,7 @@ function kasteel(B,b,stijl,o={}){
   switch(soort){
     case "gallica": {   /* een château: ronde torens met hoge puntige leien spitsen, een woonvleugel met een steil dak */
       voet(); plein(hw*2,hd*2);
-      b.ring(hoeken,mh,dik,steen,{...muurO,open:[2]});
+      b.ring(hoeken,mh,dik,steen,{...muurO,gat:[2,12*f]});
       for(const [u,v] of hoeken)b.toren(u,v,tr,mh+7*f,steen,{dak:"kegel",dakKleur:dak,dakMat:dm,dakH:tr*3.2,y:basis-.02,mat:sm,ramen:4.5*f});
       const top=zaal(-hw*.1,-hd*.35,hw*1.3,12*f,13*f,0,steen,dak,dm,sm);
       b.toren(hw*.45,-hd*.35,3.4*f,24*f,steen,{dak:"kegel",dakKleur:dak,dakMat:dm,dakH:11*f,vlag:o.vlag||st.vlag,y:basis,mat:sm,ramen:5*f,plint:false});
@@ -1237,7 +1253,7 @@ function kasteel(B,b,stijl,o={}){
     }
     case "teutlandt": { /* een burcht met vierkante torens en rode piramidedaken, een hoge bergfried */
       voet(); plein(hw*2,hd*2);
-      b.ring(hoeken,mh,dik,steen,{...muurO,open:[2]});
+      b.ring(hoeken,mh,dik,steen,{...muurO,gat:[2,12*f]});
       for(const [u,v] of hoeken)b.toren(u,v,tr,mh+6*f,steen,{vierkant:true,dak:"kegel",dakKleur:dak,dakMat:dm,dakH:tr*2.6,y:basis-.02,mat:sm,ramen:4.5*f});
       donjon(-hw*.25,-hd*.3,13*f,13*f,30*f,{hoekTorens:false,dakOok:9});
       zaal(hw*.35,-hd*.4,26*f,10*f,9*f,0,st.muur[0],dak,dm,"vakwerk");
@@ -1246,7 +1262,7 @@ function kasteel(B,b,stijl,o={}){
     }
     case "toscana": {   /* rocca: vierkante torens, zwaluwstaartkantelen, een hoge campanile */
       voet(); plein(hw*2,hd*2);
-      b.ring(hoeken,mh,dik,steen,{...muurO,open:[2]});
+      b.ring(hoeken,mh,dik,steen,{...muurO,gat:[2,12*f]});
       for(const [u,v] of hoeken)b.toren(u,v,tr,mh+5*f,steen,{vierkant:true,dak:"plat",y:basis-.02,mat:sm,kantelen:kant});
       const top=b.blok(-hw*.3,-hd*.3,24*f,16*f,13*f,st.muur[0],{y:basis,mat:"pleister",verd:4.5*f,vloer:basis});
       b.schild(-hw*.3,-hd*.3,top-.2*f,25*f,17*f,3.5*f,st.dak[0],{mat:"pannen"});
@@ -1256,7 +1272,7 @@ function kasteel(B,b,stijl,o={}){
     }
     case "arrida": {    /* kasba: dikke leemmuren, taps toelopende torens, driehoekige kantelen */
       voet(); plein(hw*2,hd*2);
-      b.ring(hoeken,mh*1.15,dik*1.4,steen,{kantelen:"driehoek",y:basis-.02,top:basis+mh*1.15,mat:"leem",open:[2]});
+      b.ring(hoeken,mh*1.15,dik*1.4,steen,{kantelen:"driehoek",y:basis-.02,top:basis+mh*1.15,mat:"leem",gat:[2,12*f]});
       for(const [u,v] of hoeken){
         b.stuk("vast",B.S.afgeknot4,u,basis-.02,v,tr*2.6,mh*1.15+6*f,tr*2.6,0,steen,{mat:"leem"});
         b.kantelen(u-tr,v+tr,u+tr,v+tr,basis-.02+mh*1.15+6*f,1*f,steen,{kantelen:"driehoek",buiten:[0,1],mat:"leem"});
@@ -1302,7 +1318,7 @@ function kasteel(B,b,stijl,o={}){
     }
     default: {          /* Araluen: ringmuur, ronde hoektorens met leien spitsen, een vierkante donjon, de grote zaal */
       voet(); plein(hw*2,hd*2);
-      b.ring(hoeken,mh,dik,steen,{...muurO,open:[2]});
+      b.ring(hoeken,mh,dik,steen,{...muurO,gat:[2,12*f]});
       for(const [u,v] of hoeken)b.toren(u,v,tr,mh+6*f,steen,{dak:o.torenDak||"kegel",dakKleur:dak,dakMat:dm,dakH:tr*2.3,y:basis-.02,mat:sm,ramen:4.5*f});
       /* torens halverwege de lange muren */
       if(hw>30*f)for(const [u,v] of [[0,-hd],[-hw,0],[hw,0]])b.toren(u,v,tr*.8,mh+3*f,steen,{dak:"plat",y:basis-.02,mat:sm});
@@ -1531,7 +1547,7 @@ export const BOUWERS={
     b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+4*f,.4,hd*2+4*f,0,wit,{mat:"steen"});
     b.blok(0,0,hw*2,hd*2,.4*M,"#B7AD94",{y:basis-.3*M,mat:"kassei",var:0});
     const hoeken=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]];
-    b.ring(hoeken,13*f,3.4*f,wit,{y:basis-.02,top:basis+13*f,mat:"steen",open:[2]});
+    b.ring(hoeken,13*f,3.4*f,wit,{y:basis-.02,top:basis+13*f,mat:"steen",gat:[2,14*f]});
     for(const [u,v] of hoeken)b.toren(u,v,5.5*f,22*f,wit,{dak:"kegel",dakKleur:blauw,dakMat:"lei",dakH:15*f,y:basis-.02,ramen:4.5*f});
     /* tussentorens halverwege de muren */
     for(const [u,v] of [[0,-hd],[hw,0],[-hw,0]])b.toren(u,v,4*f,18*f,wit,{dak:"kegel",dakKleur:blauw,dakMat:"lei",dakH:10*f,y:basis-.02});
@@ -1872,7 +1888,7 @@ export const BOUWERS={
     kasteel(B,b,"gallica",{breed:84,muurH:13,steen:"#E0D6C2",vlag:"#2B4C7E"});
     /* een tweede, lagere ringmuur met torens */
     const hw=.38, pts=[[-hw,-hw],[hw,-hw],[hw,hw],[-hw,hw]];
-    b.ring(pts,8*M,2.6*M,"#D8CDB6",{open:[2]});
+    b.ring(pts,8*M,2.6*M,"#D8CDB6",{gat:[2,20*M]});
     for(const [u,v] of pts)b.toren(u,v,4*M,12*M,"#D8CDB6",{dak:"kegel",dakKleur:"#4E5660",dakMat:"lei",dakH:10*M});
     B.dorp(B.rond(...b.naast(+.75,+.4),.4,14),"gallica",{straal:.34,aantal:30,stad:.5,verdiepingen:2,zaad:7});
   }},

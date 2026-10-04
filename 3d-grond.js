@@ -547,7 +547,13 @@ function afwerking(G,T){
      Dorpen krijgen hetzelfde, iets minder streng. */
   for(const pl of plekken){
     if(!pl.vlak)continue;
-    const [R0,R1,kracht]=pl.vlak, cx=pl.x, cy=pl.y;
+    /* Het raster heeft maar RES punten per eenheid (~200 m ertussen), en een
+       kasteel is kleiner dan dat. Een vlak dat smaller is dan een paar
+       rasterpunten vangt er geen enkel, en dan staat het model op een helling
+       die tussen twee punten door loopt: half in de heuvel. Daarom is het
+       vlak altijd minstens anderhalf rasterpunt breed, met een overgang van
+       nog twee punten daaromheen. */
+    const R0=Math.max(pl.vlak[0],1.6/RES), R1=Math.max(pl.vlak[1],R0+2.2/RES), kracht=pl.vlak[2], cx=pl.x, cy=pl.y;
     const x0=Math.max(0,Math.floor((cx+M-R1)*RES)), x1=Math.min(RW-1,Math.ceil((cx+M+R1)*RES));
     const y0=Math.max(0,Math.floor((cy+M-R1)*RES)), y1=Math.min(RH-1,Math.ceil((cy+M+R1)*RES));
     let s=0,n=0;
