@@ -1957,7 +1957,7 @@ export async function maak3D(ctx){
    paar vormen met de kleur in de hoekpunten. Zo kost een hele wereld vol
    kastelen, steden en schepen maar een handvol tekenopdrachten. */
   const modelVoor=p=>modelInfo(p);
-  let gebouwen=null, lichtjes=null, losseBomen=[], wegenVanPlaatsen=[], gebouwMat=null, doekMat=null, wiekMat=null;
+  let gebouwen=null, lichtjes=null, losseBomen=[], wegenVanPlaatsen=[], gebouwMat=null, doekMat=null, wiekMat=null, vlagMat=null;
   const plekBoven={};            /* plaats-id → hoogte van de top (voor het naambordje) */
   const plekMidden={};           /* plaats-id → waar het model echt staat (een haven ligt aan het water) */
   const middenVan=id=>plekMidden[id]||D.POS[id];
@@ -2006,6 +2006,18 @@ export async function maak3D(ctx){
           vec3 wNaaf=vec3(aDobber.x,aDobber.z,aDobber.y), wP=transformed-wNaaf;
           transformed=wNaaf+${rod("wP")};`);
     };
+    /* vlaggen wapperen: het doek golft, sterker naarmate het verder van de
+       paal is (aVlak.x: de afstand tot de paal, in modelmaat) */
+    vlagMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,side:THREE.DoubleSide});
+    vlagMat.onBeforeCompile=sh=>{
+      gebouwShader(sh);
+      sh.vertexShader=sh.vertexShader
+        .replace("#include <common>","#include <common>\nuniform float uTijd;")
+        .replace("#include <begin_vertex>",`#include <begin_vertex>
+          float vAf=aVlak.x, vFase=dot(transformed.xz,vec2(37.0,53.0));
+          transformed+=objectNormal*sin(uTijd*5.0-vAf*220.0+vFase)*vAf*.09
+                      +objectNormal*sin(uTijd*8.3-vAf*400.0+vFase*1.7)*vAf*.03;`);
+    };
     /* in blokken: wat buiten beeld valt wordt niet getekend, en wat zo ver
        weg ligt dat het kleiner is dan een paar beeldpunten ook niet (zie
        werkGebouwBlokkenBij) */
@@ -2014,6 +2026,8 @@ export async function maak3D(ctx){
       for(const deel of deelOp(geo,GBLOK)){ const x=new THREE.Mesh(deel,mt); x.castShadow=x.receiveShadow=true; g.add(x); gebouwBlokken.push(x); }
       geo.dispose();
     }
+    if(m.vlag){ const x=new THREE.Mesh(m.vlag,vlagMat); x.castShadow=true; x.frustumCulled=false; g.add(x); }
+    if(m.rook&&m.rook.length)g.add(rookWolk(m.rook));
     /* de schepen deinen: elk om zijn eigen middelpunt, met zijn eigen fase */
     if(m.schepen){
       const ms=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,side:THREE.DoubleSide});
@@ -2026,9 +2040,20 @@ export async function maak3D(ctx){
             vec3 dp=vec3(aDobber.x,0.0,aDobber.y), dq=transformed-dp;
             dq=vec3(dq.x*cos(dz)-dq.y*sin(dz),dq.x*sin(dz)+dq.y*cos(dz),dq.z);
             dq=vec3(dq.x,dq.y*cos(dx)-dq.z*sin(dx),dq.y*sin(dx)+dq.z*cos(dx));
-            transformed=dp+dq; transformed.y+=sin(df*1.3)*.002;`);
+            transformed=dp+dq; transformed.y+=sin(df*1.3)*.002;
+            /* een varend schip (aDobber.w = ±(10 + koers)): het draait over
+               een cirkel links (+) of rechts (-) van zijn koers, zodat het
+               steeds vooruit vaart */
+            if(abs(aDobber.w)>=10.0){
+              float z=sign(aDobber.w), hd=abs(aDobber.w)-10.0, th=z*(uTijd*.025+aDobber.z);
+              vec2 cc=dp.xz+z*vec2(-sin(hd),cos(hd))*.15, v=transformed.xz-cc;
+              float c=cos(th), s=sin(th);
+              transformed.xz=cc+vec2(v.x*c-v.y*s,v.x*s+v.y*c);
+            }`);
       };
-      const x=new THREE.Mesh(m.schepen,ms); x.castShadow=true; x.receiveShadow=true; g.add(x);
+      /* geen schaduw: de schaduwkaart kent het varen niet, en zou het
+         schip op zijn ankerplek laten liggen */
+      const x=new THREE.Mesh(m.schepen,ms); x.castShadow=false; x.receiveShadow=true; x.frustumCulled=false; g.add(x);
     }
     /* vijvers, grachten en plassen: water dat de lucht weerspiegelt */
     if(m.plas){ const x=new THREE.Mesh(m.plas,plasMat); g.add(x); }
@@ -2091,6 +2116,8 @@ export async function maak3D(ctx){
     if(m.vast){ const x=new THREE.Mesh(m.vast,gebouwMat); x.castShadow=x.receiveShadow=true; g.add(x); }
     if(m.doek){ const x=new THREE.Mesh(m.doek,doekMat); x.castShadow=x.receiveShadow=true; g.add(x); }
     if(m.wiek){ const x=new THREE.Mesh(m.wiek,wiekMat); x.castShadow=true; x.frustumCulled=false; g.add(x); }
+    if(m.vlag){ const x=new THREE.Mesh(m.vlag,vlagMat); x.castShadow=true; x.frustumCulled=false; g.add(x); }
+    if(m.rook&&m.rook.length)g.add(rookWolk(m.rook));
     wereld.add(g); gTegels.set(k,{g,tx,ty});
   }
   function ruimGehuchten(){
@@ -2141,6 +2168,52 @@ export async function maak3D(ctx){
       const b=x.geometry.boundingSphere; bolW.copy(b.center); bolW.y*=wereld.scale.y;
       x.visible=c.distanceTo(bolW)-b.radius<GZICHT;
     }
+  }
+
+  /* ================================ rook ================================
+     Uit een deel van de schoorstenen komt rook: per schoorsteen vijf
+     deeltjes die na elkaar opstijgen, met de wind meedrijven, groter worden
+     en vervagen. Alles in de shader (de tijd en een eigen fase per deeltje),
+     dus het kost niets per beeld. Alleen van dichtbij zichtbaar. */
+  const ROOKDEEL=5;
+  const rookMat=new THREE.ShaderMaterial({
+    uniforms:{uTijd:GEDEELD.uTijd,uSchaal:{value:800}},
+    transparent:true,depthWrite:false,
+    vertexShader:`
+      attribute float aFase; uniform float uTijd; uniform float uSchaal; varying float vA;
+      void main(){
+        float t=fract(uTijd*.045+aFase);
+        vec3 p=position;
+        p.y+=t*.03;
+        p.x+=t*t*.016+sin(uTijd*.7+aFase*23.0)*.0015*t;
+        p.z+=t*t*.006;
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
+        gl_Position=projectionMatrix*mv;
+        gl_PointSize=(.004+t*.016)*uSchaal/max(-mv.z,1e-3);
+        vA=(1.0-t)*smoothstep(0.0,.12,t)*.5*(1.0-smoothstep(2.5,5.0,-mv.z));
+      }`,
+    fragmentShader:`
+      varying float vA;
+      void main(){
+        float d=length(gl_PointCoord-.5);
+        float a=smoothstep(.5,.08,d)*vA;
+        if(a<.004)discard;
+        gl_FragColor=vec4(vec3(.74,.73,.7),a);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`
+  });
+  function rookWolk(bronnen){
+    const n=bronnen.length/3, pos=new Float32Array(n*ROOKDEEL*3), fase=new Float32Array(n*ROOKDEEL);
+    for(let i=0;i<n;i++)for(let k=0;k<ROOKDEEL;k++){
+      const j=i*ROOKDEEL+k; pos.set(bronnen.subarray(i*3,i*3+3),j*3);
+      fase[j]=k/ROOKDEEL+T.hash2(i*7+3,k+11)*.15+T.hash2(i,91);
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute("position",new THREE.BufferAttribute(pos,3));
+    g.setAttribute("aFase",new THREE.BufferAttribute(fase,1));
+    const x=new THREE.Points(g,rookMat); x.frustumCulled=false; x.renderOrder=2;
+    return x;
   }
 
   /* ======================= rivieren: water en bruggen =======================
@@ -2717,6 +2790,7 @@ export async function maak3D(ctx){
     requestAnimationFrame(lus);
     const dt=Math.min(.1,(nu-(vorige||nu))/1000); vorige=nu;
     GEDEELD.uTijd.value+=dt;
+    rookMat.uniforms.uSchaal.value=renderer.domElement.height/(2*Math.tan(FOV*Math.PI/360));
     GEDEELD.uWind.value.x+=dt*.9; GEDEELD.uWind.value.y+=dt*.35;
     if(intro)werkIntroBij(nu);
     else{

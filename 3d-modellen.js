@@ -430,8 +430,8 @@ const matVan=n=>typeof n==="number"?n:(MAT[n]??0);
 export function maakBouwer(omg){
   const S=vormen();
   const {X,Z,yOp,hNorm,opLand,hash2}=omg;
-  const bakken={vast:new Bak(),doek:new Bak(),schip:new Bak(true),plas:new Bak(),wiek:new Bak(true)};
-  const lampjes=[], bomen=[], wegen=[];
+  const bakken={vast:new Bak(),doek:new Bak(),schip:new Bak(true),plas:new Bak(),wiek:new Bak(true),vlag:new Bak()};
+  const lampjes=[], bomen=[], wegen=[], rook=[];
   const m4=new THREE.Matrix4(), nm=new THREE.Matrix3(), q=new THREE.Quaternion(), e=new THREE.Euler(), sv=new THREE.Vector3(), pv=new THREE.Vector3();
   const kl=new THREE.Color(), klG=new THREE.Color();
   /* van wereld terug naar de kaart, voor de hoogte boven de grond */
@@ -513,14 +513,17 @@ export function maakBouwer(omg){
     b.ui=(u,v,y,rad,h,kleur,o={})=>b.stuk(o.bak||"vast",S.ui,u,y,v,rad,h,rad,0,kleur,o);
     b.bol=(u,v,y,rad,kleur,o={})=>b.stuk(o.bak||"vast",S.bol,u,y,v,rad,o.h??rad,rad,0,kleur,o);
     b.lamp=(u,y,v)=>{ const [x,yy]=b.w(u,v); lampjes.push(X(x),b.wy(y),Z(yy)); };
+    /* een schoorsteen die rookt: de plek van de rook (zie maakRook in 3d.js) */
+    b.rook=(u,y,v)=>{ const [x,yy]=b.w(u,v); rook.push(X(x),b.wy(y),Z(yy)); };
     b.boom=(u,v,soort,maat=1)=>{ const [x,y]=b.w(u,v); if(opLand(x,y))bomen.push(x,y,soort,maat*k); };
     /* een weg of straat (lokale punten): die tekent de grond (zie de wegen in 3d.js) */
     b.weg=(pts,breed=4.5*M,soort=0)=>{ wegen.push({pts:pts.map(([u,v])=>b.w(u,v)),breed:breed*k,soort}); };
-    /* een paal met een vlag (het doek wappert niet, maar hangt wel aan de goede kant) */
+    /* een paal met een vlag. Het doek gaat in een eigen bak: de shader laat
+       het wapperen, meer naarmate het verder van de paal is */
     b.vlag=(u,v,y,h,kleur,o={})=>{
       const m=o.maat||1;
       b.stuk("vast",S.cil6,u,y,v,.25*M,h,.25*M,0,"#4A3A2A");
-      b.stuk("doek",S.vlak,u,y+h-3.4*M*m,v,6*M*m,3.4*M*m,1,o.r??.6,kleur);
+      b.stuk("vlag",S.vlak,u,y+h-3.4*M*m,v,6*M*m,3.4*M*m,1,o.r??.6,kleur);
     };
     /* kantelen langs een lijn, op hoogte y, aan de buitenkant van een muur
        van dikte dik (n: de richting naar buiten) */
@@ -687,6 +690,8 @@ export function maakBouwer(omg){
       const pu=u+du*c, pv=v+du*s;
       b.blok(pu,pv,1.1*M,1.1*M,hoog,"#8A8074",{r,y:g-.01,mat:"breuk",var:.1});
       b.blok(pu,pv,1.4*M,1.4*M,.35*M,"#5E564C",{r,y:g+hoog-.002,var:.1});
+      /* in zo'n vier van de tien huizen brandt het vuur */
+      if(rr(17)<.4)b.rook(pu,g+hoog+.4*M,pv);
     };
     switch(vorm){
       case "zadel": case "steil": {
@@ -907,8 +912,12 @@ export function maakBouwer(omg){
     nm.getNormalMatrix(m4);
     kl.set(kleur); bakken[bak].voeg(s,m4,nm,kl,{sx:1,sy:1,sz:1,mat:MAT.hout,zaad:dob[2]%97,verd:0,vloer:0},dob,bovenZee);
   }
+  /* een varend schip draait in de shader over een cirkel van VAARSTRAAL
+     (zie de schepen in 3d.js); de vierde waarde van dob is dan 10 + de koers
+     (cirkel links van de koers) of -(10 + de koers) (cirkel rechts) */
+  const VAARSTRAAL=.15;
   function schip(soort,mx,my,richting,zaad,o={}){
-    const dob=[X(mx),Z(my),zaad*7.3,1];
+    const tau=Math.PI*2, kk=10+((richting%tau)+tau)%tau, dob=[X(mx),Z(my),zaad*7.3,o.vaar?o.vaar*kk:1];
     const b=rond(mx,my,richting,zaad,{zee:true});
     const sk=(s,u,y,v,sx,sy,sz,r,k,oo={})=>b.stuk("schip",s,u,y,v,sx,sy,sz,r,k,{...oo,dob,var:.05});
     const m=(o.maat||1)*M;
@@ -998,7 +1007,19 @@ export function maakBouwer(omg){
       if(gelegd.some(([gx,gy])=>Math.hypot(gx-x,gy-y)<(o.ruimte??.22)*K))continue;
       gelegd.push([x,y]);
       const r=o.richting!=null?o.richting+(hk2-.5)*.4:hk*Math.PI*2;
-      schip(Array.isArray(soort)?soort[gelegd.length%soort.length]:soort,x,y,r,zaad+k,o);
+      /* de helft van de schepen voor anker vaart: alleen als de hele cirkel
+         die het schip vaart over open water loopt */
+      let vaar=0;
+      if(o.varen!==false&&hash2((x*97)|0,(y*89+k)|0)<.5){
+        /* links of rechtsom: de kant waar de cirkel helemaal op zee ligt */
+        for(const z of [1,-1]){
+          const mx=x-Math.sin(r)*VAARSTRAAL*z, my=y+Math.cos(r)*VAARSTRAAL*z;
+          let vrij=true;
+          for(let i=0;i<20&&vrij;i++){ const a=i/20*Math.PI*2; for(const f of [.8,1,1.2])if(hNorm(mx+Math.cos(a)*VAARSTRAAL*f,my+Math.sin(a)*VAARSTRAAL*f)>-.008){ vrij=false; break; } }
+          if(vrij){ vaar=z; break; }
+        }
+      }
+      schip(Array.isArray(soort)?soort[gelegd.length%soort.length]:soort,x,y,r,zaad+k,{...o,vaar});
     }
     return gelegd;
   }
@@ -1041,6 +1062,24 @@ export function maakBouwer(omg){
     }
   }
   /* ---- een boerenerf: het woonhuis, een schuur, een hooiberg, een omheinde wei ---- */
+  /* Een kudde: schapen (wit, met een donkere kop) of koeien (groter, bruin,
+     zwart of bont), los verspreid in een ovaal rond (u,v), elk een andere
+     kant op; alleen op droog land en niet in een rivier. */
+  function kudde(b,u,v,ru,rv,n,soort,r0=0,zaad=0){
+    const c=Math.cos(r0), s=Math.sin(r0), koe=soort==="koe";
+    for(let i=0;i<n;i++){
+      const a=b.r(700+zaad+i)*Math.PI*2, d=Math.sqrt(b.r(730+zaad+i));
+      const lu=Math.cos(a)*d*ru, lv=Math.sin(a)*d*rv, su=u+lu*c-lv*s, sv=v+lu*s+lv*c;
+      if(!b.land(su,sv)||(omg.rivierOp&&omg.rivierOp(...b.w(su,sv))>20))continue;
+      const g=b.grond(su,sv), ri=b.r(760+zaad+i)*6.28;
+      const lijf=koe?["#6E4A32","#2E2A26","#D8D0C2","#8A5A3A"][Math.floor(b.r(790+zaad+i)*4)]:(b.r(790+zaad+i)<.85?"#E4DECE":"#3A3430");
+      const L=koe?2.3*M:1.3*M, B2=koe?.9*M:.7*M, H=koe?1.1*M:.8*M, y=koe?.6*M:.3*M;
+      b.blok(su,sv,L,B2,H,lijf,{r:ri,y:g+y,var:.06});
+      b.blok(su+Math.cos(ri)*L*.6,sv+Math.sin(ri)*L*.6,koe?.6*M:.4*M,koe?.5*M:.35*M,koe?.6*M:.4*M,koe?"#3A2E26":"#3A3430",{r:ri,y:g+y+H*.55});
+      if(koe)for(const [lx,lz] of [[.35,.3],[-.35,.3],[.35,-.3],[-.35,-.3]])
+        b.blok(su+Math.cos(ri)*L*lx-Math.sin(ri)*B2*lz,sv+Math.sin(ri)*L*lx+Math.cos(ri)*B2*lz,.25*M,.25*M,y+.05*M,"#3A2E26",{r:ri,y:g-.02*M,var:0});
+    }
+  }
   function boerderij(b,stijl,zaad){
     const st=STIJLEN[stijl]||STIJLEN.araluen, a=b.r(1)*Math.PI*2, c=Math.cos(a), s=Math.sin(a);
     if(!b.land(0,0))return;
@@ -1065,6 +1104,8 @@ export function maakBouwer(omg){
       const hoek=(x,z)=>[wu+x*c-z*s,wv+x*s+z*c];
       const pts=[hoek(-L/2,-D/2),hoek(L/2,-D/2),hoek(L/2,D/2),hoek(-L/2,D/2)];
       for(let i=0;i<4;i++){ if(i===0&&b.r(8)<.5)continue; const [p0,p1]=[pts[i],pts[(i+1)%4]]; if(b.land(...p0)&&b.land(...p1))b.heg(p0[0],p0[1],p1[0],p1[1],"#6B5640",1*M,.3*M); }
+      /* met vee erin */
+      kudde(b,wu,wv,L*.4,D*.38,3+Math.floor(b.r(9)*5),b.r(10)<.5?"koe":"schaap",Math.atan2(s,c),zaad%97);
     }
   }
   /* Een plan uitvoeren (zie dorpPlan en havenPlan in 3d-grond.js): de
@@ -1119,6 +1160,11 @@ export function maakBouwer(omg){
         b.blok(mu,mv,3*M,2.2*M,1.1*M,"#7A6248",{r:ph,y:g-.005,mat:"hout"});
         b.lessenaar(mu,mv,g+2.3*M,3.6*M,2.8*M,.5*M,luifel[i%5],{r:ph,mat:"vlak"});
       }
+    }
+    /* buiten een gehucht of dorp graast een kudde op het land */
+    if(soort<=2&&st.huis!=="plat"&&b.r(zaad%53+400)<.7){
+      const ka=b.r(zaad%53+401)*Math.PI*2, kd=Math.max(.06,plan.straal||.1)/K*1.15;
+      kudde(b,Math.cos(ka)*kd,Math.sin(ka)*kd,(14+b.r(zaad%53+402)*14)*M,(9+b.r(zaad%53+403)*8)*M,6+Math.floor(b.r(zaad%53+404)*14),st.huis==="lang"||b.r(zaad%53+405)<.6?"schaap":"koe",ka,zaad%89);
     }
     if(plan.muur&&o.muur!==false)stadsmuur(b,st,plan.muur,o.muur);
     if(o.straten)for(const w of plan.straten)b.weg(w.pts.map(([x,y])=>[x/K,y/K]),w.breed/K,w.soort);
@@ -1179,7 +1225,7 @@ export function maakBouwer(omg){
     }
   }
 
-  return {opLand,hNorm,rond,huis,dorp,pleinGebouw,stadsmuur,bouwPlan,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
+  return {opLand,hNorm,rond,huis,dorp,pleinGebouw,stadsmuur,bouwPlan,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,kudde,bakken,lampjes,rook,bomen,wegen,S,rivierOp:omg.rivierOp};
 }
 
 /* ======================= generieke modellen per soort ======================= */
@@ -2256,7 +2302,7 @@ export function bouwGehuchten(omg,plekken,gebiedStijl){
   for(const p of plekken){
     try{ B.gehucht(p,gebiedStijl(p[5])); }catch(e){ console.warn("gehucht",e); }
   }
-  return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo(),wiek:B.bakken.wiek.geo()};
+  return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo(),wiek:B.bakken.wiek.geo(),vlag:B.bakken.vlag.geo(),rook:new Float32Array(B.rook)};
 }
 /* De bomen bij een nederzetting: een boomgaard bij een boerderij, wat
    bomen rond een gehucht of dorp (niet op de straat). Los van de huizen
@@ -2318,5 +2364,5 @@ export function bouwModellen(omg){
     if(b.straal)plekken.push([mx,my,b.straal*b.k,p.id]);
   }
   return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo(),schepen:B.bakken.schip.geo(),plas:B.bakken.plas.geo(),
-    lampjes:new Float32Array(B.lampjes),bomen:B.bomen,wegen:B.wegen,boven,plekken,midden};
+    vlag:B.bakken.vlag.geo(),lampjes:new Float32Array(B.lampjes),rook:new Float32Array(B.rook),bomen:B.bomen,wegen:B.wegen,boven,plekken,midden};
 }
