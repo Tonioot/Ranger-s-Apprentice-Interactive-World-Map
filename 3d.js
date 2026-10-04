@@ -733,6 +733,7 @@ export async function maak3D(ctx){
     const fSneeuw=new Float32Array(M2), fWinter=new Float32Array(M2);
     for(let p=0;p<M2;p++)if(pReg[p]){ const id=D.ids[pReg[p]-1]; fSneeuw[p]=(SNEEUWLAND[id]||0)*SZ.land; fWinter[p]=(WINTERSNEEUW[id]||0)*SZ.winter; }
     T.veeg(fSneeuw,PW,PH,8); T.veeg(fWinter,PW,PH,10);
+    winterVeld=fWinter;
     /* de kleur van het gesteente per land */
     const rotsStd=rgb(wcss("--rots")||"#6E6A62"), fRotsR=new Float32Array(M2), fRotsG=new Float32Array(M2), fRotsB=new Float32Array(M2);
     for(let p=0;p<M2;p++){ const id=pReg[p]?D.ids[pReg[p]-1]:null, k=ROTS3D[id]?rgb(ROTS3D[id]):rotsStd; fRotsR[p]=k[0]; fRotsG[p]=k[1]; fRotsB[p]=k[2]; }
@@ -985,6 +986,8 @@ export async function maak3D(ctx){
              water dat erlangs loopt. */
           vec3 nO=texture2D(normalMap,vNormalMapUv).xyz*2.0-1.0;
           float wand=smoothstep(.27,.55,1.0-normalize(nO).y)*(1.0-bosM);
+          /* op sneeuw geen rotslagen */
+          wand*=1.0-smoothstep(.5,.75,dot(diffuseColor.rgb,vec3(.333)));
           if(wand>.002){
             float laag=texture2D(uDetail,vec2((vWolkW.x+vWolkW.z)*.05,vWolkW.y*.9)).r;
             float voor=texture2D(uDetail,vec2((vWolkW.x-vWolkW.z)*1.3,vWolkW.y*.12)).r;
@@ -1023,6 +1026,9 @@ export async function maak3D(ctx){
              open plekken en schaduw ertussen, zodat bos ook van ver bos is */
           if(bosM>.01){
             diffuseColor.rgb=mix(diffuseColor.rgb,mix(uBosKl[1],uBosKl[0],loof),bosDek*.85);
+            /* sneeuw op de bomen in een koude winter */
+            float bosSneeuw=texture2D(uLoof,vMapUv).a;
+            diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.72,.75,.78),bosDek*bosSneeuw*.55);
             float pol=texture2D(uDetail,vWolkW.xz*1.3).r*.6+texture2D(uDetail,vWolkW.xz*.37).r*.4;
             diffuseColor.rgb*=mix(1.0,.66+.4*pol,bosDek*(1.0-bosZicht));
           }
@@ -2282,6 +2288,9 @@ export async function maak3D(ctx){
   }
 
   /* ================================ thema ================================ */
+  let winterVeld=null;
+  /* de sneeuw op het bladerdak (A van het loofplaatje), na elke kleuring */
+  const sneeuwOpBos=()=>{ if(!akkerData||!winterVeld)return; for(let i=0;i<winterVeld.length;i++)akkerData[i*4+3]=klem(winterVeld[i],0,1)*255; if(loofTex)loofTex.needsUpdate=true; };
   let landKleurTex=null, landNormTex=null, loofTex=null, wolkDek=.9, wolkSch=.4;
   function zetThema(){
     const th=THEMA.licht;
@@ -2356,7 +2365,7 @@ export async function maak3D(ctx){
         }
       }
       T.veeg(ak,R.PW,R.PH,2); T.veeg(duin,R.PW,R.PH,3);
-      for(let i=0;i<MM;i++){ l[i*4]=klem(D.fLoof[i],0,1)*255; l[i*4+1]=klem(ak[i],0,1)*255; l[i*4+2]=klem(duin[i],0,1)*255; l[i*4+3]=255; }
+      for(let i=0;i<MM;i++){ l[i*4]=klem(D.fLoof[i],0,1)*255; l[i*4+1]=klem(ak[i],0,1)*255; l[i*4+2]=klem(duin[i],0,1)*255; l[i*4+3]=winterVeld?klem(winterVeld[i],0,1)*255:0; }
       akkerData=l;
       loofTex=new THREE.DataTexture(l,R.PW,R.PH,THREE.RGBAFormat);
       loofTex.minFilter=loofTex.magFilter=THREE.LinearFilter; loofTex.needsUpdate=true; }
@@ -2700,6 +2709,7 @@ export async function maak3D(ctx){
       try{
         const k=await opnieuwBijFout(bouwKleur);
         landKleurTex.image.data.set(k); landKleurTex.needsUpdate=true;
+        sneeuwOpBos();
         randVakken.clear(); detailVakken.clear(); werkRandBomenBij(true);
         zetThema();
       }finally{ ctx.laad.weg(); }
