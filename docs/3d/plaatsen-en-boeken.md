@@ -89,15 +89,19 @@ moestuin. De Kliffen zijn een richel, en rond Kolendal ligt heuvelland.
 echt stromend water.
 
 **Morgaraths Hoogvlakte en Burcht** — een kale, regenachtige hoogvlakte
-hoog boven het zuiden van het koninkrijk. Van de Driestappas loopt een rij
-loodrechte kliffen naar het westen, die overgaan in De Spleet. Op het
-plateau had Morgarath zijn hoofdkwartier: een burcht van waaruit hij de
-Wargals aanstuurde. *Model:* een grillig plateau van ~5 km, met een rand
-die meestal steil is en hier en daar een puinhelling, en een golvend
-bovenvlak. Erop het kamp van de Wargals en de burcht: een onregelmatige
-vijfhoek van donkere breuksteen, met platte torens, een hoge smalle donjon
-en een uitkijktoren met zwarte banier. **Open:** de ligging van de burcht
-op het plateau is een schatting.
+hoog boven het zuiden van het koninkrijk. Het gebied wordt aan alle kanten
+door kliffen afgesloten: van de Driestappas loopt een rij loodrechte kliffen
+naar het westen, die overgaan in De Spleet, en naar zee de kustkliffen. De
+Driestappas (drie treden in de rots) is de enige toegang. Op het plateau had
+Morgarath zijn hoofdkwartier: een burcht van waaruit hij de Wargals
+aanstuurde. *Model:* het hele gebied uit de kaart is hoogland, met een klif
+langs de hele rand; de hoogvlakte grenst aan de Noordelijke kliffen en heeft
+een rand zonder vaste vorm, de bergen liggen erachter naar het zuiden; bij de
+Driestappas een gang door de klif met drie treden. Op de hoogvlakte het kamp
+van de Wargals en de burcht: een onregelmatige vijfhoek van donkere
+breuksteen, met platte torens, een hoge smalle donjon en een uitkijktoren met
+zwarte banier. **Open:** de plek van de burcht is een schatting; de treden
+van de pas vallen op deze schaal nauwelijks op.
 
 ## Gallica
 
