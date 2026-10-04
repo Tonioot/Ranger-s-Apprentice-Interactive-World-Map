@@ -312,7 +312,9 @@ if(gId==1.0){           /* steen: gehouwen blokken in lagen */
 }else if(gId==8.0){     /* lei: kleine platte leien, verspringend */
   vec2 b=gBlokken(fv,.0019,.0028,.5,gZaad,px,.0003);
   gL=mix(.97,(.88+.24*b.x)*(1.0-.35*b.y),gZicht(.0019,px));
-  gK*=mix(vec3(1.0),vec3(.96,.98,1.05),b.x);
+  gK*=mix(vec3(1.0),vec3(.99,.99,1.0),b.x);
+  /* lei is van ver geen zwart: het matte grijs vangt de hemel */
+  gK*=1.45;
 }else if(gId==9.0){     /* plaggen: gras op het dak */
   float n=gRuis(fv*160.0+gZaad*9.0)*.6+gRuis(fv*40.0)*.4;
   gK=mix(gK,gK*vec3(.82,1.1,.78),n*.8);
@@ -350,6 +352,33 @@ if(gVerd>0.0&&gZij>.5&&(gId==1.0||gId==2.0||gId==3.0||gId==4.0||gId==10.0||gId==
 /* waar het gebouw de grond raakt is het donkerder: het licht van de hemel
    komt daar niet bij (en er spat modder op) */
 if(gZij>.3)gL*=mix(.66,1.0,smoothstep(0.0,.014,gBoven));
+/* Verwering: geen gebouw is zo schoon als nieuw. Alles in wereldmaat, zodat
+   het op een toren even groot is als op een schuur.
+   - vlekken van een paar meter: de ene steen, de ene kalklaag is de andere niet
+   - regenstrepen op de muren, vooral van boven naar beneden
+   - een vuile voet tot een paar meter hoog
+   - korstmos en mos op de daken, en een donkerder onderrand
+   Daarna de kleur zelf: een kwart minder verzadigd en iets donkerder dan
+   de opgegeven kleur, zoals echte steen, kalk en dakpannen. */
+{
+  float zg=gZicht(.01,px);
+  float vlek=gRuis(vWp.xz*95.0+vWp.y*70.0+gZaad)*.65+gRuis(vWp.xz*260.0-vWp.y*190.0)*.35;
+  gL*=mix(1.0,.86+.22*vlek,zg);
+  bool dak=gId==6.0||gId==7.0||gId==8.0||gId==9.0||gId==15.0;
+  if(gZij>.5&&!dak){
+    float streep=gRuis(vec2(fv.x*240.0+gZaad*3.1,hv*9.0+gZaad))*.7+gRuis(vec2(fv.x*610.0,hv*21.0))*.3;
+    gL*=1.0-.17*smoothstep(.45,.85,streep)*zg;
+    gL*=mix(.82,1.0,smoothstep(0.0,.022,gBoven));
+  }
+  if(dak||gZij<=.5){
+    float mos=smoothstep(.5,.85,gRuis(vWp.xz*420.0+gZaad*5.0)*.6+gRuis(vWp.xz*1300.0)*.4);
+    vec3 grijs=vec3(dot(gK,vec3(.3,.59,.11)));
+    gK=mix(gK,grijs*vec3(.92,.97,.82),mos*.35*zg);
+    if(dak)gL*=mix(.8,1.0,smoothstep(0.0,.006,fv.y));
+  }
+  float lum=dot(gK,vec3(.2126,.7152,.0722));
+  gK=mix(vec3(lum),gK,.74)*.92;
+}
 diffuseColor.rgb=gK*gL;`;
 /* het licht achter de ramen: in emissivemap_fragment */
 export const GEBOUW_GLSL_GLOED=`
@@ -369,7 +398,7 @@ const STIJLEN={
      en daar rode pannen; kastelen van grijze steen met leien spitsen */
   araluen:{muur:["#E6DFCC","#DED4BC","#D7CBB0","#EAE4D6"],muurMat:["vakwerk","vakwerk","pleister"],
     dak:["#9E8A5C","#93805A","#8A7A58","#8E5A44","#7E5040"],dakMat:["riet","riet","riet","pannen","pannen"],
-    steen:["#A9A498","#9F9A8E","#B2AC9F"],steenMat:"steen",torendak:["#646A72","#5E646C","#6A6E74"],torendakMat:"lei",
+    steen:["#A9A498","#9F9A8E","#B2AC9F"],steenMat:"steen",torendak:["#6E6F71","#67696B","#747473"],torendakMat:"lei",
     huis:"zadel",kasteel:"araluen",schip:"kogge",kantelen:"blok",vlag:"#2F5D3A",kerk:"toren"},
   /* Hibernia: lage witte stenen huisjes met riet, ronde torens */
   hibernia:{muur:["#ECEAE2","#E4E1D7","#DCD8CC"],muurMat:["pleister"],dak:["#9A8656","#8E7E52","#857650"],dakMat:["riet"],
@@ -612,7 +641,9 @@ export function maakBouwer(omg){
       }
       switch(dak){
         case "kegel": {
-          const dh=o.dakH??rad*2.2, dr=rad*(o.overstek??1.2);
+          /* niet te spits: een echte torenspits is lager en breder dan een
+             sprookjeshoed */
+          const dh=(o.dakH??rad*2.2)*.76, dr=rad*(o.overstek??1.2);
           if(vierkant)b.pir(u,v,y,dr*2,dr*2,dh,dk,{r:ry,mat:dm}); else b.kegel(u,v,y,dr,dh,dk,{mat:dm});
           b.stuk("vast",S.cil6,u,y+dh*.96,v,.15*M,1.8*M,.15*M,0,"#6A5E4A");   /* een pinakel op de punt */
           y+=dh; break;
@@ -1367,10 +1398,11 @@ function kasteel(B,b,stijl,o={}){
       /* Zodat niet elk leen hetzelfde kasteel heeft: een keuze uit
          plattegronden (o.plan), torens (o.torenVorm, o.torenDak), de
          donjon (o.donjon) en een voorburcht voor de poort (o.voorburcht).
-         Zonder keuze: vierkant, ronde torens met spitsen, vierkante donjon.
+         Zonder keuze: vierkant, ronde torens met een platte top en kantelen
+         (zoals de Engelse burchten waar Araluen op lijkt), vierkante donjon.
          De poort zit altijd midden in de zijde tussen punt 2 en 3 (het
          zuiden van het model), zodat de weg er recht uit loopt. */
-      const plan=o.plan||"vierkant", tv=o.torenVorm||"rond", td=o.torenDak||"kegel", dj=o.donjon||"vierkant";
+      const plan=o.plan||"vierkant", tv=o.torenVorm||"rond", td=o.torenDak||"plat", dj=o.donjon||"vierkant";
       let pts;
       if(plan==="lang")pts=[[-hw*1.3,-hd*.62],[hw*1.3,-hd*.62],[hw*1.3,hd*.62],[-hw*1.3,hd*.62]];
       else if(plan==="veelhoek")pts=[[-hw*.85,-hd*.95],[hw*.95,-hd*.6],[hw*.75,hd],[-hw*.8,hd],[-hw*1.05,hd*.05]];
@@ -1584,7 +1616,7 @@ export const BOUWERS={
        zonsopgang en -ondergang rood gloeit (vandaar de naam). Binnen de
        muren het plein en de donjon, met de vertrekken van baron Arald en zijn
        officieren; drie slaapzalen en een klein paradeplein. */
-    const rood="#9A5E4A", dak="#545A62", f=M, R=66*f, mh=13*f, dik=4*f;
+    const rood="#8C6452", dak="#66686B", f=M, R=66*f, mh=13*f, dik=4*f;
     const hoek=[Math.PI/6,Math.PI*5/6,-Math.PI/2], pts=hoek.map(a=>[Math.cos(a)*R,Math.sin(a)*R]);
     const basis=b.voet(0,0,R*.75,R*.75);
     b.stuk("vast",B.S.cilDicht,0,basis-.4,0,R*.62,.4,R*.62,0,rood,{mat:"steen"});
@@ -1597,7 +1629,7 @@ export const BOUWERS={
     const dtop=b.blok(0,dv,dw,dd,dh,rood,{y:basis-.01,mat:"steen",verd:5*f,vloer:basis});
     for(const [u0,v0,u1,v1,nu,nv] of [[-dw/2,dv-dd/2,dw/2,dv-dd/2,0,-1],[dw/2,dv-dd/2,dw/2,dv+dd/2,1,0],[dw/2,dv+dd/2,-dw/2,dv+dd/2,0,1],[-dw/2,dv+dd/2,-dw/2,dv-dd/2,-1,0]])
       b.kantelen(u0,v0,u1,v1,dtop,1.2*f,rood,{buiten:[nu,nv],mat:"steen",kantelen:"blok"});
-    for(const [a,c] of [[-1,-1],[1,-1],[1,1],[-1,1]])b.toren(a*dw/2,dv+c*dd/2,2.6*f,dh+4*f,rood,{y:basis-.01,dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:6*f,mat:"steen",plint:false,krans:false});
+    for(const [a,c] of [[-1,-1],[1,-1],[1,1],[-1,1]])b.toren(a*dw/2,dv+c*dd/2,2.6*f,dh+4*f,rood,{y:basis-.01,dak:"plat",mat:"steen",plint:false});
     b.toren(dw/2-4*f,dv-dd/2+4*f,3*f,dh+12*f,rood,{dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:7*f,vlag:"#8E2B2B",y:basis,mat:"steen",plint:false,ramen:5*f});
     b.top=Math.max(b.top,dtop+12*f);
     /* de slaapzalen: langs de twee muren zonder poort, en een achter de donjon */
@@ -1637,10 +1669,10 @@ export const BOUWERS={
      uitgestrekte tuinen, de zetel van koning Duncan */
   "kasteel-araluen":{info:{vlak:[.7,1.5,1],open:2.4},bouw(B,b){
     /* honingkleurige hardsteen (de boeken), met leien daken */
-    const wit="#D9BE88", blauw="#646C78", f=M, hw=60*f, hd=52*f;
+    const wit="#D9BE88", blauw="#6C6E72", f=M, hw=60*f, hd=52*f;
     const basis=b.voet(0,0,hw,hd);
     b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+4*f,.4,hd*2+4*f,0,wit,{mat:"steen"});
-    b.blok(0,0,hw*2,hd*2,.4*M,"#B7AD94",{y:basis-.3*M,mat:"kassei",var:0});
+    b.blok(0,0,hw*2,hd*2,.4*M,"#9A9282",{y:basis-.3*M,mat:"kassei",var:0});
     const hoeken=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]];
     b.ring(hoeken,13*f,3.4*f,wit,{y:basis-.02,top:basis+13*f,mat:"steen",gat:[2,14*f]});
     for(const [u,v] of hoeken)b.toren(u,v,5.5*f,22*f,wit,{dak:"kegel",dakKleur:blauw,dakMat:"lei",dakH:15*f,y:basis-.02,ramen:4.5*f});
@@ -1869,9 +1901,9 @@ export const BOUWERS={
   dacton:leen({plan:"rond",donjon:"rond",torenDak:"plat",breed:62,steen:"#8F8C84",dorp:[.6,.3]}),
   whitby:leen({plan:"lang",torenDak:"plat",donjon:"zaal",breed:72,steen:"#A8A193",dorp:[-.55,.4]}),
   kolwei:leen({torenVorm:"vierkant",torenDak:"plat",donjon:"rond",breed:68,steen:"#9E978B",dorp:[.6,.35]}),
-  kolendal:leen({plan:"veelhoek",donjon:"zaal",dak:"#6E4A3A",breed:66,steen:"#8E887E",heuvel:{r:.7,hoogte:.008},dorp:[-.6,.35]}),
+  kolendal:leen({plan:"veelhoek",torenDak:"kegel",donjon:"zaal",dak:"#6E4A3A",breed:66,steen:"#8E887E",heuvel:{r:.7,hoogte:.008},dorp:[-.6,.35]}),
   aspienne:leen({breed:70,steen:"#B3AA98",dorp:[.6,-.35]}),
-  treileth:leen({plan:"lang",voorburcht:true,breed:76,steen:"#9C978D",dorp:[-.6,.35]}),
+  treileth:leen({plan:"lang",torenDak:"kegel",voorburcht:true,breed:76,steen:"#9C978D",dorp:[-.6,.35]}),
   martenzij:leen({plan:"rond",donjon:"zaal",torenVorm:"vierkant",dak:"#7A3A2E",breed:64,steen:"#958E80",dorp:[.6,.3]}),
   woolsey:dorpje(2,501), claradon:dorpje(2,502), silvoorde:dorpje(2,503), pendelstad:dorpje(3,504),
   scanlon:dorpje(2,505), wilgendal:dorpje(2,506), ambelton:dorpje(1,507), dantwerpen:dorpje(2,508),
