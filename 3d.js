@@ -2340,7 +2340,8 @@ export async function maak3D(ctx){
         const z=(ctx.ZEEEN||[]).find(z=>"zee:"+z.id===id); if(z)vlieg(klem(z.x,0,W),klem(z.y,0,H),260,.8);
       }else if(D.POS[id]){
         const p=ctx.PLAATSEN.find(p=>p.id===id);
-        const afst=p&&/^(natuur|landschap|rivier)$/.test(p.soort)?Math.max(20,(p.straal||8)*2.8):11;
+        /* een plaats op ware schaal is klein: dichterbij dan een landschap */
+        const afst=p&&/^(natuur|landschap|rivier)$/.test(p.soort)?Math.max(20,(p.straal||8)*2.8):7;
         vlieg(D.POS[id][0],D.POS[id][1],afst,1.02);
       }
     },
