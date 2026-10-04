@@ -1281,9 +1281,9 @@ function kasteel(B,b,stijl,o={}){
   const muurO={kantelen:kant,y:basis-.02,top:basis+mh,mat:sm};
   let hdPoort=null;   /* waar de weg begint, als de poort niet op de zuidmuur zit */
   /* een voet tot onder de grond, zodat het kasteel nergens zweeft */
-  const voet=(rad)=>{ if(rad)b.stuk("vast",B.S.cilDicht,0,basis-.4,0,rad,.4,rad,0,steen,{mat:sm}); else b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+dik,.4,hd*2+dik,0,steen,{mat:sm}); };
+  const voet=(rad)=>{ if(rad)b.stuk("vast",B.S.cilDicht,0,basis-.4,0,rad,.4-.35*M,rad,0,steen,{mat:sm}); else b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+dik,.4-.35*M,hd*2+dik,0,steen,{mat:sm}); };
   /* het binnenplein: aangestampte aarde */
-  const plein=(rx,rz)=>b.blok(0,0,rx,rz,.4*M,"#9A8E74",{y:basis-.3*M,mat:"aarde",var:0});
+  const plein=(rx,rz)=>b.blok(0,0,rx,rz,.7*M,"#9A8E74",{y:basis-.3*M,mat:"aarde",var:0});
   /* een grote zaal of een gebouw tegen de muur */
   const zaal=(u,v,L,D,h,r,muur,dk,dmat,mat)=>{
     const top=b.blok(u,v,L,D,h,muur,{r,y:basis-.01,mat,verd:4.5*f,vloer:basis});
@@ -1619,10 +1619,10 @@ export const BOUWERS={
     const rood="#8C6452", dak="#66686B", f=M, R=66*f, mh=13*f, dik=4*f;
     const hoek=[Math.PI/6,Math.PI*5/6,-Math.PI/2], pts=hoek.map(a=>[Math.cos(a)*R,Math.sin(a)*R]);
     const basis=b.voet(0,0,R*.75,R*.75);
-    b.stuk("vast",B.S.cilDicht,0,basis-.4,0,R*.62,.4,R*.62,0,rood,{mat:"steen"});
-    b.cil(0,0,R*.48,.4*M,"#9A8E74",{y:basis-.3*M,mat:"aarde"});
+    b.stuk("vast",B.S.cilDicht,0,basis-.4,0,R*.62,.4-.35*M,R*.62,0,rood,{mat:"steen"});
+    b.cil(0,0,R*.48,.7*M,"#9A8E74",{y:basis-.3*M,mat:"aarde"});
     b.ring(pts,mh,dik,rood,{kantelen:"blok",y:basis-.02,top:basis+mh,mat:"steen",gat:[0,13*f]});
-    for(const [u,v] of pts){ b.stuk("vast",B.S.cilDicht,u,basis-.4,v,10*f,.4,10*f,0,rood,{mat:"steen"}); b.toren(u,v,9*f,mh+13*f,rood,{dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:13*f,y:basis-.02,mat:"steen",ramen:4.5*f}); }
+    for(const [u,v] of pts){ b.stuk("vast",B.S.cilDicht,u,basis-.4,v,10*f,.4-.35*M,10*f,0,rood,{mat:"steen"}); b.toren(u,v,9*f,mh+13*f,rood,{dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:13*f,y:basis-.02,mat:"steen",ramen:4.5*f}); }
     b.poort(0,R/2,Math.PI/2,15*f,mh+4*f,rood,dak,{mat:"steen"});
     /* de donjon: zwaar en vierkant, met torentjes op de hoeken */
     const dw=26*f, dd=23*f, dh=34*f, dv=-8*f;
@@ -1680,13 +1680,16 @@ export const BOUWERS={
     const steen="#CDB27E", lei="#6C6E72", f=M, hw=80*f, hd=68*f, mh=18*f, dik=5*f;
     const basis=b.voet(0,0,hw+30*f,hd+30*f);
     /* de voet en het plein */
-    b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+8*f,.4,hd*2+8*f,0,steen,{mat:"steen"});
-    b.blok(0,0,hw*2,hd*2,.4*M,"#9A9282",{y:basis-.3*M,mat:"kassei",var:0});
+    b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+8*f,.4-.35*M,hd*2+8*f,0,steen,{mat:"steen"});
+    b.blok(0,0,hw*2,hd*2,.7*M,"#9A9282",{y:basis-.3*M,mat:"kassei",var:0});
     /* de gracht: een band water rondom, op ~12 m van de muur */
     const gr=14*f, gw=12*f;
     for(const [u,v,L,W] of [[0,-(hd+gr),2*(hw+gr+gw/2),gw],[0,hd+gr,2*(hw+gr+gw/2),gw],[-(hw+gr),0,gw,2*(hd+gr-gw/2)],[hw+gr,0,gw,2*(hd+gr-gw/2)]]){
-      b.stuk("vast",B.S.blok,u,basis-.6*f,v,L+2*f,.6*f,W+2*f,0,"#6E6A58",{mat:"breuk"});
-      b.stuk("plas",B.S.blok,u,basis+.05*f,v,L,.01*f,W,0,"#45656E",{var:0});
+      /* het water net boven de grond (niet erop: dan flikkert het), met aan
+         beide kanten een lage rand van breuksteen */
+      b.stuk("plas",B.S.blok,u,basis+.35*f,v,L,.01*f,W,0,"#45656E",{var:0});
+      const lang=L>W, rL=lang?L+2*f:1.2*f, rW=lang?1.2*f:W+2*f;
+      for(const z of [-1,1])b.stuk("vast",B.S.blok,u+(lang?0:z*(W/2+.6*f)),basis-.3*f,v+(lang?z*(W/2+.6*f):0),lang?rL:1.2*f,1.1*f,lang?1.2*f:rW,0,"#7A7462",{mat:"breuk"});
     }
     /* de ringmuur: hoog en dik, met de poort op het zuiden */
     const hoeken=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]];
@@ -1733,20 +1736,35 @@ export const BOUWERS={
     }
     b.lamp(0,basis+mh+2*f,hd+3*f); b.lamp(0,ktop+2*f,kv); b.lamp(kw/2,basis+kh+20*f,kv+kd/2);
     b.top=Math.max(b.top,zt||0,ktop+30*f);
-    /* de tuinen, achter het kasteel buiten de gracht: perken met heggen,
-       grindpaden en geschoren boompjes, en een vijver met fontein */
-    for(let i=-2;i<=2;i++)for(let k=0;k<2;k++){
-      const u=i*22*f, v=-(hd+gr+gw/2+22*f+k*22*f);
-      if(!b.land(u,v)||(i===0&&k===1))continue;
-      const g=b.grond(u,v);
-      b.blok(u,v,22*f,22*f,.3*f,"#BDB49C",{y:g-.2*f,var:0,mat:"aarde"});
-      b.blok(u,v,18*f,18*f,.5*f,(i+k)%2?"#66784A":"#6E8050",{y:g-.2*f,var:.04,mat:"plag"});
-      for(const [du,dv,lu,lv] of [[0,-9,18,.8],[0,9,18,.8],[-9,0,.8,18],[9,0,.8,18]])
-        b.blok(u+du*f,v+dv*f,lu*f,lv*f,1.1*f,"#46583A",{y:g-.1*f,var:.05,mat:"plag"});
-      if((i+k)%2===0)b.kegel(u,v,g,1.4*f,4*f,"#42523A",{mat:"plag"});
+    /* het plein is geen lege vlakte: een kapel met klokkentoren, de keuken
+       naast de troonzaal, wachthuizen bij de poort, een put, de smidse en
+       huizen van het personeel, en een paar bomen */
+    { const kp=b.blok(-hw*.55,hd*.3,24*f,11*f,11*f,steen,{r:.0,y:basis-.01,mat:"steen",verd:6*f,vloer:basis});
+      b.zadel(-hw*.55,hd*.3,kp-.2*f,25*f,12*f,6*f,lei,{mat:"lei",gevel:{kleur:steen,mat:"steen"}});
+      b.toren(-hw*.55-12*f,hd*.3,3.4*f,24*f,steen,{vierkant:true,dak:"kegel",dakKleur:lei,dakMat:"lei",dakH:9*f,y:basis,mat:"steen",plint:false}); }
+    { const kt=b.blok(31*f,zv,16*f,12*f,9*f,steen,{y:basis-.01,mat:"steen",verd:4.5*f,vloer:basis});
+      b.zadel(31*f,zv,kt-.2*f,16.8*f,12.8*f,5*f,lei,{mat:"lei",gevel:{kleur:steen,mat:"steen"}});
+      b.cil(36*f,zv-3*f,1*f,kt-basis+4*f,steen,{y:basis,mat:"breuk"}); }
+    for(const z of [-1,1]){ const t=b.blok(z*16*f,hd-16*f,10*f,8*f,7*f,steen,{y:basis-.01,mat:"steen",verd:3.5*f,vloer:basis});
+      b.zadel(z*16*f,hd-16*f,t-.2*f,10.8*f,8.8*f,4*f,lei,{mat:"lei",gevel:{kleur:steen,mat:"steen"}}); }
+    { const u=-22*f,v=hd*.62-6*f; b.cil(u,v,2.2*f,1.2*f,steen,{y:basis,mat:"breuk"}); b.cil(u,v,1.6*f,.2*f,"#2E3A3E",{y:basis+1.1*f}); }
+    { const t=b.blok(hw*.6,hd*.25,14*f,9*f,6*f,"#8A7458",{y:basis-.01,mat:"breuk",verd:-1,vloer:basis});
+      b.lessenaar(hw*.6,hd*.25,t-.2*f,15*f,10*f,3*f,"#5E5650",{mat:"lei",gevel:{kleur:"#8A7458",mat:"breuk"}}); }
+    for(const [u,v,r] of [[-hw+18*f,-hd*.35,.3],[-hw+34*f,-hd*.6,1.9],[hw-26*f,hd*.05,.8]])B.huis(b,u,v,"araluen",{r,nr:Math.round(u*97)&63,maat:.9,aanbouw:false});
+    for(const [u,v] of [[-hw*.2,hd*.55],[hw*.25,hd*.6],[-hw*.7,-hd*.1],[hw*.72,-hd*.45]])b.boom(u,v,2,.55);
+    /* het kasteelpark, achter het kasteel buiten de gracht: een boomgaard in
+       onregelmatige rijen, een vijver met een vrije oever, en groepjes bomen
+       op het gras, zoals een park dat in eeuwen gegroeid is */
+    const pv=-(hd+gr+gw/2);
+    for(let r=0;r<4;r++)for(let k=0;k<9;k++){
+      const u=-hw*.85+k*20*f+(b.r(400+r*9+k)-.5)*6*f, v=pv-30*f-r*16*f+(b.r(440+r*9+k)-.5)*5*f;
+      if(b.r(480+r*9+k)<.12||!b.land(u,v))continue;
+      b.boom(u,v,3,.32+b.r(520+r*9+k)*.08);
     }
-    { const u=0,v=-(hd+gr+gw/2+44*f), g=b.grond(u,v);
-      b.cil(u,v,7*f,1*f,"#CFC6B2",{y:g-.2*f,mat:"steen"}); b.plas(u,v,6.2*f,6.2*f,g+.8*f); b.cil(u,v,.7*f,4*f,"#CFC6B2",{y:g,mat:"steen"}); }
+    { const u=hw*.55,v=pv-55*f, g=b.grond(u,v);
+      for(let i=0;i<5;i++){ const a=i*1.3, d=(i%2?7:3)*f; b.plas(u+Math.cos(a)*d,v+Math.sin(a)*d*.7,(9+b.r(560+i)*5)*f,(6+b.r(570+i)*4)*f,g+.35*f,{r:a}); } }
+    for(let i=0;i<14;i++){ const a=b.r(600+i)*Math.PI*2, d=(30+b.r(620+i)*50)*f, u=hw*.55+Math.cos(a)*d, v=pv-55*f+Math.sin(a)*d*.6;
+      if(b.land(u,v))b.boom(u,v,2,.45+b.r(640+i)*.15); }
     /* de weg van de ophaalbrug naar het dorp */
     b.weg([[0,hd+gr+gw/2+2*f],[0,hd+.7]],6*M,0);
     b.straal=.95;
@@ -1870,8 +1888,8 @@ export const BOUWERS={
     const steen="#3A3633", donker="#2A2725", f=M;
     const pts=[[-34,-30],[22,-38],[44,4],[16,36],[-38,22]].map(([u,v])=>[u*f,v*f]);
     const basis=b.voet(0,0,40*f,36*f);
-    b.stuk("vast",B.S.blok,0,basis-.4,0,90*f,.4,80*f,0,steen,{mat:"breuk"});
-    b.blok(0,0,70*f,60*f,.4*M,"#5E5850",{y:basis-.3*M,mat:"aarde",var:0});
+    b.stuk("vast",B.S.blok,0,basis-.4,0,90*f,.4-.35*M,80*f,0,steen,{mat:"breuk"});
+    b.blok(0,0,70*f,60*f,.7*M,"#5E5850",{y:basis-.3*M,mat:"aarde",var:0});
     /* de ringmuur, met de poort in de zijde naar het kamp (zuidoost) */
     b.ring(pts,14*f,3.4*f,steen,{kantelen:"blok",y:basis-.02,top:basis+14*f,mat:"breuk",gat:[3,12*f]});
     for(const [u,v] of pts)b.toren(u,v,5*f,20*f,steen,{vierkant:true,dak:"plat",y:basis-.02,mat:"breuk",kantelen:"blok",ramen:0});
