@@ -327,12 +327,16 @@ if(gId==1.0){           /* steen: gehouwen blokken in lagen */
   float P=.0085, uu=fract((fv.x+gHalf)/P), yy=fract(hv/.0075);
   float lat=max(1.0-smoothstep(.04,.04+px/P,min(uu,1.0-uu)),1.0-smoothstep(.05,.05+px/.0075,min(yy,1.0-yy)));
   gK=mix(gK,vec3(.24,.18,.13),lat*gZicht(P,px));
-}else if(gId==13.0){    /* aarde: aangestampt, met sporen */
-  float n=gRuis(fv*90.0)*.6+gRuis(fv*400.0)*.4;
-  gL=.88+.24*n;
-}else if(gId==14.0){    /* kasseien */
-  vec2 b=gBlokken(fv,.0022,.0024,.5,gZaad,px,.0004);
-  gL=mix(.95,(.85+.25*b.x)*(1.0-.4*b.y),gZicht(.0022,px));
+}else if(gId==13.0||gId==14.0){    /* aarde (aangestampt, met sporen) en kasseien */
+  if(gId==13.0){ float n=gRuis(fv*90.0)*.6+gRuis(fv*400.0)*.4; gL=.88+.24*n; }
+  else{ vec2 b=gBlokken(fv,.0022,.0024,.5,gZaad,px,.0004); gL=mix(.95,(.85+.25*b.x)*(1.0-.4*b.y),gZicht(.0022,px)); }
+  /* Een binnenplein of erf is nooit egaal: waar weinig gelopen wordt
+     groeit gras, waar het water blijft staan is het modder, en langs de
+     looppaden is het kaal en lichter. Plekken van een paar tot tien meter. */
+  float pg=gRuis(fv*11.0+gZaad*5.0)*.65+gRuis(fv*37.0)*.35;
+  float pm=gRuis(fv*19.0-gZaad*3.0);
+  gK=mix(gK,vec3(.33,.38,.22),smoothstep(.58,.78,pg)*.75);
+  gK=mix(gK,gK*vec3(.62,.6,.56),smoothstep(.66,.85,pm)*.6);
 }
 /* ramen: rijen op elke verdieping, uit de hoeken weg; 's nachts brandt er
    achter een deel ervan licht */
@@ -1616,7 +1620,7 @@ export const BOUWERS={
        zonsopgang en -ondergang rood gloeit (vandaar de naam). Binnen de
        muren het plein en de donjon, met de vertrekken van baron Arald en zijn
        officieren; drie slaapzalen en een klein paradeplein. */
-    const rood="#8C6452", dak="#66686B", f=M, R=66*f, mh=13*f, dik=4*f;
+    const rood="#9C735E", dak="#66686B", f=M, R=66*f, mh=13*f, dik=4*f;
     const hoek=[Math.PI/6,Math.PI*5/6,-Math.PI/2], pts=hoek.map(a=>[Math.cos(a)*R,Math.sin(a)*R]);
     const basis=b.voet(0,0,R*.75,R*.75);
     b.stuk("vast",B.S.cilDicht,0,basis-.4,0,R*.62,.4-.35*M,R*.62,0,rood,{mat:"steen"});
@@ -1689,7 +1693,9 @@ export const BOUWERS={
          beide kanten een lage rand van breuksteen */
       b.stuk("plas",B.S.blok,u,basis+.35*f,v,L,.01*f,W,0,"#45656E",{var:0});
       const lang=L>W, rL=lang?L+2*f:1.2*f, rW=lang?1.2*f:W+2*f;
-      for(const z of [-1,1])b.stuk("vast",B.S.blok,u+(lang?0:z*(W/2+.6*f)),basis-.3*f,v+(lang?z*(W/2+.6*f):0),lang?rL:1.2*f,1.1*f,lang?1.2*f:rW,0,"#7A7462",{mat:"breuk"});
+      /* de rand ligt een halve grachtbreedte naast het midden: de korte zijde van het vak */
+      const kort=(lang?W:L)/2+.6*f;
+      for(const z of [-1,1])b.stuk("vast",B.S.blok,u+(lang?0:z*kort),basis-.3*f,v+(lang?z*kort:0),lang?rL:1.2*f,1.1*f,lang?1.2*f:rW,0,"#7A7462",{mat:"breuk"});
     }
     /* de ringmuur: hoog en dik, met de poort op het zuiden */
     const hoeken=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]];

@@ -1966,12 +1966,12 @@ export async function maak3D(ctx){
      kavelranden die de shader als heg tekent (kavelRand), in cellen van een
      eenheid, en alleen binnen STRUIKVER van de camera: verder weg is een
      struik maar een beeldpunt en doet de getekende heg het werk. */
-  const STRUIKVER=klein?0:3.5, STRUIKMAX=30000, struikVakken=new Map();
-  /* een struik: drie platgedrukte bollen blad door elkaar, zonder stam */
+  const STRUIKVER=klein?0:3.5, STRUIKMAX=16000, struikVakken=new Map();
+  /* een struik: twee platgedrukte bollen blad door elkaar, zonder stam */
   function struikVorm(){
     const delen=[];
-    for(let i=0;i<3;i++){
-      const g=new THREE.IcosahedronGeometry(.42+.1*i,0).scale(1,.75,1).translate((i-1)*.32,.32+.06*(i%2),(i%2?.12:-.1));
+    for(let i=0;i<2;i++){
+      const g=new THREE.IcosahedronGeometry(.5+.08*i,0).scale(1.05,.75,1).translate((i-.5)*.42,.34+.06*i,(i?.1:-.08));
       const p=g.getAttribute("position");
       for(let k=0;k<p.count;k++){ const f=1+(T.hash2(Math.round(p.getX(k)*97+i*31),Math.round((p.getY(k)+p.getZ(k))*89))-.5)*.3; p.setXYZ(k,p.getX(k)*f,p.getY(k)*f,p.getZ(k)*f); }
       g.setAttribute("aDeel",new THREE.Float32BufferAttribute(new Float32Array(p.count).fill(1),1));
