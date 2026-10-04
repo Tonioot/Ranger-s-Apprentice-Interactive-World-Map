@@ -139,11 +139,13 @@ const PALET3D={
           jungle:"#22401B",woestijn:"#B0905F",moeras:"#4D4F40",toendra:"#7C7D72",kaal:"#77705F"}
 };
 /* de akkers in de lappendeken, per seizoen: groen koren in de lente, rijp
-   koren en stoppels in de zomer, geploegd in de herfst, kaal in de winter */
+   koren en stoppels in de zomer, geploegd in de herfst, kaal in de winter.
+   Zoals op een luchtfoto van Engeland: het meeste is wei in een paar
+   tinten groen, met hier en daar een gouden of bruine akker ertussen. */
 const AKKERS3D={
-  lente:["#6E7D45","#5C7238","#7A6A4C","#839150","#66763E"],
-  zomer:["#93844F","#61733A","#6F5E42","#7A8445","#86784A"],
-  herfst:["#6B5841","#73703F","#5E4E3A","#667040","#857550"],
+  lente:["#6A7C42","#58703A","#76664A","#728A48","#5F7440"],
+  zomer:["#9C8A55","#5B7238","#6E5D43","#6B8240","#566A39"],
+  herfst:["#6B5841","#5E6E3C","#5E4E3A","#667040","#857550"],
   winter:["#6A6050","#76705E","#5F574A","#6E6A58","#7A7262"]
 };
 /* Elk land heeft zijn eigen bodem: het groene, vochtige Hibernia en
@@ -1053,6 +1055,14 @@ export async function maak3D(ctx){
           /* in het bos alleen een vleugje: daar doen de kruinen het werk */
           float bosM=texture2D(normalMap,vNormalMapUv).a;
           diffuseColor.rgb*=mix(1.0,.84+.32*korrel,(1.0-smoothstep(6.0,55.0,dAfst))*(1.0-.7*bosM));
+          /* Echt land is nergens egaal: natte en droge plekken, schralere
+             grond op een helling, verschillen van honderden meters tot een
+             paar kilometer. Een zachte variatie in licht en tint (groener of
+             geler) over alles heen, zodat een grote vlakte niet als één
+             kleurvlak leest. */
+          float makro=texture2D(uDetail,vWolkW.xz*.043+.31).r*.6+texture2D(uDetail,vWolkW.xz*.17).r*.4;
+          float makroT=texture2D(uDetail,vWolkW.xz*.021+vec2(.6,.1)).r;
+          diffuseColor.rgb*=(.9+.2*makro)*mix(vec3(.97,1.02,.96),vec3(1.04,1.0,.9),makroT);
           /* Een steile wand (een klif, een bergflank) is rots. Het kleurplaatje
              is daar uitgerekt — een wand van een eenheid hoog beslaat maar een
              paar beeldpunten ervan —, dus hier eigen rots, met lagen gesteente
@@ -1183,14 +1193,18 @@ export async function maak3D(ctx){
             /* heggen: langs elke kavelrand, en tussen een deel van de akkers */
             float aa=akPx*.7;
             float kRand=(sqrt(b2)-sqrt(b1))*1.0*.5;
-            float hegK=1.0-smoothstep(.0016,.0016+aa,kRand);
-            float hegA=(1.0-smoothstep(.0012,.0012+aa,rand))*step(.7,kHash(vec2(rij*3.0+kol,bid.y)).y);
-            float zHeg=1.0-smoothstep(.005,.016,akPx);
+            /* een heg met bomen erin is van boven zo'n vier meter breed, en
+               is op een luchtfoto het eerste wat je van het land ziet */
+            float hegK=1.0-smoothstep(.0032,.0032+aa,kRand);
+            float hegA=(1.0-smoothstep(.0024,.0024+aa,rand))*step(.55,kHash(vec2(rij*3.0+kol,bid.y)).y);
+            float zHeg=1.0-smoothstep(.009,.026,akPx);
             float heg=max(hegK,hegA*zHeg);
             /* van ver: de heggen als een zweem donkerder langs de kavelranden */
-            heg=mix((1.0-smoothstep(.0,.016+akPx,kRand))*.12*(1.0-smoothstep(.03,.13,akPx)),heg,zHeg);
+            heg=mix((1.0-smoothstep(.0,.02+akPx,kRand))*.22*(1.0-smoothstep(.05,.2,akPx)),heg,zHeg);
             float pad=(1.0-smoothstep(.002,.002+aa,abs(kRand-.004)))*zHeg*.6;
-            vec3 akkerRes=mix(gewas,uHeg*(.85+.3*texture2D(uDetail,vWolkW.xz*9.0).r),heg*.9);
+            /* de heg is niet egaal: struiken en boomkruinen, met schaduw ertussen */
+            float hegKruin=texture2D(uDetail,vWolkW.xz*24.0).r*.6+texture2D(uDetail,vWolkW.xz*9.0).r*.4;
+            vec3 akkerRes=mix(gewas,uHeg*(.62+.6*hegKruin),heg*.92);
             akkerRes=mix(akkerRes,uWegKleur,pad*(1.0-heg));
             float zKavel=1.0-smoothstep(.16,.45,akPx);
             /* onder de sneeuw geen akkers */
@@ -1260,6 +1274,18 @@ export async function maak3D(ctx){
           float onderWater=.8*(1.0-smoothstep(-1.4,-.04,vWolkW.y));
           normal=texture2D(normalMap,vNormalMapUv).xyz*2.0-1.0;
           normal.xz+=kruinHelling*bosZicht;
+          /* Het hoogteraster is een paar honderd meter grof: een berg wordt
+             daarmee een gladde zandhoop. Op hellingen buiten het bos daarom
+             richels, geulen en brokken rots in het licht, van zo'n honderd
+             meter tot een paar meter, sterker naarmate het steiler is. */
+          float ruw=smoothstep(.06,.35,1.0-normalize(normal).y)*(1.0-bosM);
+          if(ruw>.002){
+            vec2 rp=vWolkW.xz*.38, rq=vWolkW.xz*1.6; const float e=1.0/128.0;
+            float r0=texture2D(uDetail,rp).r, r1=texture2D(uDetail,rq).r;
+            vec2 g1=vec2(texture2D(uDetail,rp+vec2(e,0.0)).r-r0,texture2D(uDetail,rp+vec2(0.0,e)).r-r0);
+            vec2 g2=vec2(texture2D(uDetail,rq+vec2(e,0.0)).r-r1,texture2D(uDetail,rq+vec2(0.0,e)).r-r1);
+            normal.xz-=(g1*7.0+g2*3.0*(1.0-smoothstep(3.0,25.0,dAfst)))*ruw;
+          }
           normal=normalize(normalMatrix*normalize(normal));`)
         /* nat land (rivieren) glanst: de alfa van het kleurplaatje zegt hoe nat.
            Niet te glad: een rivierband is van ver een paar honderd meter breed,
