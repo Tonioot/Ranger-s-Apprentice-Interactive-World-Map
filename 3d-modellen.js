@@ -1448,6 +1448,18 @@ function slagveld(B,b,stijl,o={}){
    zegt wat de grond eronder moet doen (3d-grond.js): hoe breed hij vlak
    wordt (vlak: [binnen, buiten, kracht]), hoe groot de open plek in het bos
    eromheen is (open), en of er een klif, kloof of meer ligt. */
+/* Een leen van Araluen: het kasteel van de baron, en het dorp van het leen
+   ernaast (o.dorp: waar, in modelmaat). Op een heuvel als o.heuvel. */
+function leen(o){
+  return {info:{vlak:[.45,1,1],open:1.1,...(o.heuvel?{heuvel:o.heuvel}:{})},bouw(B,b,p){
+    kasteel(B,b,"araluen",{breed:o.breed,steen:o.steen});
+    if(o.dorp){ const d=B.rond(...b.naast(o.dorp[0],o.dorp[1]),0,(o.breed*7)|0); stad(B,d,"araluen",{soort:2,zaad:o.breed*13}); }
+  }};
+}
+/* een dorp of stadje van de kaart, in zijn eigen maat: 1 gehucht, 2 dorp, 3 marktstad */
+function dorpje(soort,zaad,stijl){
+  return {info:{vlak:[.3,.7,.6],open:soort>=3?1:.7},bouw(B,b,p,st){ stad(B,b,stijl||st,{soort,zaad}); }};
+}
 export const BOUWERS={
   /* Kasteel Redmont — "het rode kasteel van baron Arald": rode zandsteen,
      op de heuvel boven Wensley, met een Krijgsschool op het binnenplein. Even
@@ -1703,6 +1715,43 @@ export const BOUWERS={
     const a=B.zeeRichting(b.cx,b.cy,2.5);
     kasteel(B,b,"picta",{});
     if(a!=null)B.vloot(b.cx,b.cy,a,"kogge",1,21,{van:.5,tot:.5,zeil:"#3A3A3A"});
+  }},
+
+  /* ---- de lenen, dorpen en de abdij van de kaart in de boeken ----
+     Een leenkasteel met het dorp van het leen ernaast; de dorpen in hun
+     eigen maat (gehucht, dorp of stadje). */
+  hoogklif:leen({breed:70,steen:"#8E8B83",heuvel:{r:.7,hoogte:.01},dorp:[-.7,.3]}),
+  keramon:leen({breed:66,steen:"#9A948A",heuvel:{r:.6,hoogte:.007},dorp:[.6,.35]}),
+  wetborg:leen({breed:64,steen:"#A49E92",dorp:[.6,-.3]}),
+  dacton:leen({breed:62,steen:"#8F8C84",dorp:[.6,.3]}),
+  whitby:leen({breed:72,steen:"#A8A193",dorp:[-.55,.4]}),
+  kolwei:leen({breed:68,steen:"#9E978B",dorp:[.6,.35]}),
+  kolendal:leen({breed:66,steen:"#8E887E",heuvel:{r:.7,hoogte:.008},dorp:[-.6,.35]}),
+  aspienne:leen({breed:70,steen:"#B3AA98",dorp:[.6,-.35]}),
+  treileth:leen({breed:76,steen:"#9C978D",dorp:[-.6,.35]}),
+  martenzij:leen({breed:64,steen:"#958E80",dorp:[.6,.3]}),
+  woolsey:dorpje(2,501), claradon:dorpje(2,502), silvoorde:dorpje(2,503), pendelstad:dorpje(3,504),
+  scanlon:dorpje(2,505), wilgendal:dorpje(2,506), ambelton:dorpje(1,507), dantwerpen:dorpje(2,508),
+  esselden:dorpje(1,509), hambley:dorpje(2,510), klaterkreek:dorpje(1,511),
+  pordelath:dorpje(2,512,"hibernia"), gwyntoleth:dorpje(2,513,"hibernia"),
+  /* Abdij Wolden: een grote kloosterkerk, een kruisgang rond een binnenhof,
+     de gebouwen van de monniken en een ommuurde moestuin */
+  "abdij-wolden":{info:{vlak:[.3,.7,.8],open:.6},bouw(B,b){
+    const steen="#B7AE9C", dak="#5E636A", g=b.voet(0,0,30*M,24*M);
+    const top=b.blok(0,-10*M,40*M,12*M,13*M,steen,{y:g-.02,mat:"steen",verd:6*M,vloer:g});
+    b.zadel(0,-10*M,top-.2*M,41*M,13.5*M,8*M,dak,{mat:"lei",gevel:{kleur:steen,mat:"steen"}});
+    b.toren(-24*M,-10*M,3.6*M,28*M,steen,{vierkant:true,dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:12*M,mat:"steen",plint:false,krans:false});
+    /* de kruisgang: vier lage vleugels om een vierkante hof */
+    for(const [u,v,l,d,r] of [[0,8*M,30*M,7*M,0],[0,26*M,30*M,7*M,0],[-15*M,17*M,7*M,25*M,0],[15*M,17*M,7*M,25*M,0]]){
+      const t=b.blok(u,v,l,d,6*M,steen,{r,y:g-.02,mat:"steen",verd:3*M,vloer:g});
+      b.zadel(u,v,t-.2*M,l+.6*M,d+1*M,3*M,"#8C5E46",{r:l>d?0:Math.PI/2,mat:"pannen",gevel:{kleur:steen,mat:"steen"}});
+    }
+    b.blok(0,17*M,22*M,10*M,.3*M,"#6E8048",{y:g-.2*M,mat:"plag",var:.05});
+    /* de moestuin achter een lage muur */
+    const pts=[[22*M,0],[48*M,0],[48*M,26*M],[22*M,26*M]];
+    b.ring(pts,2*M,.8*M,steen,{kantelen:null,mat:"breuk",open:[3]});
+    for(let i=0;i<5;i++)b.blok(35*M,(3+i*5)*M,22*M,2.6*M,.3*M,i%2?"#5E6B38":"#6E5A40",{y:g-.2*M,mat:"aarde",var:.1});
+    b.lamp(0,top+2*M,-10*M); b.straal=.5;
   }},
 
   /* ---- Skandia ---- */

@@ -49,6 +49,27 @@ een droge gracht, de poort op het zuiden.
 *Model:* havenstad (90 huizen) en vissersdorp (26 huizen) aan de waterlijn,
 met kade, steigers en schepen.
 
+**Plaatsen van de kaart in de boeken** — de kaart voorin de Nederlandse
+uitgave noemt nog veel meer plaatsen in Araluen. Die staan nu ook op de
+kaart, op de plek waar de boekkaart ze tekent (omgerekend via vaste
+ankerpunten, dus bij benadering: `approx`).
+- Leenkastelen: Hoogklif, Keramon, Wetborg, Dacton, Whitby, Kolwei,
+  Kolendal, Aspienne, Treileth en Martenzij.
+- Steden en dorpen: Woolsey, Claradon, Silvoorde, Pendelstad, Scanlon,
+  Ambelton, Dantwerpen, Esselden, Hambley en Klaterkreek. In Celtica liggen
+  Pordelath en Gwyntoleth.
+- Verder: de Abdij van Wolden, De Kliffen, het Verdronken Woud, en de pas van
+  Eenraaf en die van Macindaw.
+- Rivieren: Tarbus, Zalmrivier, Derrylon, Kraaienpotenrivier, Sliponderrivier,
+  Wildrivier en Craiskill.
+
+*Model:* elk leenkasteel een vierkante burcht in eigen steenkleur met een
+dorp ernaast, soms op een heuvel. De steden en dorpen zijn uitgezet naar hun
+rang. De abdij heeft een kerk met toren, een kloosterhof en een ommuurde
+moestuin. De Kliffen zijn een richel, en rond Kolendal ligt heuvelland.
+**Open:** de rivieren zijn, net als de andere, nog brede natte banden en geen
+echt stromend water.
+
 ## Gallica
 
 **Château Montsombre** — het zwarte kasteel van Deparnieux: gedrongen en
