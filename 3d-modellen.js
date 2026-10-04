@@ -44,8 +44,14 @@
 import * as THREE from "three";
 
 const klem=(v,a,b)=>v<a?a:v>b?b:v;
-/* één meter, in kaarteenheden */
-export const M=.006;
+/* Eén meter in de maten van de modellen. De bouwers rekenen in die maat; elk
+   model wordt daarna met K verkleind rond zijn eigen midden (horizontaal
+   rond de plaats, verticaal rond de grond daar) tot zijn echte grootte op de
+   kaart. Een meter op de kaart is dus M·K kaarteenheden (METER in
+   3d-grond.js): één kaarteenheid is zo'n 650 meter, en Redmont ligt een
+   kleine kilometer van Wensley en een dag rijden van Kasteel Araluen. */
+export const M=.006, K=.25;
+const M_=M;
 
 /* ======================= materialen =======================
    Het nummer gaat per hoekpunt naar de shader; de shader hieronder zegt wat
@@ -248,7 +254,7 @@ vec2 fv=vVlak.xy; float gHalf=vVlak.z, gBoven=vVlak.w;
 vec3 gN=normalize(vNw);
 float gZij=1.0-smoothstep(.35,.7,abs(gN.y));
 float px=max(max(length(dFdx(fv)),length(dFdy(fv))),1e-6);
-float hv=vWp.y-gVloer;
+float hv=(vWp.y-gVloer)*${(1/K).toFixed(4)};
 vec3 gK=diffuseColor.rgb; float gL=1.0; float gGloed=0.0;
 float gRaamB=.4;        /* hoe breed een raam is, als deel van zijn vak */
 if(gId==1.0){           /* steen: gehouwen blokken in lagen */
@@ -429,31 +435,43 @@ export function maakBouwer(omg){
   const kl=new THREE.Color(), klG=new THREE.Color();
   /* van wereld terug naar de kaart, voor de hoogte boven de grond */
   const X0=X(0), Z0=Z(0);
-  const bovenLand=(x,y,z)=>y-yOp(x-X0,z-Z0);
-  const bovenZee=(x,y)=>y;
+  /* hoe hoog een punt boven de grond (of de zee) ligt, in modelmaat */
+  const bovenLand=(x,y,z)=>(y-yOp(x-X0,z-Z0))/K;
+  const bovenZee=(x,y)=>y/K;
 
   /* b: een bouwer rond kaartpunt (cx,cy), gedraaid over rot */
-  function rond(cx,cy,rot,zaad){
+  /* De ruimte van een model: horizontaal K keer zo groot als de kaart rond
+     (cx,cy), verticaal K keer zo hoog rond gC, de grond in het midden (of het
+     zeeniveau, voor schepen en steigers). De grond wordt op dezelfde manier
+     omgerekend, dus wat op de grond staat, staat er ook na het verkleinen op;
+     en een helling is in de modelruimte even steil als echt. */
+  function rond(cx,cy,rot,zaad,o={}){
     const co=Math.cos(rot), si=Math.sin(rot);
+    const k=o.schaal??K, gC=o.zee?0:yOp(cx,cy);
     let teller=0;
-    const b={cx,cy,rot,top:0,straal:.5,
+    const b={cx,cy,rot,top:0,straal:.5,k,gC,
       /* toeval dat bij deze plaats hoort: elke keer laden hetzelfde */
       r:(i)=>hash2((cx*131+i*17+zaad)|0,(cy*71+i*29)|0),
-      w:(u,v)=>[cx+u*co-v*si,cy+u*si+v*co],
-      grond:(u,v)=>{ const [x,y]=b.w(u,v); return yOp(x,y); },
+      w:(u,v)=>[cx+(u*co-v*si)*k,cy+(u*si+v*co)*k],
+      /* een plek op de kaart naast deze, met een verschuiving in modelmaat (niet gedraaid) */
+      naast:(du,dv)=>[cx+du*k,cy+dv*k],
+      /* van modelhoogte naar wereldhoogte en terug */
+      wy:y=>gC+(y-gC)*k,
+      my:y=>gC+(y-gC)/k,
+      grond:(u,v)=>{ const [x,y]=b.w(u,v); return gC+(yOp(x,y)-gC)/k; },
       land:(u,v)=>{ const [x,y]=b.w(u,v); return opLand(x,y); },
       diep:(u,v)=>{ const [x,y]=b.w(u,v); return hNorm(x,y); },
       /* de laagste grond onder een voetafdruk: daar begint de voet */
       voet:(u,v,ru,rv,r=0)=>{
         let m=b.grond(u,v); const c=Math.cos(r),s=Math.sin(r);
         for(const [a,d] of [[-ru,-rv],[ru,-rv],[ru,rv],[-ru,rv]])m=Math.min(m,b.grond(u+a*c-d*s,v+a*s+d*c));
-        return Math.max(m,.02);
+        return Math.max(m,b.my(.02));
       },
       /* de hoogste grond onder een voetafdruk: daar ligt de vloer */
       kruin:(u,v,ru,rv,r=0)=>{
         let m=b.grond(u,v); const c=Math.cos(r),s=Math.sin(r);
         for(const [a,d] of [[-ru,-rv],[ru,-rv],[ru,rv],[-ru,rv]])m=Math.max(m,b.grond(u+a*c-d*s,v+a*s+d*c));
-        return Math.max(m,.02);
+        return Math.max(m,b.my(.02));
       }
     };
     const kleurVan=(k,var_)=>{ kl.set(k); if(var_){ const f=1+(b.r(teller++)-.5)*var_; kl.r*=f; kl.g*=f; kl.b*=f; } return kl; };
@@ -463,9 +481,11 @@ export function maakBouwer(omg){
        van de gevels van een zadeldak) */
     b.stuk=(bak,s,u,y,v,sx,sy,sz,r,kleur,o={})=>{
       const [x,yy]=b.w(u,v);
-      m4.compose(pv.set(X(x),y,Z(yy)),q.setFromEuler(e.set(o.rx||0,-(rot+(r||0)),o.rz||0,"YXZ")),sv.set(sx,sy,sz));
+      m4.compose(pv.set(X(x),b.wy(y),Z(yy)),q.setFromEuler(e.set(o.rx||0,-(rot+(r||0)),o.rz||0,"YXZ")),sv.set(sx*k,sy*k,sz*k));
       nm.getNormalMatrix(m4);
-      const info={sx,sy,sz,mat:matVan(o.mat),zaad:(b.r(teller+3)*97)%97,verd:o.verd||0,vloer:o.vloer??y};
+      /* de maten op het vlak blijven in modelmaat (zo heeft een laag steen
+         zijn eigen hoogte); de vloer gaat als wereldhoogte mee */
+      const info={sx,sy,sz,mat:matVan(o.mat),zaad:(b.r(teller+3)*97)%97,verd:o.verd||0,vloer:b.wy(o.vloer??y)};
       if(o.gevel){ klG.set(o.gevel.kleur||o.gevel); info.gevel={kleur:klG,mat:matVan(o.gevel.mat),verd:o.gevel.verd||0}; }
       bakken[bak].voeg(s,m4,nm,kleurVan(kleur,o.var??.08),info,o.dob,bak==="schip"?bovenZee:bovenLand);
       b.top=Math.max(b.top,y+sy);
@@ -491,10 +511,10 @@ export function maakBouwer(omg){
     b.koepel=(u,v,y,rad,h,kleur,o={})=>b.stuk(o.bak||"vast",S.koepel,u,y,v,rad,h,rad,0,kleur,o);
     b.ui=(u,v,y,rad,h,kleur,o={})=>b.stuk(o.bak||"vast",S.ui,u,y,v,rad,h,rad,0,kleur,o);
     b.bol=(u,v,y,rad,kleur,o={})=>b.stuk(o.bak||"vast",S.bol,u,y,v,rad,o.h??rad,rad,0,kleur,o);
-    b.lamp=(u,y,v)=>{ const [x,yy]=b.w(u,v); lampjes.push(X(x),y,Z(yy)); };
-    b.boom=(u,v,soort,maat=1)=>{ const [x,y]=b.w(u,v); if(opLand(x,y))bomen.push(x,y,soort,maat); };
+    b.lamp=(u,y,v)=>{ const [x,yy]=b.w(u,v); lampjes.push(X(x),b.wy(y),Z(yy)); };
+    b.boom=(u,v,soort,maat=1)=>{ const [x,y]=b.w(u,v); if(opLand(x,y))bomen.push(x,y,soort,maat*k); };
     /* een weg of straat (lokale punten): die tekent de grond (zie de wegen in 3d.js) */
-    b.weg=(pts,breed=4.5*M,soort=0)=>{ wegen.push({pts:pts.map(([u,v])=>b.w(u,v)),breed,soort}); };
+    b.weg=(pts,breed=4.5*M,soort=0)=>{ wegen.push({pts:pts.map(([u,v])=>b.w(u,v)),breed:breed*k,soort}); };
     /* een paal met een vlag (het doek wappert niet, maar hangt wel aan de goede kant) */
     b.vlag=(u,v,y,h,kleur,o={})=>{
       const m=o.maat||1;
@@ -866,13 +886,13 @@ export function maakBouwer(omg){
     const g=new THREE.BufferGeometry(); g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3)); g.computeVertexNormals();
     const s={p:g.getAttribute("position").array,n:g.getAttribute("normal").array,vorm:"vlak"};
     const [mx,my,richting]=plek;
-    m4.compose(pv.set(X(mx),0,Z(my)),q.setFromEuler(e.set(0,-richting,0)),sv.set(1,1,1));
+    m4.compose(pv.set(X(mx),0,Z(my)),q.setFromEuler(e.set(0,-richting,0)),sv.set(K,K,K));
     nm.getNormalMatrix(m4);
     kl.set(kleur); bakken[bak].voeg(s,m4,nm,kl,{sx:1,sy:1,sz:1,mat:MAT.hout,zaad:dob[2]%97,verd:0,vloer:0},dob,bovenZee);
   }
   function schip(soort,mx,my,richting,zaad,o={}){
     const dob=[X(mx),Z(my),zaad*7.3,1];
-    const b=rond(mx,my,richting,zaad);
+    const b=rond(mx,my,richting,zaad,{zee:true});
     const sk=(s,u,y,v,sx,sy,sz,r,k,oo={})=>b.stuk("schip",s,u,y,v,sx,sy,sz,r,k,{...oo,dob,var:.05});
     const m=(o.maat||1)*M;
     switch(soort){
@@ -953,11 +973,12 @@ export function maakBouwer(omg){
     const gelegd=[];
     for(let k=0;k<aantal*30&&gelegd.length<aantal;k++){
       const hk=hash2((cx*31+k*7+zaad)|0,(cy*17+k*13)|0), hk2=hash2((cy*29+k*5)|0,(cx*11+k*19+zaad)|0);
-      const hoek=a+(hk-.5)*(o.spreid??1.6), d=(o.van??.35)+hk2*(o.tot??.9);
-      const x=cx+Math.cos(hoek)*d, y=cy+Math.sin(hoek)*d;
-      if(hNorm(x,y)>(o.ondiep??-.03))continue;
-      if(hNorm(x+.1,y)>-.01||hNorm(x-.1,y)>-.01||hNorm(x,y+.1)>-.01||hNorm(x,y-.1)>-.01)continue;
-      if(gelegd.some(([gx,gy])=>Math.hypot(gx-x,gy-y)<(o.ruimte??.22)))continue;
+      /* de afstanden in modelmaat: een haven op schaal heeft zijn schepen dichtbij */
+      const hoek=a+(hk-.5)*(o.spreid??1.6), d=((o.van??.35)+hk2*(o.tot??.9))*K*(1+Math.floor(k/(aantal*10))*.6);
+      const x=cx+Math.cos(hoek)*d, y=cy+Math.sin(hoek)*d, rr=.1*K;
+      if(hNorm(x,y)>(o.ondiep??-.02))continue;
+      if(hNorm(x+rr,y)>-.005||hNorm(x-rr,y)>-.005||hNorm(x,y+rr)>-.005||hNorm(x,y-rr)>-.005)continue;
+      if(gelegd.some(([gx,gy])=>Math.hypot(gx-x,gy-y)<(o.ruimte??.22)*K))continue;
       gelegd.push([x,y]);
       const r=o.richting!=null?o.richting+(hk2-.5)*.4:hk*Math.PI*2;
       schip(Array.isArray(soort)?soort[gelegd.length%soort.length]:soort,x,y,r,zaad+k,o);
@@ -967,17 +988,17 @@ export function maakBouwer(omg){
   /* een steiger vanaf de waterlijn het water in: planken op palen */
   function steiger(b,cx,cy,a,lang=.25,kleur="#6B5138"){
     const t=waterlijn(cx,cy,a), dx=Math.cos(a), dy=Math.sin(a);
-    const x0=cx+dx*(t-.05), y0=cy+dy*(t-.05);
-    const c=rond(x0,y0,a,7);
+    const x0=cx+dx*(t-.05*K), y0=cy+dy*(t-.05*K);
+    const c=rond(x0,y0,a,7,{zee:true});
     c.stuk("vast",V.blok,lang/2,.02,0,lang,.5*M,3*M,0,kleur,{mat:"hout"});
     for(let i=0;i<=Math.floor(lang/(4*M));i++)for(const z of [-1,1])c.stuk("vast",V.cil6,i*4*M,-.2,z*1.3*M,.25*M,.22+.5*M,.25*M,0,"#4E3A28");
-    return [x0+dx*lang,y0+dy*lang];
+    return [x0+dx*lang*K,y0+dy*lang*K];
   }
   /* een kade langs de waterlijn: een stenen rand met een bolder hier en daar */
   function kade(b,cx,cy,a,lang,kleur="#8E887C"){
     const t=waterlijn(cx,cy,a), dx=Math.cos(a), dy=Math.sin(a);
-    const x0=cx+dx*(t-.012), y0=cy+dy*(t-.012);
-    const c=rond(x0,y0,a+Math.PI/2,9);
+    const x0=cx+dx*(t-.012*K), y0=cy+dy*(t-.012*K);
+    const c=rond(x0,y0,a+Math.PI/2,9,{zee:true});
     const g=Math.max(.03,c.grond(0,-3*M));
     c.blok(0,0,lang,4*M,.2*M,kleur,{y:-.15,mat:"steen"});
     c.stuk("vast",V.blok,0,-.15,0,lang,g+.15,4*M,0,kleur,{mat:"steen"});
@@ -995,7 +1016,7 @@ export function maakBouwer(omg){
        draaien: elk hoekpunt weet waar de naaf zit en hoe de as loopt
        (aDobber), de shader in 3d.js draait ze daaromheen. */
     const c=Math.cos(r), s=Math.sin(r), au=u+c*3.4*M, av=v+s*3.4*M, ay=top+1.6*M;
-    const [nx,ny]=b.w(au,av), dob=[X(nx),Z(ny),ay,b.rot+r];
+    const [nx,ny]=b.w(au,av), dob=[X(nx),Z(ny),b.wy(ay),b.rot+r];
     for(let i=0;i<4;i++){
       const hk=i*Math.PI/2+.35;
       b.stuk("wiek",S.blok,au,ay,av,.35*M,9.5*M,.35*M,r+Math.PI/2,"#5E4A38",{rz:hk,mat:"hout",dob});
@@ -1222,7 +1243,7 @@ function haven(B,b,stijl,p,o={}){
     /* het water ligt een eind verderop: de stad blijft waar de kaart hem
        zet, en aan de kust ligt een haventje met een steiger en schepen */
     stad(B,b,stijl,o);
-    const kx=b.cx+Math.cos(a)*(t-.2), ky=b.cy+Math.sin(a)*(t-.2);
+    const kx=b.cx+Math.cos(a)*(t-.2*K), ky=b.cy+Math.sin(a)*(t-.2*K);
     const k=B.rond(kx,ky,a+Math.PI/2,b.r(6)*99|0);
     B.dorp(k,stijl,{straal:.18,aantal:6,geenPlein:true,richting:0,zaad:5});
     B.steiger(k,kx,ky,a,o.steiger||.22);
@@ -1233,16 +1254,16 @@ function haven(B,b,stijl,p,o={}){
   /* de stad ligt aan het water en groeit dus alleen landinwaarts: het midden
      schuift wat van de waterlijn af, de hoofdstraat loopt langs de kust */
   const R=o.straal||.5;
-  const mx=b.cx+Math.cos(a)*(t-R*.7), my=b.cy+Math.sin(a)*(t-R*.7);
+  const mx=b.cx+Math.cos(a)*(t-R*.7*K), my=b.cy+Math.sin(a)*(t-R*.7*K);
   const c=B.rond(mx,my,a+Math.PI/2,b.r(5)*99|0);
   stad(B,c,stijl,{...o,richting:0,plein:o.plein||[0,-R*.25]});
   /* de kade en de pakhuizen erachter */
   const [kx,ky]=B.kade(c,mx,my,a,Math.min(.3,R*.8));
-  const pk=B.rond(kx-Math.cos(a)*12*M,ky-Math.sin(a)*12*M,a+Math.PI/2,b.r(8)*99|0);
+  const pk=B.rond(kx-Math.cos(a)*12*M*K,ky-Math.sin(a)*12*M*K,a+Math.PI/2,b.r(8)*99|0);
   for(let i=-1;i<=1;i++){ if(!pk.land(i*18*M,0))continue; const g=pk.kruin(i*18*M,0,7*M,5*M); if(g-pk.voet(i*18*M,0,7*M,5*M)>2.5*M)continue; const top=pk.blok(i*18*M,0,15*M,9*M,7*M,st.muur[0],{mat:st.huis==="plat"?"leem":"hout",vloer:g,verd:3.5*M});
     if(st.huis==="plat")continue; pk.zadel(i*18*M,0,top-.2*M,15.6*M,10*M,5*M,st.dak[0],{mat:st.dakMat[0],gevel:{kleur:st.muur[0],mat:"hout"}}); }
   B.steiger(c,mx,my,a,o.steiger||.22);
-  if(o.tweedeSteiger)B.steiger(c,mx+Math.cos(a+1.57)*.18,my+Math.sin(a+1.57)*.18,a,.18);
+  if(o.tweedeSteiger)B.steiger(c,mx+Math.cos(a+1.57)*.18*K,my+Math.sin(a+1.57)*.18*K,a,.18);
   B.vloot(mx,my,a,o.schip||st.schip,o.schepen??3,b.r(9)*999|0,{richting:a+Math.PI/2,...(o.vloot||{})});
   b.top=Math.max(b.top,c.top,pk.top); b.straal=R+.15;
 }
@@ -1297,12 +1318,12 @@ export const BOUWERS={
     const rood="#8E7266", dak="#5A6068";
     kasteel(B,b,"araluen",{steen:rood,dak,breed:84,muurH:11,torenR:5.5,donjonH:28,vlag:"#8E2B2B"});
     /* de oefenplaats van de Krijgsschool: een omheind veld met staken */
-    const c=B.rond(b.cx-.42,b.cy-.1,0,3), g=c.grond(0,0);
+    const c=B.rond(...b.naast(-.42,-.1),0,3), g=c.grond(0,0);
     c.blok(0,0,30*M,18*M,.2*M,"#A2946E",{y:g-.1*M,mat:"aarde",var:0});
     for(let i=0;i<8;i++){ const u=(i-3.5)*4*M; c.cil(u,9*M,.18*M,1.6*M,"#6B5138",{zes:true}); c.cil(u,-9*M,.18*M,1.6*M,"#6B5138",{zes:true}); }
     for(let i=0;i<4;i++)c.cil((i-1.5)*6*M,0,.3*M,2*M,"#5E4A38",{zes:true});
     /* de hut van Halt, aan de bosrand richting het Westwoud */
-    const h=B.rond(b.cx-.55,b.cy+.45,-.4,4), hg=h.kruin(0,0,4*M,3*M);
+    const h=B.rond(...b.naast(-.55,+.45),-.4,4), hg=h.kruin(0,0,4*M,3*M);
     const top=h.blok(0,0,8*M,5.5*M,3*M,"#7A5E44",{mat:"hout",vloer:hg});
     h.zadel(0,0,top-.2*M,9*M,6.6*M,3.4*M,"#7E6E4E",{mat:"riet",gevel:{kleur:"#7A5E44",mat:"hout"}});
     h.blok(3*M,0,1*M,1*M,6.6*M,"#857B6C",{mat:"breuk",y:hg-.005});
@@ -1363,14 +1384,14 @@ export const BOUWERS={
       b.blok(u,v,bx,bz,.3*M,"#55603E",{y:g-.25*M,var:0,mat:"plag"});
   }},
   /* Noordam (Norgate) — het leen aan de noordgrens */
-  noordam:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:74,steen:"#A49F93"}); B.dorp(B.rond(b.cx+.62,b.cy+.36,.3,8),"araluen",{straal:.26,aantal:14,geenPlein:false,zaad:2}); }},
+  noordam:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:74,steen:"#A49F93"}); B.dorp(B.rond(...b.naast(+.62,+.36),.3,8),"araluen",{straal:.26,aantal:14,geenPlein:false,zaad:2}); }},
   /* Karwij (Caraway) — een leen met een eigen Krijgsschool */
-  karwij:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:76,steen:"#B8B1A2"}); B.dorp(B.rond(b.cx-.64,b.cy+.3,-.3,9),"araluen",{straal:.26,aantal:13,zaad:3}); }},
+  karwij:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:76,steen:"#B8B1A2"}); B.dorp(B.rond(...b.naast(-.64,+.3),-.3,9),"araluen",{straal:.26,aantal:13,zaad:3}); }},
   /* Gorlan — Morgaraths kasteel, sinds zijn nederlaag een ruïne die de boeren
      mijden; en het toernooiveld waar het allemaal begon */
   gorlan:{info:{vlak:[.45,1,.8],open:1.2},bouw(B,b){
     ruine(B,b,"araluen",{breed:74,steen:"#77736A",puin:"#6E6A60"});
-    const c=B.rond(b.cx+.6,b.cy+.2,.2,5), g=c.grond(0,0);
+    const c=B.rond(...b.naast(+.6,+.2),.2,5), g=c.grond(0,0);
     c.blok(0,0,60*M,26*M,.2*M,"#8E8A6A",{y:g-.1*M,var:0,mat:"aarde"});
     for(const z of [-1,1])c.blok(0,z*14*M,60*M,.5*M,1.4*M,"#5E4A38",{y:g,mat:"hout"});
   }},
@@ -1378,7 +1399,7 @@ export const BOUWERS={
      een burcht boven op het klif (zie het klif in 3d-grond.js) */
   zeeklif:{info:{klif:{r:3.2,hoogte:1.5},vlak:[.3,.7,.8],open:.8},bouw(B,b){
     kasteel(B,b,"araluen",{breed:50,muurH:8,torenR:4.4,donjonH:20,steen:"#ADA799"});
-    B.dorp(B.rond(b.cx-.3,b.cy+.28,.5,11),"araluen",{straal:.16,aantal:7,geenPlein:true,zaad:4});
+    B.dorp(B.rond(...b.naast(-.3,+.28),.5,11),"araluen",{straal:.16,aantal:7,geenPlein:true,zaad:4});
     const a=B.zeeRichting(b.cx,b.cy,2.6); if(a!=null){ B.steiger(b,b.cx,b.cy,a,.15); B.vloot(b.cx,b.cy,a,"boot",3,11,{van:.15,tot:.3,ruimte:.08}); }
   }},
   /* De Oostelijke en Zuidelijke kliffen — waar het gebergte van Morgarath
@@ -1396,7 +1417,7 @@ export const BOUWERS={
     b.straal=.3;
   }},
   /* Het Grimsdell Woud — mistig en verwrongen: dode, kromme bomen tussen het naaldbos */
-  grimsdell:{info:{},bouw(B,b){ for(let i=0;i<14;i++){ const a=b.r(i)*Math.PI*2, d=1+b.r(i+20)*5; b.boom(Math.cos(a)*d,Math.sin(a)*d,5,1.1); } b.straal=0; }},
+  grimsdell:{wereld:true,info:{},bouw(B,b){ for(let i=0;i<14;i++){ const a=b.r(i)*Math.PI*2, d=1+b.r(i+20)*5; b.boom(Math.cos(a)*d,Math.sin(a)*d,5,.35); } b.straal=0; }},
   /* Het Open Veld van de Heler — Malcolms gehucht diep in Grimsdell, met het ven */
   healersclearing:{info:{vlak:[.2,.5,.5],open:.6},bouw(B,b){
     for(let i=0;i<7;i++){ const a=i/7*Math.PI*2+.3, d=.13+b.r(i)*.05; B.huis(b,Math.cos(a)*d,Math.sin(a)*d,"araluen",{r:a+Math.PI/2,maat:.8,nr:i,dak:"#7E6E4E",dakMat:"riet",aanbouw:false}); }
@@ -1429,7 +1450,7 @@ export const BOUWERS={
     const langs=.5*Math.atan2(2*xy,xx-yy);
     /* het punt van de kloof dat het dichtst bij de plaats ligt */
     let bx=sx,by=sy,bd=1e9; for(let i=0;i<k.pts.length;i+=2){ const d=Math.hypot(k.pts[i]-b.cx,k.pts[i+1]-b.cy); if(d<bd){bd=d;bx=k.pts[i];by=k.pts[i+1];} }
-    const c=B.rond(bx,by,langs+Math.PI/2,6), L=k.breed*1.6;
+    const c=B.rond(bx,by,langs+Math.PI/2,6), L=k.breed*1.6/K;
     const y=Math.max(c.grond(-L,0),c.grond(L,0))+.012;
     const n2=40;
     for(let i=0;i<n2;i++){
@@ -1454,14 +1475,14 @@ export const BOUWERS={
     b.straal=.45;
   }},
   /* De Veenlanden — drassig laagland: plassen en riet */
-  veenlanden:{info:{},bouw(B,b){
+  veenlanden:{wereld:true,info:{},bouw(B,b){
     for(let i=0;i<9;i++){ const a=b.r(i)*Math.PI*2, d=b.r(i+5)*4, u=Math.cos(a)*d, v=Math.sin(a)*d; if(b.land(u,v))b.plas(u,v,.1+b.r(i+9)*.15,.07+b.r(i+11)*.1,b.grond(u,v)+.006,{r:a,kleur:"#5E7E78"}); }
     b.straal=0;
   }},
   /* De Vlakte der Eenzamen — leeg en moerassig: een paar plassen en een dode boom */
-  eenzamen:{info:{},bouw(B,b){
+  eenzamen:{wereld:true,info:{},bouw(B,b){
     for(let i=0;i<5;i++){ const a=b.r(i)*Math.PI*2, d=b.r(i+5)*3, u=Math.cos(a)*d, v=Math.sin(a)*d; if(b.land(u,v))b.plas(u,v,.08+b.r(i+9)*.1,.06+b.r(i+11)*.06,b.grond(u,v)+.006,{r:a,kleur:"#62807A"}); }
-    b.boom(.3,.2,5,1); b.boom(-1.2,.8,5,.9);
+    b.boom(.3,.2,5,.32); b.boom(-1.2,.8,5,.3);
     b.straal=0;
   }},
 
@@ -1470,7 +1491,7 @@ export const BOUWERS={
      (dun) met een woontoren en een slanke ronde toren */
   dunkilty:{info:{vlak:[.4,.9,1],open:1.0},bouw(B,b){
     kasteel(B,b,"hibernia",{breed:70});
-    B.dorp(B.rond(b.cx+.55,b.cy-.3,.4,12),"hibernia",{straal:.26,aantal:14,zaad:6});
+    B.dorp(B.rond(...b.naast(+.55,-.3),.4,12),"hibernia",{straal:.26,aantal:14,zaad:6});
   }},
   /* Craikennis — een dorp in Clonmel, verdedigd door Halt, Will en Arnaut */
   craikennis:{info:{vlak:[.3,.7,.6],open:1.0},bouw(B,b){
@@ -1515,8 +1536,8 @@ export const BOUWERS={
        echt land is, een halve eenheid aan één stuk; daar begint het strand,
        en het midden van de stad ligt daar nog een eind achter. */
     let t=0, aaneen=0;
-    while(t<4&&aaneen<.5){ t+=.02; aaneen=B.opLand(b.cx-Math.cos(a)*t,b.cy-Math.sin(a)*t)?aaneen+.02:0; }
-    const strand=t-.5, mx=b.cx-Math.cos(a)*(strand+.55), my=b.cy-Math.sin(a)*(strand+.55);
+    while(t<4&&aaneen<.3){ t+=.01; aaneen=B.opLand(b.cx-Math.cos(a)*t,b.cy-Math.sin(a)*t)?aaneen+.01:0; }
+    const strand=t-.3, mx=b.cx-Math.cos(a)*(strand+.55*K), my=b.cy-Math.sin(a)*(strand+.55*K);
     const c=B.rond(mx,my,a+Math.PI/2,31);
     /* de Grote Zaal: lang, hoog, van hout, met gekruiste drakenkoppen op de
        nokken en een trap ervoor */
@@ -1571,13 +1592,13 @@ export const BOUWERS={
     for(let i=0;i<pts.length;i++){ const [u,v]=pts[i], [u2,v2]=pts[(i+1)%pts.length]; if(b.land(u,v)&&b.land(u2,v2))b.muur(u,v,u2,v2,8*M,2.6*M,"#A49D90",{}); }
     for(const [u,v] of pts)if(b.land(u,v))b.toren(u,v,3.4*M,12*M,"#A49D90",{dak:"kegel",dakKleur:"#7C4232",dakMat:"pannen",dakH:7*M});
     /* de mijn: een donkere ingang in de heuvel, met een houten bok erboven */
-    const m=B.rond(b.cx+.8,b.cy-.4,.5,13), g=m.grond(0,0);
+    const m=B.rond(...b.naast(+.8,-.4),.5,13), g=m.grond(0,0);
     m.blok(0,0,4*M,2.6*M,3*M,"#1E1A16",{y:g-.01});
     for(const u of [-2.5,2.5])m.cil(u*M,2.6*M,.35*M,9*M,"#5E4A38",{zes:true,mat:"hout"});
     m.blok(0,2.6*M,6*M,.8*M,.8*M,"#5E4A38",{y:g+8.4*M,mat:"hout"});
   }},
   /* Skorghijl — een kaal, mistig rotseiland met een beschutte kraterhaven */
-  skorghijl:{info:{},bouw(B,b){ B.vloot(b.cx,b.cy,0,"wolf",3,61,{van:1.5,tot:4,spreid:6.3}); b.straal=0; }},
+  skorghijl:{wereld:true,info:{},bouw(B,b){ B.vloot(b.cx,b.cy,0,"wolf",3,61,{van:6,tot:16,spreid:6.3}); b.straal=0; }},
 
   /* ---- Gallica ---- */
   /* La Rivage — de havenstad waar Halt en Arnaut aan land gingen */
@@ -1609,7 +1630,7 @@ export const BOUWERS={
     const hw=.38, pts=[[-hw,-hw],[hw,-hw],[hw,hw],[-hw,hw]];
     b.ring(pts,8*M,2.6*M,"#D8CDB6",{open:[2]});
     for(const [u,v] of pts)b.toren(u,v,4*M,12*M,"#D8CDB6",{dak:"kegel",dakKleur:"#4E5660",dakMat:"lei",dakH:10*M});
-    B.dorp(B.rond(b.cx+.75,b.cy+.4,.4,14),"gallica",{straal:.34,aantal:30,stad:.5,verdiepingen:2,zaad:7});
+    B.dorp(B.rond(...b.naast(+.75,+.4),.4,14),"gallica",{straal:.34,aantal:30,stad:.5,verdiepingen:2,zaad:7});
   }},
   /* Château des Falaises — het kustbolwerk van baron Joubert */
   falaises:{info:{vlak:[.5,1.1,1],open:1.2},bouw(B,b){ kasteel(B,b,"gallica",{breed:76,muurH:13,steen:"#CAC1AD",vlag:"#5A1E1E"}); }},
@@ -1668,7 +1689,7 @@ export const BOUWERS={
       const n=Math.max(1,Math.round(Math.max(bx,bz)/.1));
       for(let i=0;i<n;i++){ const t=(i+.5)/n-.5, uu=u+(bx>bz?t*bx:0), vv=v+(bz>bx?t*bz:0); b.plas(uu,vv,bx>bz?bx/n/2+.002:bx/2,bz>bx?bz/n/2+.002:bz/2,b.grond(uu,vv)+.003); }
     }
-    B.dorp(B.rond(b.cx+.8,b.cy+.4,.2,17),"nihon-ja",{straal:.36,aantal:30,zaad:8});
+    B.dorp(B.rond(...b.naast(+.8,+.4),.2,17),"nihon-ja",{straal:.36,aantal:30,zaad:8});
   }},
   /* Iwanai — de haven waar het gezelschap op zoek naar Arnaut aan land ging */
   iwanai:{info:{vlak:[.4,.9,.7],open:1.1},bouw(B,b,p){ haven(B,b,"nihon-ja",p,{straal:.34,aantal:24,schepen:4,steiger:.3}); torii(B,b,.0,.32); }},
@@ -1709,8 +1730,8 @@ export const BOUWERS={
   "mizu-umi-bakudai":{info:{meer:{r:4.2,diepte:.035}},bouw(B,b){
     /* een paar Kikori-hutten aan de oever */
     for(let i=0;i<40;i++){
-      const a=i/40*Math.PI*2, [x,y]=b.w(Math.cos(a)*4.6,Math.sin(a)*4.6);
-      if(b.land(Math.cos(a)*4.6,Math.sin(a)*4.6)&&b.r(i)<.15){
+      const a=i/40*Math.PI*2, [x,y]=b.w(Math.cos(a)*4.6/K,Math.sin(a)*4.6/K);
+      if(B.opLand(x,y)&&b.r(i)<.15){
         const c=B.rond(x,y,a+Math.PI/2,i); B.huis(c,0,0,"nihon-ja",{nr:i,maat:.8});
       }
     }
@@ -1745,7 +1766,7 @@ export const BOUWERS={
   byzantos:{info:{vlak:[.6,1.3,.8],open:1.2},bouw(B,b,p){
     haven(B,b,"helleno",p,{straal:.46,aantal:50,schepen:5,schip:"galei",stad:.5,verdiepingen:2});
     const a=B.zeeRichting(b.cx,b.cy,2.2)??0;
-    const t=B.waterlijn(b.cx,b.cy,a), c=B.rond(b.cx+Math.cos(a)*(t-.32),b.cy+Math.sin(a)*(t-.32),a+Math.PI/2,8);
+    const t=B.waterlijn(b.cx,b.cy,a), c=B.rond(b.cx+Math.cos(a)*(t-.32*K),b.cy+Math.sin(a)*(t-.32*K),a+Math.PI/2,8);
     /* de dikke landmuur, met torens */
     c.muur(-.55,-.5,.55,-.5,12*M,5*M,"#D2C9B6",{kantelen:"blok"});
     for(let i=0;i<7;i++)c.toren(-.55+i*.183,-.5,4.4*M,17*M,"#D2C9B6",{vierkant:true,dak:"plat"});
@@ -1768,14 +1789,14 @@ export const BOUWERS={
   genovesa:{info:{vlak:[.5,1.1,.8],open:1.1},bouw(B,b,p){
     haven(B,b,"toscana",p,{straal:.4,aantal:36,schepen:3,schip:"galei",stad:.5,verdiepingen:2});
     const a=B.zeeRichting(b.cx,b.cy,2.2)??0, t=B.waterlijn(b.cx,b.cy,a);
-    const c=B.rond(b.cx+Math.cos(a)*(t-.32),b.cy+Math.sin(a)*(t-.32),a,19);
+    const c=B.rond(b.cx+Math.cos(a)*(t-.32*K),b.cy+Math.sin(a)*(t-.32*K),a,19);
     for(let i=0;i<12;i++){ const u=(c.r(i)-.5)*.45, v=-(c.r(i+9))*.32; if(c.land(u,v))c.toren(u,v,2.4*M,(20+c.r(i+20)*16)*M,"#D4BF97",{vierkant:true,dak:"plat",mat:"pleister",plint:false,ramen:3.6*M}); }
   }},
   /* Palladio — een grote kuststad in het zuiden van Toscana */
   palladio:{info:{vlak:[.55,1.2,.7],open:1.1},bouw(B,b,p){
     haven(B,b,"toscana",p,{straal:.46,aantal:48,schepen:4,schip:["galei","kogge"],stad:.5,verdiepingen:2});
     const a=B.zeeRichting(b.cx,b.cy,2.2)??0, t=B.waterlijn(b.cx,b.cy,a);
-    const c=B.rond(b.cx+Math.cos(a)*(t-.36),b.cy+Math.sin(a)*(t-.36),a,23);
+    const c=B.rond(b.cx+Math.cos(a)*(t-.36*K),b.cy+Math.sin(a)*(t-.36*K),a,23);
     const g=c.voet(-.13,0,7*M,7*M);
     const top=c.blok(-.13,0,16*M,12*M,10*M,"#E8DBC0",{y:g-.02,mat:"pleister",verd:5*M,vloer:g}); c.koepel(-.13,0,top,5.4*M,6*M,"#A85E40",{mat:"pannen"});
     c.toren(-.13,.08,2.2*M,26*M,"#E8DBC0",{vierkant:true,dak:"kegel",dakKleur:"#A85E40",dakMat:"pannen",dakH:4*M,mat:"pleister",plint:false});
@@ -1807,7 +1828,7 @@ export const BOUWERS={
      rand van een uitgedoofde krater; de schuilplaats van de kaper Myrgos */
   santorina:{info:{vlak:[.35,.8,.7],open:1},bouw(B,b){
     kasteel(B,b,"helleno",{breed:56,muurH:12,steen:"#E0DBCE",soort:"toscana",kantelen:"blok",vlag:"#1E1E22",steenMat:"steen"});
-    B.dorp(B.rond(b.cx-.4,b.cy+.26,0,27),"helleno",{straal:.24,aantal:16,geenPlein:true,zaad:9});
+    B.dorp(B.rond(...b.naast(-.4,+.26),0,27),"helleno",{straal:.24,aantal:16,geenPlein:true,zaad:9});
     B.vloot(b.cx,b.cy,0,"galei",1,77,{spreid:6.3,van:.7,tot:.8,zeil:"#2A2A2A"});
   }},
 
@@ -1816,7 +1837,7 @@ export const BOUWERS={
   "indus-haven":{info:{vlak:[.5,1.1,.7],open:1.1},bouw(B,b,p){
     haven(B,b,"indus",p,{straal:.4,aantal:38,schepen:4,steiger:.3});
     const a=B.zeeRichting(b.cx,b.cy,2.5)??0, t=B.waterlijn(b.cx,b.cy,a);
-    const c=B.rond(b.cx+Math.cos(a)*(t-.32),b.cy+Math.sin(a)*(t-.32),a,29);
+    const c=B.rond(b.cx+Math.cos(a)*(t-.32*K),b.cy+Math.sin(a)*(t-.32*K),a,29);
     const g=c.voet(-.16,0,8*M,8*M);
     const top=c.blok(-.16,0,18*M,18*M,8*M,"#E4D6C4",{y:g-.02,mat:"leem",vloer:g}); c.ui(-.16,0,top,6*M,11*M,"#E8E0D2",{mat:"pleister"});
     for(const [u,v] of [[-7,-7],[7,-7],[-7,7],[7,7]])c.ui(-.16+u*M,v*M,top,2*M,4*M,"#E8E0D2",{mat:"pleister"});
@@ -1872,7 +1893,12 @@ export const SOORTEN={
 };
 export const stijlVan=gebied=>STIJL_VAN[gebied]||"araluen";
 /* wat de grond moet doen rond deze plaats (voor 3d-grond.js) */
-export function modelInfo(p){ return (BOUWERS[p.id]||SOORTEN[p.soort]||{}).info||{}; }
+export function modelInfo(p){
+  const i=(BOUWERS[p.id]||SOORTEN[p.soort]||{}).info||{};
+  /* vlak en open plek horen bij het gebouw, en dat is met K verkleind; klif,
+     kloof en meer zijn landschap en blijven zoals ze zijn */
+  return {...i,vlak:i.vlak?[i.vlak[0]*K,i.vlak[1]*K*1.4,i.vlak[2]]:null,open:i.open?Math.max(.36,i.open*K*1.6):0};
+}
 
 /* ======================= de naamloze nederzettingen =======================
    Per tegel rond de camera (zie 3d.js): de huizen van alle plekken in de
@@ -1890,7 +1916,7 @@ export function bouwGehuchten(omg,plekken,gebiedStijl){
    uitgerekend, zodat ze ook van verder weg al kunnen staan dan de huizen. */
 export function gehuchtBomen(plek,stijl,opLand,hash2,uit){
   const [x,y,soort,zaad,a]=plek;
-  const st=STIJLEN[stijl]||STIJLEN.araluen;
+  const st=STIJLEN[stijl]||STIJLEN.araluen, M=M_*K;
   const r=i=>hash2((zaad*7+i*131)|0,(zaad%977+i*17)|0);
   const soortBoom=st.huis==="plat"?4:stijl==="toscana"||stijl==="helleno"?7:st.huis==="japans"?6:2;
   if(soort===0){
@@ -1900,15 +1926,15 @@ export function gehuchtBomen(plek,stijl,opLand,hash2,uit){
     for(let i=0;i<4;i++)for(let k=0;k<3;k++){
       if(r(10+i*3+k)<.2)continue;
       const px=ox+c*i*7*M-s*k*7*M, py=oy+s*i*7*M+c*k*7*M;
-      if(opLand(px,py))uit.push(px,py,soortBoom,.34+r(30+i)*.08);
+      if(opLand(px,py))uit.push(px,py,soortBoom,(.34+r(30+i)*.08)*K);
     }
     return;
   }
-  const n=soort===2?14:7, R=soort===2?.42:.28, c=Math.cos(a), s=Math.sin(a);
+  const n=soort===2?14:7, R=(soort===2?.42:.28)*K, c=Math.cos(a), s=Math.sin(a);
   for(let i=0;i<n;i++){
-    const t=(r(40+i)-.5)*2*R, z=(r(60+i)<.5?-1:1)*(.045+r(80+i)*.08);
+    const t=(r(40+i)-.5)*2*R, z=(r(60+i)<.5?-1:1)*(.045+r(80+i)*.08)*K;
     const px=x+c*t-s*z, py=y+s*t+c*z;
-    if(opLand(px,py))uit.push(px,py,soortBoom,.38+r(90+i)*.12);
+    if(opLand(px,py))uit.push(px,py,soortBoom,(.38+r(90+i)*.12)*K);
   }
 }
 
@@ -1926,14 +1952,14 @@ export function bouwModellen(omg){
     const def=BOUWERS[p.id]||SOORTEN[p.soort];
     const [cx,cy]=pos;
     const rot=def&&def.draai?def.draai(omg.POS):omg.hash2((cx*131)|0,(cy*71)|0)*Math.PI*2;
-    const b=B.rond(cx,cy,rot,p.id.length*13);
-    b.top=Math.max(omg.yOp(cx,cy),0)+.12;
+    const b=B.rond(cx,cy,rot,p.id.length*13,def&&def.wereld?{schaal:1}:{});
+    b.top=b.my(Math.max(omg.yOp(cx,cy),0)+.04);
     if(def){
       try{ def.bouw(B,b,p,stijlVan(p.gebied),omg.POS); }
       catch(e){ console.warn("3D-model van",p.id,e); }
     }else b.straal=0;
-    boven[p.id]=b.top+.04;
-    if(b.straal)plekken.push([cx,cy,b.straal]);
+    boven[p.id]=b.wy(b.top)+.03;
+    if(b.straal)plekken.push([cx,cy,b.straal*b.k]);
   }
   return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo(),schepen:B.bakken.schip.geo(),plas:B.bakken.plas.geo(),
     lampjes:new Float32Array(B.lampjes),bomen:B.bomen,wegen:B.wegen,boven,plekken};

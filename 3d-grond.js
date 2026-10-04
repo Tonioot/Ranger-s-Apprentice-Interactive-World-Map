@@ -36,7 +36,9 @@ export const LAND0=.05, ZEE0=.05;        /* land net boven, zeebodem net onder d
 export const Yvan=h=>h>=0?LAND0+h*(.5+.5*h)*SCHAAL:-ZEE0+h*ZEEDIEPTE;
 /* Hoe hoog het bladerdak boven de grond uitkomt, in kaarteenheden. Even
    overdreven als de rest: een boom zo groot als een dorpshuis. */
-export const KRUIN=.2;
+export const KRUIN=.05;
+/* één meter in kaarteenheden (zie M en K in 3d-modellen.js) */
+export const METER=.0015;
 
 /* Van het reliëf op de kaart naar de hoogte in 3D.
    De platte kaart gebruikt RELIEF (vlak .2, heuvels .5, hoogland .7, bergen 1)
@@ -591,12 +593,15 @@ function bos(G,T){
       let v=bw*(.62+.76*(c-.5)*1.6)*(1-glad(klem((hh-.36)/.26,0,1)))*(1-glad(klem((steil-1.1)/1.2,0,1)));
       v*=klem((kust[q]/18-.35)/.5,0,1);
       if(rivier[q])v*=1-rivier[q]/60;
-      /* een weg loopt door het bos als een laan: daar is het bladerdak open */
-      if(G.weg){ const e=G.weg[q]/255*WEGVER-WEGRAND; if(e<.16)v*=glad(klem((e-.03)/.13,0,1)); }
+      /* (een weg door het bos opent het bladerdak niet: een laan van een paar
+         meter is smaller dan een rasterpunt, en van boven zie je hem niet) */
       for(const pl of openBij(wx,wy)){
-        const dx=wx-pl.x, dy=wy-pl.y; if(dx*dx+dy*dy>(pl.open+1.2)*(pl.open+1.2))continue;
-        const d=Math.sqrt(dx*dx+dy*dy)+(T.ruis(wx*1.3,wy*1.3)-.5)*.5;
-        v*=glad(klem((d-pl.open)/1.0,0,1));
+        /* de rand van de open plek loopt over een stuk dat met de plek
+           meegroeit: een erf in het bos is een klein rond gat, geen vlek */
+        const rand=Math.max(.06,pl.open*.7);
+        const dx=wx-pl.x, dy=wy-pl.y; if(dx*dx+dy*dy>(pl.open+rand*1.5)*(pl.open+rand*1.5))continue;
+        const d=Math.sqrt(dx*dx+dy*dy)+(T.ruis(wx*5,wy*5)-.5)*rand;
+        v*=glad(klem((d-pl.open)/rand,0,1));
       }
       b[q]=glad(klem((v-.30)/.08,0,1))*255;
     }
@@ -679,7 +684,7 @@ function kleur(G,T){
       /* Bos is van boven een donker dek van kruinen; dat dek staat precies
          waar het bladerdak staat. */
       const bw=bos[q]/255;
-      if(bw>0){ m*=1-.40*bw; k[1]+=(k[1]*.10)*bw; k[0]-=k[0]*.06*bw; }
+      if(bw>0){ m*=1-.5*bw; k[1]+=(k[1]*.08)*bw; k[0]-=k[0]*.1*bw; k[2]-=k[2]*.05*bw; }
       m*=klem(1+holte[hp]*.07,.68,1.14);
       /* zand langs de kust, maar niet boven op een klif */
       if(kust[q]<30){ const t=1-kust[q]/30; meng(ZAND,t*t*.85*(1-glad(klem((hh-.025)/.03,0,1)))); }
@@ -720,11 +725,10 @@ function kleur(G,T){
      dichtstbijzijnde weg.
 
    De uitkomst
-     de plekken (x, y, soort, toeval, richting van de straat), de wegen als
-     lijnen, de bruggen, en een afstandsveld: per rasterpunt de afstand tot
-     de dichtstbijzijnde weg en de breedte daarvan. Uit dat veld tekent de
-     shader de wegen scherp, ook al is één rasterpunt een derde eenheid. */
-export const VAKN=2.3, WEGVER=.6;
+     de plekken (x, y, soort, toeval, richting van de straat, gebied), de
+     wegen als lijnen en de bruggen. De shader tekent de wegen uit de
+     lijnstukken zelf (zie wegLijnen()). */
+export const VAKN=2.3;
 export const SOORT_PLEK={boerderij:0,gehucht:1,dorp:2};
 function nederzettingen(G,T){
   const R=G.R, {RW,RH,RES,M,PW,PH,W,H}=R;
@@ -864,7 +868,7 @@ function nederzettingen(G,T){
     /* een omweg van meer dan het dubbele is geen weg tussen deze twee */
     let L=0; for(let i=1;i<cellen.length;i++){ const c0=cellen[i-1],c1=cellen[i]; L+=Math.hypot((c1%PW)-(c0%PW),((c1/PW)|0)-((c0/PW)|0)); }
     if(L>d*2.2+3)continue;
-    legWeg(cellen,5*.006,[A.x,A.y],[B.x,B.y]);
+    legWeg(cellen,5*METER,[A.x,A.y],[B.x,B.y]);
   }
   /* ---- karresporen: van elk gehucht en elke boerderij naar de dichtstbijzijnde weg ---- */
   for(const p of plekken){
@@ -875,7 +879,7 @@ function nederzettingen(G,T){
     if(e<0)continue;
     const cellen=pad(e);
     if(p.soort===0&&cellen.length>7)continue;
-    legWeg(cellen,(p.soort===0?2.6:3.4)*.006,[p.x,p.y],null);
+    legWeg(cellen,(p.soort===0?2.6:3.4)*METER,[p.x,p.y],null);
     const pts=wegen[wegen.length-1].pts;
     /* de straat van het gehucht ligt in het verlengde van de weg erheen */
     const q=pts[Math.min(pts.length-1,6)];
@@ -901,13 +905,12 @@ function nederzettingen(G,T){
   /* ---- de straat van elk gehucht en dorp: een rechte lijn langs zijn richting ---- */
   for(const p of plekken){
     if(p.soort===0)continue;
-    const L=p.soort===2?.42:.26, c=Math.cos(p.a), s=Math.sin(p.a);
-    wegen.push({pts:[[p.x-c*L,p.y-s*L],[p.x+c*L,p.y+s*L]],breed:4*.006,soort:1});
+    const L=(p.soort===2?.42:.26)*.25, c=Math.cos(p.a), s=Math.sin(p.a);
+    wegen.push({pts:[[p.x-c*L,p.y-s*L],[p.x+c*L,p.y+s*L]],breed:4*METER,soort:1});
   }
-  const veld=wegVeld(R,wegen);
   const uitP=new Float32Array(plekken.length*6);
   plekken.forEach((p,i)=>{ uitP.set([p.x,p.y,p.soort,p.zaad,p.a,p.r],i*6); });
-  return {plekken:uitP,wegen:JSON.stringify(wegen.map(w=>({b:w.breed,s:w.soort||0,p:w.pts.map(([x,y])=>[+x.toFixed(3),+y.toFixed(3)])}))),bruggen:new Float32Array(bruggen.flat()),veld};
+  return {plekken:uitP,wegen:JSON.stringify(wegen.map(w=>({b:w.breed,s:w.soort||0,p:w.pts.map(([x,y])=>[+x.toFixed(3),+y.toFixed(3)])}))),bruggen:new Float32Array(bruggen.flat())};
 }
 /* de richting van de weg die het dichtst bij (x,y) langs komt */
 function richtingBij(wegen,x,y,anders){
@@ -919,36 +922,7 @@ function richtingBij(wegen,x,y,anders){
   }
   return best<1.5?r:anders;
 }
-/* Het afstandsveld van de wegen, voor het bos: per rasterpunt de afstand
-   tot de rand van de dichtstbijzijnde weg (plus WEGRAND), als byte, tot
-   WEGVER eenheden. Daarmee gaat het bladerdak open waar een weg door het bos
-   loopt. (De weg zelf tekent de shader uit de lijnstukken, zie wegLijnen().) */
 export const WEGRAND=.03;
-export function wegVeld(R,wegen){
-  const {RW,RH,RES,M}=R;
-  const veld=new Uint8Array(RW*RH).fill(255);
-  for(const w of wegen){
-    const half=w.breed/2;
-    for(let i=1;i<w.pts.length;i++){
-      const [x0,y0]=w.pts[i-1],[x1,y1]=w.pts[i];
-      const dx=x1-x0, dy=y1-y0, ll=dx*dx+dy*dy||1e-9;
-      const xa=Math.max(0,Math.floor((Math.min(x0,x1)-WEGVER+M)*RES)), xb=Math.min(RW-1,Math.ceil((Math.max(x0,x1)+WEGVER+M)*RES));
-      const ya=Math.max(0,Math.floor((Math.min(y0,y1)-WEGVER+M)*RES)), yb=Math.min(RH-1,Math.ceil((Math.max(y0,y1)+WEGVER+M)*RES));
-      for(let y=ya;y<=yb;y++){
-        const wy=y/RES-M;
-        for(let x=xa;x<=xb;x++){
-          const wx=x/RES-M;
-          const t=klem(((wx-x0)*dx+(wy-y0)*dy)/ll,0,1), ex=x0+dx*t-wx, ey=y0+dy*t-wy;
-          const d=Math.sqrt(ex*ex+ey*ey)-half+WEGRAND;
-          if(d>=WEGVER)continue;
-          const q=Math.max(0,Math.round(d/WEGVER*255)), p=y*RW+x;
-          if(q<veld[p])veld[p]=q;
-        }
-      }
-    }
-  }
-  return veld;
-}
 /* De wegen voor de shader: alle lijnstukken (uitgedund waar de weg recht
    loopt), en per cel van een eenheid welke lijnstukken er langs komen. De
    shader rekent dan per beeldpunt de echte afstand tot die paar lijnstukken

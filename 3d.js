@@ -32,7 +32,7 @@ import {Line2} from "three/addons/lines/Line2.js";
 import {LineMaterial} from "three/addons/lines/LineMaterial.js";
 import {LineGeometry} from "three/addons/lines/LineGeometry.js";
 import {bouwModellen,bouwGehuchten,gehuchtBomen,modelInfo,stijlVan,GEBOUW_GLSL_V,GEBOUW_GLSL_V_MAIN,GEBOUW_GLSL_F,GEBOUW_GLSL_KLEUR,GEBOUW_GLSL_GLOED} from "./3d-modellen.js";
-import {TAKEN,rekenregels,rooster,groveRijen,leesVeld,kustVelden,wegLijnen,SEGBREED,LIJSTBREED,MARGE,SCHAAL,ZEEDIEPTE,ZEE0,Yvan,dakHoogte} from "./3d-grond.js";
+import {TAKEN,rekenregels,rooster,groveRijen,leesVeld,kustVelden,wegLijnen,SEGBREED,LIJSTBREED,METER,MARGE,SCHAAL,ZEEDIEPTE,ZEE0,Yvan,dakHoogte} from "./3d-grond.js";
 
 const FOV=42;
 const WOLKHOOGTE=58;
@@ -346,7 +346,7 @@ export async function maak3D(ctx){
   controls.screenSpacePanning=false;
   controls.enableDamping=true; controls.dampingFactor=.09;
   controls.zoomToCursor=true;
-  controls.minDistance=1.2; controls.maxDistance=1500;
+  controls.minDistance=.22; controls.maxDistance=1500;
   controls.maxPolarAngle=Math.PI*.49;
   controls.zoomSpeed=1.1; controls.rotateSpeed=.6;
   controls.keyPanSpeed=25;
@@ -531,14 +531,14 @@ export async function maak3D(ctx){
     const nz=await ploeg.doe("nederzettingen",{R,h:a.h,land:a.land,rivier:a.rivier,reg:a.reg,fBos:v.fBos,dicht,wegLand,plaatsen:plaatsLijst,meren:a.meren});
     /* een gehucht ligt in een open plek in het bos, net als een plaats */
     const bosPlekken=plekken.slice();
-    for(let i=0;i<nz.plekken.length;i+=6)bosPlekken.push({x:nz.plekken[i],y:nz.plekken[i+1],open:[.32,.5,.75][nz.plekken[i+2]]});
+    for(let i=0;i<nz.plekken.length;i+=6)bosPlekken.push({x:nz.plekken[i],y:nz.plekken[i+1],open:[.3,.36,.45][nz.plekken[i+2]]});
     /* het bladerdak en de normalen, per strook (met twee rijen rand) */
     const bos=new Uint8Array(N), normalen=new Uint8Array(N*4);
     await Promise.all(stroken().map(async([y0,y1])=>{
       const hr0=Math.max(0,y0-2), hr1=Math.min(RH,y1+2), [g0,g1]=groveRijen(R,hr0,hr1);
       const G={R,y0,y1,hr0,hr1,go:g0*PW,plekken:bosPlekken.filter(p=>p.open&&p.y+4>hr0/RES-MARGE&&p.y-4<hr1/RES-MARGE),meren:a.meren,
         h:snij(a.h,RW,hr0,hr1),land:snij(a.land,RW,hr0,hr1),rivier:snij(a.rivier,RW,hr0,hr1),kust:snij(a.kust,RW,hr0,hr1),
-        weg:snij(nz.veld,RW,hr0,hr1),fBos:snij(v.fBos,PW,g0,g1)};
+        fBos:snij(v.fBos,PW,g0,g1)};
       const r=await ploeg.doe("bos",G,mee(G));
       bos.set(r.bos,y0*RW); normalen.set(r.normalen,y0*RW*4);
     }));
@@ -651,7 +651,7 @@ export async function maak3D(ctx){
     }
     const P=D.plekken;
     for(let i=0;i<P.length;i+=6){
-      const cx=P[i], cy=P[i+1], r=[.1,.2,.32][P[i+2]];
+      const cx=P[i], cy=P[i+1], r=[.05,.08,.12][P[i+2]];
       for(let y=Math.floor((cy+MARGE-r)*RES);y<=Math.ceil((cy+MARGE+r)*RES);y++)for(let x=Math.floor((cx+MARGE-r)*RES);x<=Math.ceil((cx+MARGE+r)*RES);x++){
         const pp=y*RW+x; if(pp<0||pp>=N||!land[pp])continue;
         const d=Math.hypot(x/RES-MARGE-cx,y/RES-MARGE-cy); if(d>r)continue;
@@ -849,11 +849,17 @@ export async function maak3D(ctx){
           float loof=texture2D(uLoof,vMapUv).r;
           /* vaste celmaat: een maat die met het loof meeloopt zou het hele
              patroon laten verschuiven waar het bos van soort wisselt */
-          vec2 kp=vWolkW.xz/.11;
+          vec2 kp=vWolkW.xz/.035;
           float bosZicht=bosM*(1.0-smoothstep(.3,.65,length(fwidth(kp))));
           vec2 kruinHelling=vec2(0.0);
           /* bladclusters binnen een kruin: dezelfde korrel, fijner */
           float blad=texture2D(uDetail,vWolkW.xz*2.4).r;
+          /* waar de kruinen te klein worden om te tekenen: groepjes bomen,
+             open plekken en schaduw ertussen, zodat bos ook van ver bos is */
+          if(bosM>.01){
+            float pol=texture2D(uDetail,vWolkW.xz*1.3).r*.6+texture2D(uDetail,vWolkW.xz*.37).r*.4;
+            diffuseColor.rgb*=mix(1.0,.66+.5*pol,bosM*(1.0-bosZicht));
+          }
           if(bosZicht>.002){
             vec3 kk;
             float hk=kruinRaak(kp,normalize(cameraPosition-vWolkW),loof,bosZicht,kruinHelling,kk);
@@ -874,8 +880,8 @@ export async function maak3D(ctx){
           if(akker>.01){
             /* de kavelranden golven wat: echte percelen volgen sloten en
                oude grenzen, geen rechte lijnen van punt tot punt */
-            vec2 kWarp=(vec2(texture2D(uDetail,vWolkW.xz*.021).r,texture2D(uDetail,vWolkW.xz*.021+vec2(.37,.61)).r)-.5)*.9;
-            vec2 bp=(vWolkW.xz+kWarp)/3.2, bc=floor(bp), bf=bp-bc;
+            vec2 kWarp=(vec2(texture2D(uDetail,vWolkW.xz*.065).r,texture2D(uDetail,vWolkW.xz*.065+vec2(.37,.61)).r)-.5)*.3;
+            vec2 bp=(vWolkW.xz+kWarp)/1.0, bc=floor(bp), bf=bp-bc;
             float b1=9.0, b2=9.0; vec2 bid=vec2(0.0), bpos=vec2(0.0);
             for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){
               vec2 g=vec2(float(i),float(j)), o=.1+.8*kHash(bc+g+vec2(3.0,11.0)), r=g+o-bf;
@@ -887,8 +893,8 @@ export async function maak3D(ctx){
             int kg=int(h3.y*5.0);
             vec3 kavelKleur=uAkk[kg];
             float th=h3.x*3.1416, cs=cos(th), sn=sin(th);
-            vec2 q=vWolkW.xz+kWarp-bpos*3.2; q=vec2(cs*q.x+sn*q.y,-sn*q.x+cs*q.y);
-            float w=mix(.2,.38,h3.y), L=mix(.5,1.2,fract(h3.y*7.13));
+            vec2 q=vWolkW.xz+kWarp-bpos*1.0; q=vec2(cs*q.x+sn*q.y,-sn*q.x+cs*q.y);
+            float w=mix(.065,.12,h3.y), L=mix(.16,.38,fract(h3.y*7.13));
             float rij=floor(q.y/w), sch=kHash(vec2(rij,bid.x+bid.y*17.0)).x*L;
             float kol=floor((q.x+sch)/L);
             vec2 hh=kHash(vec2(kol,rij)+bid*64.0);
@@ -897,24 +903,24 @@ export async function maak3D(ctx){
             vec3 akkerKleur=hh.y<.5?kavelKleur:uAkk[ag];
             float fy=fract(q.y/w), fx=fract((q.x+sch)/L);
             float rand=min(min(fy,1.0-fy)*w,min(fx,1.0-fx)*L);
-            float zAkker=1.0-smoothstep(.04,.11,akPx);
-            vec3 gewas=mix(mix(kavelKleur,(uAkk[0]+uAkk[1]+uAkk[2]+uAkk[3]+uAkk[4])*.2,.4+.45*smoothstep(.12,.8,akPx)),akkerKleur,zAkker);
+            float zAkker=1.0-smoothstep(.013,.035,akPx);
+            vec3 gewas=mix(mix(kavelKleur,(uAkk[0]+uAkk[1]+uAkk[2]+uAkk[3]+uAkk[4])*.2,.4+.45*smoothstep(.04,.26,akPx)),akkerKleur,zAkker);
             /* ploegvoren in een deel van de akkers */
-            float voor=step(.6,hh.y)*(.5+.5*sin(q.y/w*6.2832*7.0))*(1.0-smoothstep(.006,.02,akPx));
+            float voor=step(.6,hh.y)*(.5+.5*sin(q.y/w*6.2832*7.0))*(1.0-smoothstep(.002,.007,akPx));
             gewas*=1.0-.06*voor;
             /* heggen: langs elke kavelrand, en tussen een deel van de akkers */
             float aa=akPx*.7;
-            float kRand=(sqrt(b2)-sqrt(b1))*3.2*.5;
-            float hegK=1.0-smoothstep(.004,.004+aa,kRand);
-            float hegA=(1.0-smoothstep(.003,.003+aa,rand))*step(.45,kHash(vec2(rij*3.0+kol,bid.y)).y);
-            float zHeg=1.0-smoothstep(.015,.05,akPx);
+            float kRand=(sqrt(b2)-sqrt(b1))*1.0*.5;
+            float hegK=1.0-smoothstep(.0016,.0016+aa,kRand);
+            float hegA=(1.0-smoothstep(.0012,.0012+aa,rand))*step(.45,kHash(vec2(rij*3.0+kol,bid.y)).y);
+            float zHeg=1.0-smoothstep(.005,.016,akPx);
             float heg=max(hegK,hegA*zHeg);
             /* van ver: de heggen als een zweem donkerder langs de kavelranden */
-            heg=mix((1.0-smoothstep(.0,.05+akPx,kRand))*.12*(1.0-smoothstep(.1,.4,akPx)),heg,zHeg);
-            float pad=(1.0-smoothstep(.006,.006+aa,abs(kRand-.012)))*zHeg*.6;
+            heg=mix((1.0-smoothstep(.0,.016+akPx,kRand))*.12*(1.0-smoothstep(.03,.13,akPx)),heg,zHeg);
+            float pad=(1.0-smoothstep(.002,.002+aa,abs(kRand-.004)))*zHeg*.6;
             vec3 akkerRes=mix(gewas,uHeg,heg);
             akkerRes=mix(akkerRes,uWegKleur,pad*(1.0-heg));
-            float zKavel=1.0-smoothstep(.5,1.4,akPx);
+            float zKavel=1.0-smoothstep(.16,.45,akPx);
             diffuseColor.rgb=mix(diffuseColor.rgb,akkerRes*(.92+.16*korrel),akker*.62*zKavel);
           }
           /* De wegen. Per cel van een eenheid staat in uWegCel welke
@@ -943,7 +949,8 @@ export async function maak3D(ctx){
               float wPx=length(fwidth(wKp));
               float wAA=wPx*.6+1e-5;
               float dek=clamp(2.6*wH/max(wPx,1e-5),0.0,1.0);
-              float weg=(1.0-smoothstep(-wAA,wAA,wE))*dek;
+              /* onder een gesloten bladerdak zie je de weg niet */
+              float weg=(1.0-smoothstep(-wAA,wAA,wE))*dek*(1.0-smoothstep(.5,.9,bosM));
               float berm=(1.0-smoothstep(0.0,.008+wAA,wE))*(1.0-weg)*.2*dek;
               float spoor=(1.0-smoothstep(.0011,.0011+wAA,abs(wE+wH*.55)))*clamp(.003/max(wPx,1e-5),0.0,1.0)*(1.0-wS);
               vec3 wk=mix(uWegKleur,uWegKleur*vec3(.9,.9,.93),wS)*(.88+.24*texture2D(uDetail,wKp*2.3).r)*(1.0-.16*spoor);
@@ -1242,7 +1249,7 @@ export async function maak3D(ctx){
      daarna geleidelijk op — dan is hij kleiner dan de bosrand van het land
      zelf, die gewoon blijft staan. */
   const RANDVAK=16, randVakken=new Map();
-  const RANDVER=klein?120:175;        /* verder weg is een boom kleiner dan een beeldpunt */
+  const RANDVER=klein?70:100;        /* verder weg is een boom kleiner dan een beeldpunt */
   const RANDMAX=klein?60000:160000;
   let randBomen=null;
   const randStand={x:1e9,y:1e9,b:0};
@@ -1377,7 +1384,7 @@ export async function maak3D(ctx){
       const b=bos[p];
       const rand=b>10&&b<245;
       let n=0;
-      if(rand)n=b<128?3:2;
+      if(rand)n=b<128?7:5;
       else if(b===0&&!rivier[p]&&h[p]<.3&&T.hash2(x*7+13,y*11+5)<.006&&!opPlaats(x/RES-MARGE,y/RES-MARGE)
         &&leesD(D.fBos,x/RES-MARGE,y/RES-MARGE)*.5>T.hash2(x+1,y+1))n=1;
       if(!n)continue;
@@ -1385,8 +1392,8 @@ export async function maak3D(ctx){
       let q=p, bb=-1; for(const d of buren)if(bos[p+d]>bb){ bb=bos[p+d]; q=p+d; }
       const kr=lin(kl[q*4]), kg=lin(kl[q*4+1]), kb=lin(kl[q*4+2]);
       for(let i=0;i<n;i++){
-        const wx=x/RES-MARGE+(T.hash2(x+3+i*91,y-7)-.5)*1.4/RES, wy=y/RES-MARGE+(T.hash2(x-5,y+2+i*53)-.5)*1.4/RES;
-        const maat=(.16+.1*T.hash2(x-1+i*7,y+9))*(rand?1:1.15);
+        const wx=x/RES-MARGE+(T.hash2(x+3+i*91,y-7)-.5)*1.1/RES, wy=y/RES-MARGE+(T.hash2(x-5,y+2+i*53)-.5)*1.1/RES;
+        const maat=(.026+.012*T.hash2(x-1+i*7,y+9))*(rand?1:1.1);
         const loof=leesD(D.fLoof,wx,wy)>T.hash2(x+5+i,y+1);
         uit.push(X(wx),yOp(wx,wy)-.01,Z(wy),maat,(loof?2:0)+(T.hash2(x+9,y+2+i)<.5?1:0),T.hash2(x+2+i,y+8),kr,kg,kb);
       }
@@ -1420,7 +1427,7 @@ export async function maak3D(ctx){
      dan een beeldpunt. De heggen liggen waar de shader ze tekent: hier staat
      hetzelfde kavelpatroon nog eens, met dezelfde husselfunctie (kHash) en
      dezelfde golving uit het korrelplaatje. */
-  const DETAILVER=klein?45:70, detailVakken=new Map();
+  const DETAILVER=klein?20:30, detailVakken=new Map();
   const kHashJS=(cx,cy)=>{
     const qx=Math.imul((cx+65536)>>>0,1597334673)>>>0, qy=Math.imul((cy+65536)>>>0,3812015801)>>>0;
     const n=Math.imul((qx^qy)>>>0,1597334673)>>>0;
@@ -1433,36 +1440,36 @@ export async function maak3D(ctx){
   };
   /* hoe ver een wereldpunt (X,Z) van de rand van zijn kavel ligt */
   function kavelRand(px,pz){
-    const wx=(korrelOp(px*.021,pz*.021)-.5)*.9, wz=(korrelOp(px*.021+.37,pz*.021+.61)-.5)*.9;
-    const bx=(px+wx)/3.2, bz=(pz+wz)/3.2, cx=Math.floor(bx), cz=Math.floor(bz), fx=bx-cx, fz=bz-cz;
+    const wx=(korrelOp(px*.065,pz*.065)-.5)*.3, wz=(korrelOp(px*.065+.37,pz*.065+.61)-.5)*.3;
+    const bx=(px+wx)/1.0, bz=(pz+wz)/1.0, cx=Math.floor(bx), cz=Math.floor(bz), fx=bx-cx, fz=bz-cz;
     let b1=9,b2=9;
     for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){
       const o=kHashJS(cx+i+3,cz+j+11), rx=i+.1+.8*o[0]-fx, rz=j+.1+.8*o[1]-fz, d=rx*rx+rz*rz;
       if(d<b1){ b2=b1; b1=d; } else if(d<b2)b2=d;
     }
-    return (Math.sqrt(b2)-Math.sqrt(b1))*3.2*.5;
+    return (Math.sqrt(b2)-Math.sqrt(b1))*1.0*.5;
   }
   const akkerOp=(wx,wy)=>{ if(!akkerData)return 0; const i=Math.floor(wx+MARGE), j=Math.floor(wy+MARGE); return i<0||j<0||i>=R.PW||j>=R.PH?0:akkerData[(j*R.PW+i)*2+1]/255; };
   function detailIn(cx,cy){
     const sl=cx+","+cy; let v=detailVakken.get(sl); if(v)return v;
     const uit=[], {land,bos,rivier,h}=D;
     /* het groen van een boom in het veld: van zichzelf, niet van de akker eronder */
-    const kleurBij=(wx,wy)=>{ const f=.82+.36*T.hash2(Math.round(wx*71),Math.round(wy*67)), g=T.hash2(Math.round(wx*13),Math.round(wy*19)); return [.12*f*(1+.25*g),.2*f,.075*f]; };
+    const kleurBij=(wx,wy)=>{ const f=.82+.36*T.hash2(Math.round(wx*71),Math.round(wy*67)), g=T.hash2(Math.round(wx*13),Math.round(wy*19)); return [.15*f*(1+.25*g),.24*f,.09*f]; };
     const stijlBij=(wx,wy)=>{ const p=Math.floor((wy+MARGE)*RES)*RW+Math.floor((wx+MARGE)*RES); return gebiedStijl(D.reg[p]); };
     const vrij=(wx,wy)=>{ const p=Math.floor((wy+MARGE)*RES)*RW+Math.floor((wx+MARGE)*RES); return p>=0&&p<N&&land[p]&&!rivier[p]&&bos[p]<20&&h[p]<.3&&!opPlaats(wx,wy); };
     /* langs de kavelranden */
-    const S=.11;
+    const S=.035;
     for(let wy=cy*RANDVAK+S/2;wy<(cy+1)*RANDVAK;wy+=S)for(let wx=cx*RANDVAK+S/2;wx<(cx+1)*RANDVAK;wx+=S){
       const ak=akkerOp(wx,wy); if(ak<.3)continue;
       /* niet elke heg heeft bomen: in stukken van een eenheid of zo wel of niet */
-      if(T.hash2(Math.floor(wx/1.2)*5+1,Math.floor(wy/1.2)*3+7)>.75*ak)continue;
+      if(T.hash2(Math.floor(wx/.4)*5+1,Math.floor(wy/.4)*3+7)>.75*ak)continue;
       const hk=T.hash2(Math.round(wx*97),Math.round(wy*89));
       if(hk>.85)continue;
-      const kr=kavelRand(X(wx),Z(wy)); if(kr>.02)continue;
+      const kr=kavelRand(X(wx),Z(wy)); if(kr>.0065)continue;
       if(!vrij(wx,wy))continue;
       const st=stijlBij(wx,wy); if(st==="arrida"||st==="steppen")continue;
       const k=kleurBij(wx,wy);
-      uit.push(X(wx),yOp(wx,wy)-.01,Z(wy),.09+.05*T.hash2(Math.round(wx*31),Math.round(wy*37)),st==="toscana"||st==="helleno"?7:2+(hk<.05*ak?1:0),hk*5%1,k[0],k[1],k[2]);
+      uit.push(X(wx),yOp(wx,wy)-.002,Z(wy),.016+.008*T.hash2(Math.round(wx*31),Math.round(wy*37)),st==="toscana"||st==="helleno"?7:2+(hk<.05*ak?1:0),hk*5%1,k[0],k[1],k[2]);
     }
     /* langs de wegen: stukken laan, in Toscana cipressen */
     if(wegL){
@@ -1479,31 +1486,31 @@ export async function maak3D(ctx){
           if(mxs<cx*RANDVAK||mxs>=(cx+1)*RANDVAK||mys<cy*RANDVAK||mys>=(cy+1)*RANDVAK)continue;
           const L=Math.hypot(x1-x0,y1-y0); if(L<1e-4)continue;
           const nx=-(y1-y0)/L, ny=(x1-x0)/L;
-          for(let d=0;d<L;d+=.09){
+          for(let d=0;d<L;d+=.028){
             const px=x0+(x1-x0)*d/L, py=y0+(y1-y0)*d/L;
             /* een laan loopt in stukken van een paar honderd meter, aan één
                of aan beide kanten, en niet elke boom staat er nog */
-            const stuk=T.hash2(Math.floor(px/1.3)*7+3,Math.floor(py/1.3)*11+5);
+            const stuk=T.hash2(Math.floor(px/.45)*7+3,Math.floor(py/.45)*11+5);
             if(stuk>.2)continue;
             if(T.hash2(Math.round(px*211),Math.round(py*223))<.22)continue;
             const st=stijlBij(px,py); if(st==="arrida"||st==="steppen")continue;
             for(const z of stuk<.08?[-1,1]:[stuk<.14?-1:1]){
-              const tx=px+nx*z*(half+3.5*.006), ty=py+ny*z*(half+3.5*.006);
+              const tx=px+nx*z*(half+3.5*METER), ty=py+ny*z*(half+3.5*METER);
               if(!vrij(tx,ty))continue;
               const kk=kleurBij(tx,ty);
-              uit.push(X(tx),yOp(tx,ty)-.01,Z(ty),.1+.03*T.hash2(Math.round(tx*53),Math.round(ty*59)),st==="toscana"||st==="helleno"?7:2,T.hash2(Math.round(tx*7),Math.round(ty*3)),kk[0],kk[1],kk[2]);
+              uit.push(X(tx),yOp(tx,ty)-.002,Z(ty),.017+.005*T.hash2(Math.round(tx*53),Math.round(ty*59)),st==="toscana"||st==="helleno"?7:2,T.hash2(Math.round(tx*7),Math.round(ty*3)),kk[0],kk[1],kk[2]);
             }
           }
         }
       }
     }
     /* een losse boom midden in een wei */
-    for(let i=0;i<14;i++){
+    for(let i=0;i<60;i++){
       const wx=(cx+T.hash2(cx*13+i,cy*7))*RANDVAK, wy=(cy+T.hash2(cx*5,cy*17+i))*RANDVAK;
       if(akkerOp(wx,wy)<.25||!vrij(wx,wy))continue;
       const st=stijlBij(wx,wy); if(st==="arrida"||st==="steppen")continue;
       const k=kleurBij(wx,wy);
-      uit.push(X(wx),yOp(wx,wy)-.01,Z(wy),.12+.05*T.hash2(i,cx+cy),2,T.hash2(i+3,cx-cy),k[0],k[1],k[2]);
+      uit.push(X(wx),yOp(wx,wy)-.002,Z(wy),.02+.008*T.hash2(i,cx+cy),2,T.hash2(i+3,cx-cy),k[0],k[1],k[2]);
     }
     v=new Float32Array(uit);
     detailVakken.set(sl,v);
@@ -1530,7 +1537,7 @@ export async function maak3D(ctx){
   }
   function stenenIn(cx,cy){
     const sl=cx+","+cy; let v=steenVakken.get(sl); if(v)return v;
-    const uit=[], {land,h,bos,rivier}=D, S=.3;
+    const uit=[], {land,h,bos,rivier}=D, S=.15;
     for(let wy=cy*RANDVAK+S/2;wy<(cy+1)*RANDVAK;wy+=S)for(let wx=cx*RANDVAK+S/2;wx<(cx+1)*RANDVAK;wx+=S){
       const px=wx+(T.hash2(Math.round(wx*41),Math.round(wy*43))-.5)*S, py=wy+(T.hash2(Math.round(wx*47),Math.round(wy*53))-.5)*S;
       const fx=Math.floor((px+MARGE)*RES), fy=Math.floor((py+MARGE)*RES); if(fx<1||fy<1||fx>=RW-1||fy>=RH-1)continue;
@@ -1539,7 +1546,7 @@ export async function maak3D(ctx){
       /* hoe groot de kans op een steen hier is */
       const kans=klem((hl-.6)/1.4,0,1)*.7+klem((h[p]-.32)/.3,0,1)*.35+(D.kust[p]<8&&hl>.5?.4:0);
       const hk=T.hash2(Math.round(px*61),Math.round(py*67)); if(hk>kans)continue;
-      const maat=(.008+.03*Math.pow(T.hash2(Math.round(px*71),Math.round(py*73)),2.2))*(1+hl*.3);
+      const maat=(.004+.016*Math.pow(T.hash2(Math.round(px*71),Math.round(py*73)),2.2))*(1+hl*.3);
       const t=.85+.3*T.hash2(Math.round(px*79),Math.round(py*83));
       uit.push(X(px),yOp(px,py)-maat*.35,Z(py),maat,hk*97%6.283,t);
     }
@@ -1683,7 +1690,7 @@ export async function maak3D(ctx){
             vec3 dp=vec3(aDobber.x,0.0,aDobber.y), dq=transformed-dp;
             dq=vec3(dq.x*cos(dz)-dq.y*sin(dz),dq.x*sin(dz)+dq.y*cos(dz),dq.z);
             dq=vec3(dq.x,dq.y*cos(dx)-dq.z*sin(dx),dq.y*sin(dx)+dq.z*cos(dx));
-            transformed=dp+dq; transformed.y+=sin(df*1.3)*.008;`);
+            transformed=dp+dq; transformed.y+=sin(df*1.3)*.002;`);
       };
       const x=new THREE.Mesh(m.schepen,ms); x.castShadow=true; x.receiveShadow=true; g.add(x);
     }
@@ -1702,7 +1709,7 @@ export async function maak3D(ctx){
     { const c=gloed.getContext("2d"), gr=c.createRadialGradient(32,32,0,32,32,32);
       gr.addColorStop(0,"rgba(255,214,150,1)"); gr.addColorStop(.18,"rgba(255,170,80,.6)"); gr.addColorStop(1,"rgba(255,140,60,0)");
       c.fillStyle=gr; c.fillRect(0,0,64,64); }
-    const lm=new THREE.PointsMaterial({size:.24,map:new THREE.CanvasTexture(gloed),color:0xFFC27A,transparent:true,
+    const lm=new THREE.PointsMaterial({size:.07,map:new THREE.CanvasTexture(gloed),color:0xFFC27A,transparent:true,
       depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,fog:false});
     lichtjes=new THREE.Points(lg,lm); lichtjes.renderOrder=4;
     wereld.add(lichtjes);
@@ -1715,7 +1722,7 @@ export async function maak3D(ctx){
      en hooguit één per beeldje. Verder weg zijn ze een vlekje daken tussen
      hun akkers (zie bouwKleur), en een tegel die ver achter de camera ligt
      wordt weer opgeruimd. */
-  const GTEGEL=16, GBOUW=klein?26:38, GWEG=GBOUW+22;
+  const GTEGEL=16, GBOUW=klein?10:15, GWEG=GBOUW+12;
   const gTegels=new Map(); let gPerTegel=null;
   const gebiedStijl=r=>stijlVan(D.ids[r-1]||"");
   function verdeelGehuchten(){
@@ -2132,7 +2139,7 @@ export async function maak3D(ctx){
     const vrij=(p,a)=>{
       sph.set(afst,p,a); c.setFromSpherical(sph).add(doel);
       const [cx,cy]=naarKaart(c);
-      if(c.y<grondY(cx,cy)+Math.max(1.2,afst*.1))return false;
+      if(c.y<grondY(cx,cy)+Math.max(.15,afst*.1))return false;
       /* het laatste stuk niet: dat ligt op de helling van het doel zelf */
       for(let s=1;s<=24;s++){
         const t=s/24*.86, x=c.x+(doel.x-c.x)*t, y=c.y+(doel.y-c.y)*t, z=c.z+(doel.z-c.z)*t;
@@ -2163,7 +2170,7 @@ export async function maak3D(ctx){
   function kantelMee(nu){
     if(nu-zoomTijd>450||vlucht)return;
     const d=camera.position.distanceTo(controls.target);
-    const t=klem((Math.log(d)-Math.log(6))/(Math.log(700)-Math.log(6)),0,1);
+    const t=klem((Math.log(d)-Math.log(1.5))/(Math.log(700)-Math.log(1.5)),0,1);
     const wil=1.32+(.62-1.32)*t;
     sph.setFromVector3(off.copy(camera.position).sub(controls.target));
     sph.phi+=(wil-sph.phi)*.1;
@@ -2175,18 +2182,18 @@ export async function maak3D(ctx){
     const [tx,ty]=naarKaart(t);
     t.y+=(grondY(tx,ty)-t.y)*.15;
     const [cx,cy]=naarKaart(camera.position);
-    const min=grondY(cx,cy)+.6;
+    const min=grondY(cx,cy)+.05;
     if(camera.position.y<min)camera.position.y=min;
     /* het dichtbije vlak meeschuiven met de hoogte: vlakbij scherp, en in de
        verte geen gevecht tussen water en zeebodem */
     const boven=camera.position.y-grondY(cx,cy);
-    const near=klem(boven*.06,.03,8);
+    const near=klem(boven*.06,.004,8);
     if(Math.abs(near-camera.near)/camera.near>.2){ camera.near=near; camera.updateProjectionMatrix(); }
   }
   /* de schaduw van de zon: een vak rond waar je kijkt, groter naarmate je verder weg bent */
   function werkSchaduwBij(){
     const t=controls.target, d=camera.position.distanceTo(t);
-    const vak=klem(d*1.1,18,800);
+    const vak=klem(d*1.1,2.5,800);
     const sc=zon.shadow.camera;
     if(Math.abs(sc.right-vak)/vak>.08){
       sc.left=-vak; sc.right=vak; sc.top=vak; sc.bottom=-vak; sc.updateProjectionMatrix();
@@ -2365,7 +2372,7 @@ export async function maak3D(ctx){
       }else if(D.POS[id]){
         const p=ctx.PLAATSEN.find(p=>p.id===id);
         /* een plaats op ware schaal is klein: dichterbij dan een landschap */
-        const afst=p&&/^(natuur|landschap|rivier)$/.test(p.soort)?Math.max(20,(p.straal||8)*2.8):7;
+        const afst=p&&/^(natuur|landschap|rivier)$/.test(p.soort)?Math.max(20,(p.straal||8)*2.8):1.8;
         vlieg(D.POS[id][0],D.POS[id][1],afst,1.02);
       }
     },
