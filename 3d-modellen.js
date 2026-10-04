@@ -852,10 +852,14 @@ export const BOUWERS={
     for(const z of [-1,1])c.blok(0,z*.13,.5,.008,.02,"#5E4A38",{y:g});
   }},
   /* Zeeklif (Seacliff) — een klein eilandleen: Wills eerste standplaats */
-  zeeklif:{info:{vlak:[.3,.7,.8],open:.8},bouw(B,b){
+  zeeklif:{info:{klif:{r:3.2,hoogte:1.5},vlak:[.3,.7,.8],open:.8},bouw(B,b){
     kasteel(B,b,"araluen",{maat:.42,muurH:.1,steen:"#B3AD9E"});
     const a=B.zeeRichting(b.cx,b.cy,2); if(a!=null){ B.steiger(b,b.cx,b.cy,a,.35); B.vloot(b.cx,b.cy,a,"boot",2,11,{van:.4,tot:.6}); }
   }},
+  /* De Oostelijke en Zuidelijke kliffen — waar het gebergte van Morgarath
+     steil in zee valt (zie het klif in 3d-grond.js) */
+  oostkliffen:{info:{klif:{r:7,hoogte:2.2}},bouw(B,b){ b.straal=0; }},
+  zuidkliffen:{info:{klif:{r:7,hoogte:2}},bouw(B,b){ b.straal=0; }},
   /* De Vlakte van Uthal — waar het leger van Araluen de Wargals opving */
   uthal:{info:{open:1.4},bouw(B,b){ slagveld(B,b,"araluen",{tenten:8,vlaggen:["#2F5D3A","#8E2B2B","#E2D8BE"]}); }},
   /* De Heckingse Heide — het slagveld van de eerste oorlog: grafheuvels en

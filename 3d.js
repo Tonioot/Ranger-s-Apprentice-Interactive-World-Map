@@ -455,7 +455,7 @@ export async function maak3D(ctx){
     for(const p of ctx.PLAATSEN){
       const pos=POS[p.id]; if(!pos)continue;
       const m=modelVoor(p);
-      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null});
+      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null});
     }
 
     /* --- het rekenwerk --- */
@@ -728,6 +728,8 @@ export async function maak3D(ctx){
     }
     return kruin(p0+stap*diep,loof,helling,kleur);
   }`;
+  /* de kleur van rots, uit hetzelfde CSS-variabele als de kaart (per thema) */
+  const rotsKleur={value:new THREE.Color()};
   function maakLandMat(kleurTex,normTex,loofTex){
     const m=new THREE.MeshStandardMaterial({map:kleurTex,normalMap:normTex,
       normalMapType:THREE.ObjectSpaceNormalMap,roughness:.93,metalness:0});
@@ -735,11 +737,12 @@ export async function maak3D(ctx){
       metNevel(sh);
       sh.uniforms.uDetail={value:detailTex};
       sh.uniforms.uLoof={value:loofTex};
+      sh.uniforms.uRots=rotsKleur;
       sh.vertexShader=sh.vertexShader
         .replace("#include <common>","#include <common>\nvarying vec3 vWolkW;")
         .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*vec4(transformed,1.0)).xyz;");
       sh.fragmentShader=sh.fragmentShader
-        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\n"+WOLK_GLSL+KRUIN_GLSL
+        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\nuniform vec3 uRots;\n"+WOLK_GLSL+KRUIN_GLSL
           +"float randSchaduw(vec4 c,float s){ vec3 p=c.xyz/c.w; float r=min(min(p.x,1.0-p.x),min(p.y,1.0-p.y)); return mix(1.0,s,smoothstep(0.0,.18,r)); }")
         /* Van dichtbij is het kleurplaatje te grof: dan een fijne korrel van
            gras, aarde en steen eroverheen, die in de verte weer wegvalt. */
@@ -749,6 +752,19 @@ export async function maak3D(ctx){
           /* in het bos alleen een vleugje: daar doen de kruinen het werk */
           float bosM=texture2D(normalMap,vNormalMapUv).a;
           diffuseColor.rgb*=mix(1.0,.84+.32*korrel,(1.0-smoothstep(6.0,55.0,dAfst))*(1.0-.7*bosM));
+          /* Een steile wand (een klif, een bergflank) is rots. Het kleurplaatje
+             is daar uitgerekt — een wand van een eenheid hoog beslaat maar een
+             paar beeldpunten ervan —, dus hier eigen rots, met lagen gesteente
+             die horizontaal door de wand lopen en verticale voren van het
+             water dat erlangs loopt. */
+          vec3 nO=texture2D(normalMap,vNormalMapUv).xyz*2.0-1.0;
+          float wand=smoothstep(.27,.55,1.0-normalize(nO).y)*(1.0-bosM);
+          if(wand>.002){
+            float laag=texture2D(uDetail,vec2((vWolkW.x+vWolkW.z)*.05,vWolkW.y*.9)).r;
+            float voor=texture2D(uDetail,vec2((vWolkW.x-vWolkW.z)*1.3,vWolkW.y*.12)).r;
+            vec3 rots=uRots*(.72+.4*laag)*(.86+.24*voor);
+            diffuseColor.rgb=mix(diffuseColor.rgb,rots,wand);
+          }
           float loof=texture2D(uLoof,vMapUv).r;
           /* vaste celmaat: een maat die met het loof meeloopt zou het hele
              patroon laten verschuiven waar het bos van soort wisselt */
@@ -1564,6 +1580,7 @@ export async function maak3D(ctx){
     }
     if(lichtjes)lichtjes.visible=!!th.lichtjes;
     GEDEELD.uGebouwLicht.value=isDonker()?.04:.13;
+    rotsKleur.value.set(css("--rots")||"#9C9782");
     if(D)tekenRoutes();
   }
 

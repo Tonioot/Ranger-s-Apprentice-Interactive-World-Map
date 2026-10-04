@@ -371,6 +371,32 @@ function afwerking(G,T){
   const R=G.R, {RW,RH,RES,N,M}=R;
   const {h,land,rivier,reg,kust,plekken}=G;
   erodeer(R,h,land);
+  /* Een klif (Zeeklif, de kliffen onder het gebergte): het land loopt hier
+     niet geleidelijk op vanaf het strand, maar staat meteen als een wand uit
+     het water op, met een golvend plateau erboven. De wand komt vanzelf: het
+     eerste rasterpunt op het land ligt al hoog, het eerste in zee laag. kust
+     is de afstand tot de waterlijn (×18), dus hier is ook te zien hoe ver
+     landinwaarts een punt ligt. Rond de rand van het gebied loopt het klif
+     terug in het gewone land, zodat er geen trede in het landschap staat. */
+  for(const pl of plekken){
+    if(!pl.klif)continue;
+    const {r,hoogte}=pl.klif, cx=pl.x, cy=pl.y;
+    /* de hoogte (0..1) die hoort bij een wand van hoogte eenheden boven zee */
+    const hVan=y=>{ const a=(y-LAND0)/SCHAAL; return -.5+Math.sqrt(.25+2*a); };
+    for(let y=Math.max(0,Math.floor((cy+M-r)*RES));y<=Math.min(RH-1,Math.ceil((cy+M+r)*RES));y++)
+      for(let x=Math.max(0,Math.floor((cx+M-r)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+r)*RES));x++){
+        const q=y*RW+x; if(!land[q])continue;
+        const wx=x/RES-M, wy=y/RES-M, d=Math.hypot(wx-cx,wy-cy)/r;
+        const w=1-glad(klem((d-.6)/.4,0,1)); if(w<=0)continue;
+        const dk=kust[q]/18;
+        /* de wand: binnen een paar tienden van een eenheid op volle hoogte */
+        const wand=glad(klem((dk-.04)/.32,0,1));
+        /* het plateau loopt landinwaarts nog wat op, en golft */
+        const plat=.8+.2*glad(klem(dk/2.2,0,1))+.12*(T.fbm(wx*.6+3,wy*.6-8,3,.3)-.5);
+        const doel=hVan(LAND0+hoogte*plat)*wand;
+        if(doel>h[q])h[q]+=(doel-h[q])*w;
+      }
+  }
   /* de kloven: steile wanden, een bodem net boven zee */
   for(const k of G.kloven||[]){
     if(!k.pts.length)continue;
@@ -639,7 +665,8 @@ function kleur(G,T){
       const bw=bos[q]/255;
       if(bw>0){ m*=1-.40*bw; k[1]+=(k[1]*.10)*bw; k[0]-=k[0]*.06*bw; }
       m*=klem(1+holte[hp]*.07,.68,1.14);
-      if(kust[q]<30){ const t=1-kust[q]/30; meng(ZAND,t*t*.85); }
+      /* zand langs de kust, maar niet boven op een klif */
+      if(kust[q]<30){ const t=1-kust[q]/30; meng(ZAND,t*t*.85*(1-glad(klem((hh-.025)/.03,0,1)))); }
       if(grens[q]){ meng(GRENS,.22); }
       let r=k[0]*m, g=k[1]*m, b=k[2]*m, nat=0;
       if(rivier[q]){ const t=rivier[q]/255; r+=(RIV[0]-r)*t; g+=(RIV[1]-g)*t; b+=(RIV[2]-b)*t; nat=t*.9; }
