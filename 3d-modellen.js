@@ -42,7 +42,7 @@
    de kaart. Hoogtes zijn absolute wereldhoogtes (y), zoals yOp() ze geeft.
    ========================================================================== */
 import * as THREE from "three";
-import {dorpPlan,METER} from "./3d-grond.js";
+import {dorpPlan,havenPlan,METER} from "./3d-grond.js";
 
 const klem=(v,a,b)=>v<a?a:v>b?b:v;
 /* Eén meter in de maten van de modellen. De bouwers rekenen in die maat; elk
@@ -1051,66 +1051,75 @@ export function maakBouwer(omg){
       for(let i=0;i<4;i++){ if(i===0&&b.r(8)<.5)continue; const [p0,p1]=[pts[i],pts[(i+1)%4]]; if(b.land(...p0)&&b.land(...p1))b.heg(p0[0],p0[1],p1[0],p1[1],"#6B5640",1*M,.3*M); }
     }
   }
+  /* Een plan uitvoeren (zie dorpPlan en havenPlan in 3d-grond.js): de
+     huizen, schuren, stadshuizen en pakhuizen, elk alleen waar het op
+     droog en niet te steil land past; de brink of het marktplein met de
+     kerk en kraampjes; de muur. Het plan staat in kaartmaat ten opzichte
+     van het midden van b; straten: ook de straten in de grond leggen (voor
+     een plaats op de kaart; de straten van de naamloze plekken legt de
+     rekenploeg zelf). */
+  function bouwPlan(b,plan,stijl,soort,a,zaad,o={}){
+    const st=STIJLEN[stijl]||STIJLEN.araluen, ru=7*M;
+    let nr=(zaad%71)*41;
+    for(const h of plan.huizen){
+      const u=h.x/K, v=h.y/K;
+      if(!b.land(u,v)||!b.land(u+ru,v)||!b.land(u-ru,v)||!b.land(u,v+ru)||!b.land(u,v-ru))continue;
+      if(omg.rivierOp&&omg.rivierOp(...b.w(u,v))>20)continue;
+      const g=b.grond(u,v); if(Math.abs(b.grond(u+ru,v)-g)+Math.abs(b.grond(u,v+ru)-g)>ru*1.1)continue;
+      nr++;
+      let t;
+      if(h.soort===1&&st.huis!=="plat"&&st.huis!=="joert")
+        /* een schuur: groter, lager, van donker hout */
+        t=huis(b,u,v,stijl,{r:h.r,nr,maat:1.15,lang:1.35,aanbouw:false,muur:"#6E5A44",muurMat:"hout"});
+      else if(h.soort===2)
+        /* een stadshuis: smal en hoog, met de gevel aan de straat */
+        t=huis(b,u,v,stijl,{r:h.r,nr,maat:.85,lang:.8,aanbouw:false,verdiepingen:h.lagen});
+      else if(h.soort===3)
+        /* een pakhuis aan de kade: groot, twee of drie lagen hoog */
+        t=huis(b,u,v,stijl,{r:h.r,nr,maat:1.4,lang:1.15,aanbouw:false,verdiepingen:2+(b.r(nr)<.3?1:0)});
+      else t=huis(b,u,v,stijl,{r:h.r,nr,verdiepingen:h.lagen>1?h.lagen:undefined});
+      b.top=Math.max(b.top,t||0);
+    }
+    const pl=plan.plein;
+    if(pl&&soort===2){
+      /* de kerk op de brink */
+      if(b.land(pl.x/K,pl.y/K))pleinGebouw(b,stijl,pl.x/K,pl.y/K,a+Math.PI/2);
+    }
+    if(pl&&soort>=3){
+      /* het marktplein met kinderkopjes, de kerk eraan, en op het plein
+         kraampjes met gekleurde luifels */
+      const ph=pl.hoek??a, c=Math.cos(ph), s=Math.sin(ph), op=(du,dv)=>[(pl.x+du*c-dv*s)/K,(pl.y+du*s+dv*c)/K];
+      const [mu0,mv0]=op(0,0);
+      if(b.land(mu0,mv0)){
+        const g=b.grond(mu0,mv0);
+        b.blok(mu0,mv0,pl.b/K,pl.d/K,.25*M,"#9A9282",{r:ph,y:g-.15*M,mat:"kassei",var:.04});
+      }
+      if(plan.kerk){ const [ku,kv]=[plan.kerk[0]/K,plan.kerk[1]/K]; if(b.land(ku,kv))pleinGebouw(b,stijl,ku,kv,ph); }
+      const luifel=["#B5523A","#D8C9A0","#4F6E8E","#C9A24A","#7A8A4E"];
+      for(let i=0;i<(soort>=4?14:9);i++){
+        const [mu,mv]=op((b.r(200+i)-.5)*(pl.b-10*METER),(b.r(220+i)-.5)*(pl.d-10*METER));
+        if(!b.land(mu,mv))continue;
+        const g=b.grond(mu,mv);
+        b.blok(mu,mv,3*M,2.2*M,1.1*M,"#7A6248",{r:ph,y:g-.005,mat:"hout"});
+        b.lessenaar(mu,mv,g+2.3*M,3.6*M,2.8*M,.5*M,luifel[i%5],{r:ph,mat:"vlak"});
+      }
+    }
+    if(plan.muur&&o.muur!==false)stadsmuur(b,st,plan.muur,o.muur);
+    if(o.straten)for(const w of plan.straten)b.weg(w.pts.map(([x,y])=>[x/K,y/K]),w.breed/K,w.soort);
+  }
   /* Een naamloze nederzetting (zie nederzettingen() en dorpPlan() in
      3d-grond.js): een boerderij, een gehucht, een dorp met een brink of een
-     marktstad met een muur. Het plan zegt waar de straten en de huizen
-     liggen; hier komen de huizen erop, elk alleen waar het op droog en niet
-     te steil land past. In de korenlanden soms een molen op het hoogste punt
-     in de buurt. */
+     marktstad met een muur. In de korenlanden soms een molen op het
+     hoogste punt in de buurt. */
   function gehucht(plek,stijl){
     const [x,y,soort,zaad,a]=plek;
     const b=rond(x,y,0,zaad%997);
     const st=STIJLEN[stijl]||STIJLEN.araluen;
     if(soort===0)boerderij(b,stijl,zaad%89);
-    else{
-      const plan=dorpPlan(soort,zaad,a);
-      const ru=7*M;
-      let nr=(zaad%71)*41;
-      for(const h of plan.huizen){
-        const u=h.x/K, v=h.y/K;
-        if(!b.land(u,v)||!b.land(u+ru,v)||!b.land(u-ru,v)||!b.land(u,v+ru)||!b.land(u,v-ru))continue;
-        if(omg.rivierOp&&omg.rivierOp(x+h.x,y+h.y)>20)continue;
-        const g=b.grond(u,v); if(Math.abs(b.grond(u+ru,v)-g)+Math.abs(b.grond(u,v+ru)-g)>ru*1.1)continue;
-        nr++;
-        let t;
-        if(h.soort===1&&st.huis!=="plat"&&st.huis!=="joert")
-          /* een schuur: groter, lager, van donker hout */
-          t=huis(b,u,v,stijl,{r:h.r,nr,maat:1.15,lang:1.35,aanbouw:false,muur:"#6E5A44",muurMat:"hout"});
-        else if(h.soort===2)
-          /* een stadshuis: smal en hoog, met de gevel aan de straat */
-          t=huis(b,u,v,stijl,{r:h.r,nr,maat:.85,lang:.8,aanbouw:false,verdiepingen:h.lagen});
-        else t=huis(b,u,v,stijl,{r:h.r,nr,verdiepingen:h.lagen>1?h.lagen:undefined});
-        b.top=Math.max(b.top,t||0);
-      }
-      const pl=plan.plein;
-      if(pl&&soort===2){
-        /* de kerk op de brink */
-        if(b.land(pl.x/K,pl.y/K))pleinGebouw(b,stijl,pl.x/K,pl.y/K,a+Math.PI/2);
-      }
-      if(pl&&soort===3){
-        /* aan het marktplein de kerk, op de rest kraampjes met gekleurde
-           luifels */
-        const c=Math.cos(a), s=Math.sin(a), op=(du,dv)=>[(du*c-dv*s)/K,(du*s+dv*c)/K];
-        if(b.land(0,0)){
-          const g=b.grond(0,0);
-          b.blok(0,0,pl.b/K,pl.d/K,.25*M,"#9A9282",{r:a,y:g-.15*M,mat:"kassei",var:.04});
-        }
-        const [ku,kv]=[plan.kerk[0]/K,plan.kerk[1]/K];
-        if(b.land(ku,kv))pleinGebouw(b,stijl,ku,kv,a);
-        const luifel=["#B5523A","#D8C9A0","#4F6E8E","#C9A24A","#7A8A4E"];
-        for(let i=0;i<9;i++){
-          const [mu,mv]=op((b.r(200+i)-.5)*(pl.b-10*METER),(b.r(220+i)-.5)*(pl.d-10*METER));
-          if(!b.land(mu,mv))continue;
-          const g=b.grond(mu,mv);
-          b.blok(mu,mv,3*M,2.2*M,1.1*M,"#7A6248",{r:a,y:g-.005,mat:"hout"});
-          b.lessenaar(mu,mv,g+2.3*M,3.6*M,2.8*M,.5*M,luifel[i%5],{r:a,mat:"vlak"});
-        }
-      }
-      if(plan.muur)stadsmuur(b,st,plan.muur);
-    }
+    else bouwPlan(b,dorpPlan(soort,zaad,a),stijl,soort,a,zaad);
     if(soort>0&&(st.huis==="zadel"||st.huis==="steil")&&b.r(9)<(soort>=2?.5:.25)){
       /* de molen: buiten het dorp, op de hoogste plek van een paar kandidaten */
-      let best=null; const ver=(soort===3?.3:soort===2?.18:.1)/K;
+      let best=null; const ver=(soort>=3?.3:soort===2?.18:.1)/K;
       for(let i=0;i<6;i++){ const t=b.r(20+i)*Math.PI*2, d=ver+b.r(30+i)*.12, u=Math.cos(t)*d, v=Math.sin(t)*d; if(!b.land(u,v))continue; const g=b.grond(u,v); if(!best||g>best[2])best=[u,v,g]; }
       if(best)molen(b,best[0],best[1],b.r(40)*Math.PI*2);
     }
@@ -1119,11 +1128,11 @@ export function maakBouwer(omg){
      om de zoveel meter en een poort met twee torens waar een hoofdstraat de
      stad in gaat; in het hoge noorden en op de steppe een palissade van
      palen. In stukken van een meter of acht, zodat hij het land volgt. */
-  function stadsmuur(b,st,muur){
-    const steen=st.huis!=="lang"&&st.huis!=="plag"&&st.huis!=="joert"&&st.huis!=="japans";
+  function stadsmuur(b,st,muur,soort){
+    const steen=soort?soort==="steen":st.huis!=="lang"&&st.huis!=="plag"&&st.huis!=="joert"&&st.huis!=="japans";
     const kleur=st.steen[0], P=muur.punten, n=P.length;
     const poortBij=(x,y)=>muur.poorten.some(([px,py])=>Math.hypot(px-x,py-y)<9*METER);
-    for(let i=0;i<n;i++){
+    for(let i=0;i<(muur.open?n-1:n);i++){
       const [x0,y0]=P[i], [x1,y1]=P[(i+1)%n], L=Math.hypot(x1-x0,y1-y0), k=Math.max(1,Math.round(L/(8*METER))), r=Math.atan2(y1-y0,x1-x0);
       for(let j=0;j<k;j++){
         const mx=x0+(x1-x0)*(j+.5)/k, my=y0+(y1-y0)*(j+.5)/k; if(poortBij(mx,my))continue;
@@ -1135,6 +1144,14 @@ export function maakBouwer(omg){
       /* een toren op elke tweede hoek */
       if(steen&&i%2===0&&!poortBij(x0,y0)&&b.land(x0/K,y0/K))
         b.toren(x0/K,y0/K,3.4*M,11*M,kleur,{dak:"kegel",dakKleur:st.torendak[0],dakH:5*M,mat:st.steenMat,krans:false,plint:false});
+      /* bij een palissade houten wachttorens: op de hoeken van een open muur
+         (een haven), anders op elke vierde hoek */
+      else if(!steen&&(muur.open?i>0:i%4===0)&&!poortBij(x0,y0)&&b.land(x0/K,y0/K)){
+        const u=x0/K, v=y0/K, g=b.grond(u,v);
+        for(const [du,dv] of [[-1.6,-1.6],[1.6,-1.6],[1.6,1.6],[-1.6,1.6]])b.stuk("vast",S.blok,u+du*M,g-1*M,v+dv*M,.5*M,10*M,.5*M,0,"#5E4A36",{mat:"hout"});
+        b.blok(u,v,4.4*M,4.4*M,1.6*M,"#6B5640",{y:g+7.5*M,mat:"hout"});
+        b.kegel(u,v,g+9.1*M,3.4*M,2.4*M,"#5A4A38",{vier:true,mat:"hout"});
+      }
     }
     for(const [px,py,h] of muur.poorten){
       const c=Math.cos(h+Math.PI/2), s=Math.sin(h+Math.PI/2);
@@ -1146,7 +1163,7 @@ export function maakBouwer(omg){
     }
   }
 
-  return {opLand,rond,huis,dorp,pleinGebouw,stadsmuur,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
+  return {opLand,hNorm,rond,huis,dorp,pleinGebouw,stadsmuur,bouwPlan,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
 }
 
 /* ======================= generieke modellen per soort ======================= */
@@ -1303,44 +1320,93 @@ function kasteel(B,b,stijl,o={}){
   b.straal=Math.max(hw,hd)*1.35;
 }
 
-/* een stad of dorp, met wat erbij hoort */
+/* Een stad of dorp met een naam op de kaart: uitgezet zoals de naamloze
+   (zie dorpPlan), maar met een vast zaad uit de naam en met de straten
+   erbij. o.soort: 2 dorp, 3 marktstad, 4 grote stad (anders naar o.aantal). */
 function stad(B,b,stijl,o={}){
-  return B.dorp(b,stijl,{straal:o.straal||.5,aantal:o.aantal||22,...o});
+  const soort=o.soort||((o.aantal||22)>=60?4:(o.aantal||22)>=28?3:(o.aantal||22)>=10?2:1);
+  const zaad=o.zaad??(Math.abs(Math.round(b.cx*131+b.cy*71))%100000);
+  const a=o.richting??b.r(1)*Math.PI*2;
+  const plan=dorpPlan(soort,zaad,a,o.vrij);
+  B.bouwPlan(b,plan,stijl,soort,a,zaad,{straten:true,muur:o.muur});
+  b.straal=Math.max(b.straal,plan.straal/K*.8);
+  return plan;
 }
 
-/* een haven: de stad aan het water, een kade, steigers en schepen */
+/* Een haven: de stad langs de echte waterlijn. Eerst de kust zelf: vanaf
+   de plaats naar zee tot het water, en twee keer een stuk ernaast, voor de
+   richting van de kust. Langs die lijn ligt de kade met de pakhuizen, het
+   land in de straten (havenPlan in 3d-grond.js); vanaf de kade steken de
+   steigers het water in, met de schepen eraan afgemeerd, en wat verder
+   liggen er een paar voor anker. o: huizen (of aantal), muur ("steen" of
+   "palissade"), steigers, schepen, schip (soort), vloot (opties). */
 function haven(B,b,stijl,p,o={}){
   const st=STIJLEN[stijl]||STIJLEN.araluen;
   const a=B.zeeRichting(b.cx,b.cy,2.2)??B.zeeRichting(b.cx,b.cy,5);
   if(a==null){ stad(B,b,stijl,o); return; }
-  const t=B.waterlijn(b.cx,b.cy,a,6);
-  if(t>1.3){
-    /* het water ligt een eind verderop: de stad blijft waar de kaart hem
-       zet, en aan de kust ligt een haventje met een steiger en schepen */
-    stad(B,b,stijl,o);
-    const kx=b.cx+Math.cos(a)*(t-.2*K), ky=b.cy+Math.sin(a)*(t-.2*K);
-    const k=B.rond(kx,ky,a+Math.PI/2,b.r(6)*99|0);
-    B.dorp(k,stijl,{straal:.18,aantal:6,geenPlein:true,richting:0,zaad:5});
-    B.steiger(k,kx,ky,a,o.steiger||.22);
-    B.vloot(kx,ky,a,o.schip||st.schip,o.schepen??3,b.r(9)*999|0,{richting:a+Math.PI/2,...(o.vloot||{})});
-    b.top=Math.max(b.top,k.top);
-    return;
+  const huizen=o.huizen||Math.round(Math.min(300,Math.max(25,(o.aantal||24)*4)));
+  const lengte=o.lengte||Math.round(150+huizen*1.1), diepte=o.diepte||Math.round(80+huizen*.45);
+  /* een punt op de waterlijn: vanaf (x, y) wat landinwaarts, dan richting zee */
+  const opKust=(x,y,dx,dy)=>{
+    let t=-.6; while(t>-1.5&&B.hNorm(x+dx*t,y+dy*t)<0)t-=.02;
+    while(t<4&&B.hNorm(x+dx*t,y+dy*t)>=0)t+=.004;
+    return [x+dx*t,y+dy*t];
+  };
+  const zx=Math.cos(a), zy=Math.sin(a);
+  const C=opKust(b.cx,b.cy,zx,zy);
+  const s=lengte*.4*METER;
+  const P1=opKust(C[0]-zy*s,C[1]+zx*s,zx,zy), P2=opKust(C[0]+zy*s,C[1]-zx*s,zx,zy);
+  let tx=P1[0]-P2[0], ty=P1[1]-P2[1]; const tl=Math.hypot(tx,ty)||1; tx/=tl; ty/=tl;
+  /* landinwaarts is links van de kustrichting */
+  if(-ty*zx+tx*zy>0){ tx=-tx; ty=-ty; }
+  const nx=-ty, ny=tx, hoek=Math.atan2(ty,tx);
+  /* hoe ver de waterlijn landinwaarts ligt, per tien meter langs de kust */
+  const vcache=new Map();
+  const kust=u=>{
+    const k=Math.round(u/10), f=u/10-k;
+    const lees=k=>{
+      if(vcache.has(k))return vcache.get(k);
+      const qx=C[0]+tx*k*10*METER, qy=C[1]+ty*k*10*METER;
+      let v=200; while(v>-200&&B.hNorm(qx+nx*v*METER,qy+ny*v*METER)<0)v-=3;
+      while(v>-200&&B.hNorm(qx+nx*v*METER,qy+ny*v*METER)>=0)v-=3;
+      vcache.set(k,v+1.5); return v+1.5;
+    };
+    return f>=0?lees(k)+(lees(k+1)-lees(k))*f:lees(k)+(lees(k)-lees(k-1))*f;
+  };
+  const zaad=Math.abs(Math.round(b.cx*131+b.cy*71))%100000;
+  const ns=o.steigers??(huizen>150?4:huizen>60?3:2);
+  const plan=havenPlan(zaad,kust,{huizen,lengte,diepte,steigers:ns,muur:o.muur,vrij:o.vrij},hoek);
+  const c=B.rond(C[0],C[1],0,zaad%997);
+  B.bouwPlan(c,plan,stijl,huizen>150?4:3,hoek,zaad,{straten:true,muur:o.muur});
+  /* de kade: een stenen rand langs de waterlijn, met bolders */
+  const kp=plan.kade, kk=o.kade||"#8E887C";
+  for(let i=1;i<kp.length;i++){
+    const [x0,y0]=kp[i-1], [x1,y1]=kp[i], u=(x0+x1)/2/K, v=(y0+y1)/2/K, l=Math.hypot(x1-x0,y1-y0)/K+.3*M;
+    const g=Math.max(.03,c.grond(u-nx*4*M,v-ny*4*M));
+    c.blok(u,v,l,5*M,g+.15,kk,{r:Math.atan2(y1-y0,x1-x0),y:-.15,mat:"steen",var:.05});
+    if(i%2)c.cil(u,v,.35*M,.8*M,"#3E3830",{y:g});
   }
-  /* de stad ligt aan het water en groeit dus alleen landinwaarts: het midden
-     schuift wat van de waterlijn af, de hoofdstraat loopt langs de kust */
-  const R=o.straal||.5;
-  const mx=b.cx+Math.cos(a)*(t-R*.7*K), my=b.cy+Math.sin(a)*(t-R*.7*K);
-  const c=B.rond(mx,my,a+Math.PI/2,b.r(5)*99|0);
-  stad(B,c,stijl,{...o,richting:0,plein:o.plein||[0,-R*.25]});
-  /* de kade en de pakhuizen erachter */
-  const [kx,ky]=B.kade(c,mx,my,a,Math.min(.3,R*.8));
-  const pk=B.rond(kx-Math.cos(a)*12*M*K,ky-Math.sin(a)*12*M*K,a+Math.PI/2,b.r(8)*99|0);
-  for(let i=-1;i<=1;i++){ if(!pk.land(i*18*M,0))continue; const g=pk.kruin(i*18*M,0,7*M,5*M); if(g-pk.voet(i*18*M,0,7*M,5*M)>2.5*M)continue; const top=pk.blok(i*18*M,0,15*M,9*M,7*M,st.muur[0],{mat:st.huis==="plat"?"leem":"hout",vloer:g,verd:3.5*M});
-    if(st.huis==="plat")continue; pk.zadel(i*18*M,0,top-.2*M,15.6*M,10*M,5*M,st.dak[0],{mat:st.dakMat[0],gevel:{kleur:st.muur[0],mat:"hout"}}); }
-  B.steiger(c,mx,my,a,o.steiger||.22);
-  if(o.tweedeSteiger)B.steiger(c,mx+Math.cos(a+1.57)*.18*K,my+Math.sin(a+1.57)*.18*K,a,.18);
-  B.vloot(mx,my,a,o.schip||st.schip,o.schepen??3,b.r(9)*999|0,{richting:a+Math.PI/2,...(o.vloot||{})});
-  b.top=Math.max(b.top,c.top,pk.top); b.straal=R+.15;
+  /* de steigers met schepen eraan, en verderop wat schepen voor anker */
+  const soorten=Array.isArray(o.schip)?o.schip:[o.schip||st.schip];
+  let k=0;
+  for(const [x,y,h] of plan.steigers){
+    const lang=(38+c.r(300+k)*30)*M;
+    const [ex,ey]=B.steiger(c,C[0]+x,C[1]+y,h,lang);
+    /* aan weerskanten van de steiger een schip, langszij */
+    for(const z of [-1,1]){
+      if(c.r(320+k*3+(z>0?1:0))<.3)continue;
+      const f=.45+c.r(340+k)*.3, px=C[0]+x+(ex-C[0]-x)*f+Math.cos(h+Math.PI/2)*z*9*METER, py=C[1]+y+(ey-C[1]-y)*f+Math.sin(h+Math.PI/2)*z*9*METER;
+      if(B.hNorm(px,py)<-.003)B.schip(soorten[(k+(z>0?1:0))%soorten.length],px,py,h,zaad+k*7+(z>0?3:0),o.vloot||{});
+    }
+    k++;
+  }
+  const anker=Math.max(0,(o.schepen??3)-ns);
+  if(anker)B.vloot(C[0],C[1],a,soorten.length>1?soorten:soorten[0],anker,zaad%999,{richting:hoek,van:.9,tot:1.2,...(o.vloot||{})});
+  b.top=Math.max(b.top,c.top); b.straal=Math.max(b.straal,plan.straal/K*.8);
+  /* een plek in het plan (u langs de kust, v landinwaarts vanaf de
+     waterlijn, in meters) in de maat van c */
+  const lokaal=(u,v)=>{ const vv=v+kust(u); return [(tx*u+nx*vv)*METER/K,(ty*u+ny*vv)*METER/K]; };
+  return {C,a,hoek,c,lokaal,lengte,diepte,zee:[-nx,-ny]};
 }
 
 function ruine(B,b,stijl,o={}){
@@ -1386,12 +1452,45 @@ export const BOUWERS={
   /* Kasteel Redmont — "het rode kasteel van baron Arald": rode zandsteen,
      op de heuvel boven Wensley, met een Krijgsschool op het binnenplein. Even
      buiten de muren, aan de rand van het bos, de hut van de Grijze Jager. */
-  redmont:{info:{vlak:[.45,1,1],open:1.1},
-  /* de poort kijkt naar Wensley, onder aan de heuvel */
-  draai:(POS)=>POS.wensley?Math.atan2(POS.wensley[1]-POS.redmont[1],POS.wensley[0]-POS.redmont[0])-Math.PI/2:0,
+  redmont:{info:{vlak:[.45,1,1],open:1.1,heuvel:{r:.9,hoogte:.008}},
+  /* driehoekig, met de poort naar het westen */
+  draai:()=>Math.PI/2,
   bouw(B,b,p,stijl,POS){
-    const rood="#8E7266", dak="#5A6068";
-    kasteel(B,b,"araluen",{steen:rood,dak,breed:84,muurH:11,torenR:5.5,donjonH:28,vlag:"#8E2B2B"});
+    /* Kasteel Redmont: een driehoek van drie muren met drie ronde torens op
+       de hoeken, boven op een heuvel. Gebouwd van ijzersteen, dat bij
+       zonsopgang en -ondergang rood gloeit (vandaar de naam). Binnen de
+       muren het plein en de donjon, met de vertrekken van baron Arald en zijn
+       officieren; drie slaapzalen en een klein paradeplein. */
+    const rood="#9A5E4A", dak="#545A62", f=M, R=66*f, mh=13*f, dik=4*f;
+    const hoek=[Math.PI/6,Math.PI*5/6,-Math.PI/2], pts=hoek.map(a=>[Math.cos(a)*R,Math.sin(a)*R]);
+    const basis=b.voet(0,0,R*.75,R*.75);
+    b.stuk("vast",B.S.cilDicht,0,basis-.4,0,R*.62,.4,R*.62,0,rood,{mat:"steen"});
+    b.cil(0,0,R*.48,.4*M,"#9A8E74",{y:basis-.3*M,mat:"aarde"});
+    b.ring(pts,mh,dik,rood,{kantelen:"blok",y:basis-.02,top:basis+mh,mat:"steen",open:[0]});
+    for(const [u,v] of pts){ b.stuk("vast",B.S.cilDicht,u,basis-.4,v,10*f,.4,10*f,0,rood,{mat:"steen"}); b.toren(u,v,9*f,mh+13*f,rood,{dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:13*f,y:basis-.02,mat:"steen",ramen:4.5*f}); }
+    b.poort(0,R/2,Math.PI/2,15*f,mh+4*f,rood,dak,{mat:"steen"});
+    /* de donjon: zwaar en vierkant, met torentjes op de hoeken */
+    const dw=26*f, dd=23*f, dh=34*f, dv=-8*f;
+    const dtop=b.blok(0,dv,dw,dd,dh,rood,{y:basis-.01,mat:"steen",verd:5*f,vloer:basis});
+    for(const [u0,v0,u1,v1,nu,nv] of [[-dw/2,dv-dd/2,dw/2,dv-dd/2,0,-1],[dw/2,dv-dd/2,dw/2,dv+dd/2,1,0],[dw/2,dv+dd/2,-dw/2,dv+dd/2,0,1],[-dw/2,dv+dd/2,-dw/2,dv-dd/2,-1,0]])
+      b.kantelen(u0,v0,u1,v1,dtop,1.2*f,rood,{buiten:[nu,nv],mat:"steen",kantelen:"blok"});
+    for(const [a,c] of [[-1,-1],[1,-1],[1,1],[-1,1]])b.toren(a*dw/2,dv+c*dd/2,2.6*f,dh+4*f,rood,{y:basis-.01,dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:6*f,mat:"steen",plint:false,krans:false});
+    b.toren(dw/2-4*f,dv-dd/2+4*f,3*f,dh+12*f,rood,{dak:"kegel",dakKleur:dak,dakMat:"lei",dakH:7*f,vlag:"#8E2B2B",y:basis,mat:"steen",plint:false,ramen:5*f});
+    b.top=Math.max(b.top,dtop+12*f);
+    /* de slaapzalen: langs de twee muren zonder poort, en een achter de donjon */
+    for(const [i0,i1] of [[1,2],[2,0]]){
+      const [u0,v0]=pts[i0],[u1,v1]=pts[i1], mu=(u0+u1)/2, mv=(v0+v1)/2, l=Math.hypot(u1-u0,v1-v0), r=Math.atan2(v1-v0,u1-u0);
+      const nu=-mu/Math.hypot(mu,mv), nv=-mv/Math.hypot(mu,mv), cu=mu+nu*(dik/2+5.5*f), cv=mv+nv*(dik/2+5.5*f);
+      const t=b.blok(cu,cv,l*.42,9*f,7*f,rood,{r,y:basis-.01,mat:"steen",verd:3.5*f,vloer:basis});
+      b.zadel(cu,cv,t-.2*f,l*.42+.8*f,10*f,5*f,dak,{r,mat:"lei",gevel:{kleur:rood,mat:"steen"}});
+    }
+    { const t=b.blok(0,-R*.62,30*f,8*f,7*f,rood,{y:basis-.01,mat:"steen",verd:3.5*f,vloer:basis});
+      b.zadel(0,-R*.62,t-.2*f,30.8*f,9*f,4.5*f,dak,{mat:"lei",gevel:{kleur:rood,mat:"steen"}}); }
+    /* het paradeplein voor de poort, binnen de muren */
+    b.blok(0,R*.25,22*f,10*f,.3*M,"#B7AD94",{y:basis-.2*M,mat:"kassei",var:0});
+    b.weg([[0,R/2+4*f],[0,R/2+50*f],[(b.r(7)-.5)*30*f,R/2+120*f]],4.5*M,0);
+    b.lamp(0,basis+mh+2*f,R/2+3*f); b.lamp(0,dtop+2*f,dv);
+    b.straal=R*1.4;
     /* de oefenplaats van de Krijgsschool: een omheind veld met staken */
     const c=B.rond(...b.naast(-.42,-.1),0,3), g=c.grond(0,0);
     c.blok(0,0,30*M,18*M,.2*M,"#A2946E",{y:g-.1*M,mat:"aarde",var:0});
@@ -1409,12 +1508,13 @@ export const BOUWERS={
   /* Wensley — het dorp onder aan de heuvel: herberg, markt, akkers */
   wensley:{info:{vlak:[.3,.7,.5],open:1.2},bouw(B,b,p,stijl,POS){
     const naar=POS.redmont?Math.atan2(POS.redmont[1]-b.cy,POS.redmont[0]-b.cx)-b.rot:0;
-    B.dorp(b,"araluen",{straal:.34,aantal:24,richting:naar,stad:.3,verdiepingen:2});
+    stad(B,b,"araluen",{soort:2,richting:naar+b.rot,zaad:401});
   }},
   /* Kasteel Araluen — de koninklijke burcht: slanke witte torens,
      uitgestrekte tuinen, de zetel van koning Duncan */
   "kasteel-araluen":{info:{vlak:[.7,1.5,1],open:2.4},bouw(B,b){
-    const wit="#DDD8CC", blauw="#646C78", f=M, hw=60*f, hd=52*f;
+    /* honingkleurige hardsteen (de boeken), met leien daken */
+    const wit="#D9BE88", blauw="#646C78", f=M, hw=60*f, hd=52*f;
     const basis=b.voet(0,0,hw,hd);
     b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+4*f,.4,hd*2+4*f,0,wit,{mat:"steen"});
     b.blok(0,0,hw*2,hd*2,.4*M,"#B7AD94",{y:basis-.3*M,mat:"kassei",var:0});
@@ -1450,7 +1550,9 @@ export const BOUWERS={
   }},
   /* Kasteel Macindaw — een grensvesting tegen de Scotti: zwaar, grijs,
      vierkant, met een droge gracht. Hier speelde Will de jongleur. */
-  macindaw:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){
+  /* groot, vierkant en van graniet, meer vesting dan kasteel; de
+     ophaalbrug en de hoofdpoort op het zuiden */
+  macindaw:{info:{vlak:[.45,1,1],open:1.0},draai:()=>0,bouw(B,b){
     const steen="#8A877E";
     kasteel(B,b,"araluen",{steen,breed:62,muurH:13,torenR:6,donjonH:30,torenDak:"plat",vlag:"#2F5D3A"});
     /* de droge gracht: een donkere strook om de muren */
@@ -1508,10 +1610,10 @@ export const BOUWERS={
   }},
   /* Cresthaven — de baai waar de Reiger als plichtschip lag */
   cresthaven:{info:{vlak:[.3,.8,.6],open:1.2},bouw(B,b,p){
-    haven(B,b,"araluen",p,{straal:.3,aantal:16,schepen:3,schip:["reiger","kogge","boot"]});
+    haven(B,b,"araluen",p,{huizen:90,schepen:4,schip:["kogge","boot","reiger"]});
   }},
   /* Selsey — een vissersdorp aan de westkust, onder geen leen */
-  selsey:{info:{vlak:[.3,.8,.6],open:1.1},bouw(B,b,p){ haven(B,b,"araluen",p,{straal:.3,aantal:16,schepen:4,schip:"boot"}); }},
+  selsey:{info:{vlak:[.3,.8,.6],open:1.1},bouw(B,b,p){ haven(B,b,"araluen",p,{huizen:26,lengte:150,diepte:70,steigers:2,schepen:4,schip:"boot"}); }},
   /* De Spleet — de kloof tussen Araluen en Morgaraths hoogvlakte, met de brug
      die Morgarath in het geheim liet bouwen en die Will en Arnaut in brand staken */
   spleet:{info:{kloof:{r:10,breed:.32}},bouw(B,b){
@@ -1572,9 +1674,9 @@ export const BOUWERS={
   }},
   /* Craikennis — een dorp in Clonmel, verdedigd door Halt, Will en Arnaut */
   craikennis:{info:{vlak:[.3,.7,.6],open:1.0},bouw(B,b){
-    B.dorp(b,"hibernia",{straal:.28,aantal:18});
+    stad(B,b,"hibernia",{soort:2,zaad:77});
     /* het lage stenen muurtje waarachter het dorp zich verdedigde */
-    const pts=[]; for(let i=0;i<16;i++){ const a=i/16*Math.PI*2; pts.push([Math.cos(a)*.36,Math.sin(a)*.36]); }
+    const pts=[]; for(let i=0;i<24;i++){ const a=i/24*Math.PI*2; pts.push([Math.cos(a)*1.05,Math.sin(a)*1.05]); }
     b.ring(pts,1.5*M,1*M,"#9A988F",{kantelen:null,open:[3,11],mat:"breuk"});
   }},
   /* Mountshannon — het dorp dat níet betaalde: niets heel gelaten */
@@ -1594,7 +1696,7 @@ export const BOUWERS={
     b.straal=.28;
   }},
   /* Port Cael — een smokkelaarshaven van Black O'Malley */
-  portcael:{info:{vlak:[.3,.8,.6],open:1.0},bouw(B,b,p){ haven(B,b,"hibernia",p,{straal:.28,aantal:14,schepen:3,schip:["kogge","boot"],vloot:{zeil:"#3A3A3A"}}); }},
+  portcael:{info:{vlak:[.3,.8,.6],open:1.0},bouw(B,b,p){ haven(B,b,"hibernia",p,{huizen:70,schepen:3,schip:["kogge","boot"],vloot:{zeil:"#3A3A3A"}}); }},
   /* De Mull van Linkeith — de landtong waar Tennyson aan land werd gezet:
      een strand, een broch op de kaap en het smokkelschip voor de kust */
   mulllinkeith:{info:{vlak:[.3,.7,.6],open:.8},bouw(B,b,p){
@@ -1607,40 +1709,45 @@ export const BOUWERS={
   /* Hallasholm — de hoofdstad aan de Stormwitte Zee: een houten Grote Zaal,
      een haven vol wolfschepen en een strand waar de Broederbandtraining
      begint */
-  hallasholm:{info:{vlak:[.55,1.3,.7],open:1.8},bouw(B,b){
-    const a=B.zeeRichting(b.cx,b.cy,2.5)??Math.PI/2;
-    /* De markering ligt in zee. Landinwaarts (tegen a in) tot het land
-       echt land is, een halve eenheid aan één stuk; daar begint het strand,
-       en het midden van de stad ligt daar nog een eind achter. */
-    let t=0, aaneen=0;
-    while(t<4&&aaneen<.3){ t+=.01; aaneen=B.opLand(b.cx-Math.cos(a)*t,b.cy-Math.sin(a)*t)?aaneen+.01:0; }
-    const strand=t-.3, mx=b.cx-Math.cos(a)*(strand+.55*K), my=b.cy-Math.sin(a)*(strand+.55*K);
-    const c=B.rond(mx,my,a+Math.PI/2,31);
+  hallasholm:{info:{open:1.8},bouw(B,b,p){
+    /* Hallasholm volgens de boeken: een grote haven achter een havendam,
+       pakhuizen voor de buit van de rooftochten, een houten palissade met
+       kleine wachttorens, huisjes dicht op elkaar, in het midden de Common
+       Greens (waar elke burger een paar schapen mag houden), en de Grote
+       Zaal van de Oberjarl achter een eigen palissade. */
+    const H=haven(B,b,"skandia",p,{huizen:150,lengte:360,diepte:190,steigers:3,schepen:5,schip:"wolf",muur:"palissade",
+      vrij:[[20,105,36],[-95,70,34]],vloot:{ruimte:.24}});
+    if(!H)return;
+    const c=H.c, r=H.hoek, cr=Math.cos(r), sr=Math.sin(r);
+    /* de Common Greens: een grasveld met schapen */
+    { const [u,v]=H.lokaal(20,105), g=c.grond(u,v);
+      c.cil(u,v,30*M,.3*M,"#7E9A56",{y:g-.2*M,mat:"plag",var:.05});
+      for(let i=0;i<16;i++){ const a=c.r(500+i)*Math.PI*2, d=Math.sqrt(c.r(520+i))*24*M, su=u+Math.cos(a)*d, sv=v+Math.sin(a)*d, sg=c.grond(su,sv), sa=c.r(540+i)*6.28;
+        c.blok(su,sv,1.3*M,.7*M,.8*M,"#E8E2D2",{r:sa,y:sg+.3*M,var:.06}); c.blok(su+Math.cos(sa)*.8*M,sv+Math.sin(sa)*.8*M,.4*M,.35*M,.4*M,"#3A3430",{r:sa,y:sg+.7*M}); } }
     /* de Grote Zaal: lang, hoog, van hout, met gekruiste drakenkoppen op de
-       nokken en een trap ervoor */
-    const g=c.kruin(0,0,22*M,8*M);
-    c.blok(0,0,48*M,18*M,1.4*M,"#8C8478",{y:c.voet(0,0,24*M,9*M)-.02,mat:"breuk"});
-    const zt=c.blok(0,0,44*M,14*M,7*M,"#8E7256",{y:g+1.2*M,mat:"hout",verd:-1});
-    c.zadel(0,0,zt-.3*M,46*M,18*M,12*M,"#5A4834",{mat:"schindel",gevel:{kleur:"#8E7256",mat:"hout",verd:-1}});
-    for(const u of [-23,23])for(const rz of [.55,-.55])c.stuk("vast",B.S.blok,u*M,zt+11*M,0,.5*M,5*M,1.8*M,0,"#4A3828",{rz,mat:"hout"});
-    c.blok(0,-10*M,8*M,3.5*M,1.4*M,"#8C8478",{y:g-.01,mat:"breuk"});
-    c.lamp(0,zt+6*M,0); c.lamp(14*M,zt,-7.5*M); c.lamp(-14*M,zt,-7.5*M);
-    c.vlag(25*M,-6*M,g,14*M,"#8E2B2B");
-    /* de langhuizen: in rijen achter de zaal, evenwijdig aan de kust */
-    B.dorp(c,"skandia",{straal:.42,aantal:30,richting:0,geenPlein:true,breedStraat:3,
-      weg:(u,v)=>(Math.abs(u)<.2&&Math.abs(v)<.09)||v<-.2});
-    /* het strand, met wolfschepen op het zand getrokken (de boeg naar het land) */
-    for(let i=0;i<4;i++){
-      const u=-.3+i*.2; let v=-.15;
-      while(v>-1&&c.land(u,v-.02))v-=.02;
-      if(v<=-1)continue;
-      const [x,y]=c.w(u,v+.06);
-      B.schip("wolf",x,y,a+Math.PI+(c.r(i)-.5)*.25,40+i,{maat:1});
-    }
-    B.steiger(c,mx,my,a,.3);
-    B.vloot(mx,my,a,"wolf",6,51,{richting:a+Math.PI/2,van:.5,tot:.9,ruimte:.24});
-    b.top=c.top; b.straal=.6;
+       nokken en een trap ervoor; eromheen een eigen palissade */
+    { const [u,v]=H.lokaal(-95,70), g=c.kruin(u,v,22*M,8*M);
+      c.blok(u,v,48*M,18*M,1.4*M,"#8C8478",{r,y:c.voet(u,v,24*M,9*M)-.02,mat:"breuk"});
+      const zt=c.blok(u,v,44*M,14*M,7*M,"#8E7256",{r,y:g+1.2*M,mat:"hout",verd:-1});
+      c.zadel(u,v,zt-.3*M,46*M,18*M,12*M,"#5A4834",{r,mat:"schindel",gevel:{kleur:"#8E7256",mat:"hout",verd:-1}});
+      for(const z of [-23,23])for(const rz of [.55,-.55])c.stuk("vast",B.S.blok,u+cr*z*M,zt+11*M,v+sr*z*M,.5*M,5*M,1.8*M,r,"#4A3828",{rz,mat:"hout"});
+      c.blok(u+sr*10*M,v-cr*10*M,8*M,3.5*M,1.4*M,"#8C8478",{r,y:g-.01,mat:"breuk"});
+      c.lamp(u,zt+6*M,v); c.vlag(u+cr*25*M,v+sr*25*M,g,14*M,"#8E2B2B");
+      const n=44, R=32*M;
+      for(let i=0;i<n;i++){ if(i===Math.round(n*.75))continue; const a=i/n*Math.PI*2, pu=u+Math.cos(a)*R*1.25, pv=v+Math.sin(a)*R*.9; if(!c.land(pu,pv))continue;
+        const top=c.cil(pu,pv,.45*M,4.5*M+c.r(560+i)*M,"#6B5038",{zes:true,mat:"hout"}); c.kegel(pu,pv,top,.46*M,.9*M,"#5A4430",{zes:true}); }
+      b.top=Math.max(b.top,c.top); }
+    /* de havendam: een stenen dam die vanaf de kust in een boog om de haven
+       heen loopt */
+    { let [u,v]=H.lokaal(H.lengte/2-10,-3); const [zx,zy]=H.zee; let h=Math.atan2(zy,zx);
+      for(let i=0;i<22;i++){
+        const du=Math.cos(h)*9*M, dv=Math.sin(h)*9*M, mu=u+du/2, mv=v+dv/2;
+        c.blok(mu,mv,9.6*M,7*M,.18+1.4*M,"#8A857A",{r:h,y:-.18,mat:"breuk",var:.08});
+        u+=du; v+=dv; if(i>6)h-=.12*(Math.sign(Math.sin(r-h))||1);
+      }
+      c.toren(u,v,2.2*M,7*M,"#8A857A",{dak:"kegel",dakKleur:"#5A4834",dakMat:"schindel",dakH:3*M,mat:"breuk",y:1.4*M-.02,plint:false,krans:false}); }
   }},
+
   /* De jachthut in het hoogland — waar Will en Evanlyn de winter doorkwamen */
   berghut:{info:{vlak:[.08,.2,.6],open:.15},bouw(B,b){
     const g=b.kruin(0,0,4*M,3*M);
@@ -1663,11 +1770,19 @@ export const BOUWERS={
   /* Limmat — een welvarende handelsstad die leeft van haar smaragdmijn;
      Zavac en de Raaf vielen haar aan */
   limmat:{info:{vlak:[.4,.9,.7],open:1.2},bouw(B,b,p){
-    haven(B,b,"teutlandt",p,{straal:.38,aantal:30,schepen:3,schip:["kogge","wolf"],stad:.5,verdiepingen:2});
-    /* de stadsmuur aan de landkant */
-    const R=.5, pts=[]; for(let i=0;i<14;i++){ const a=i/14*Math.PI*2; pts.push([Math.cos(a)*R,Math.sin(a)*R]); }
-    for(let i=0;i<pts.length;i++){ const [u,v]=pts[i], [u2,v2]=pts[(i+1)%pts.length]; if(b.land(u,v)&&b.land(u2,v2))b.muur(u,v,u2,v2,8*M,2.6*M,"#A49D90",{}); }
-    for(const [u,v] of pts)if(b.land(u,v))b.toren(u,v,3.4*M,12*M,"#A49D90",{dak:"kegel",dakKleur:"#7C4232",dakMat:"pannen",dakH:7*M});
+    /* een havenstadje van zo'n vijfhonderd zielen: een palissade met twee
+       grote houten wachttorens, en een zware houten giek (een drijvende
+       versperring van boomstammen) dwars over de havenmond */
+    const H=haven(B,b,"teutlandt",p,{huizen:90,lengte:240,diepte:120,steigers:2,schepen:3,schip:["kogge","wolf"],muur:"palissade"});
+    if(H){
+      const c=H.c, [u0,v0]=H.lokaal(H.lengte/2+6,-2), [zx,zy]=H.zee;
+      let u=u0, v=v0, h=Math.atan2(zy,zx)-.5;
+      for(let i=0;i<16;i++){
+        const du=Math.cos(h)*8*M, dv=Math.sin(h)*8*M;
+        if(c.diep(u+du/2,v+dv/2)<-.002)c.blok(u+du/2,v+dv/2,8.4*M,1*M,.8*M,"#4E3A28",{y:-.5*M,mat:"hout",r:h});
+        u+=du; v+=dv; h+=.06;
+      }
+    }
     /* de mijn: een donkere ingang in de heuvel, met een houten bok erboven */
     const m=B.rond(...b.naast(+.8,-.4),.5,13), g=m.grond(0,0);
     m.blok(0,0,4*M,2.6*M,3*M,"#1E1A16",{y:g-.01});
@@ -1679,17 +1794,20 @@ export const BOUWERS={
 
   /* ---- Gallica ---- */
   /* La Rivage — de havenstad waar Halt en Arnaut aan land gingen */
-  larivage:{info:{vlak:[.4,.9,.7],open:1.1},bouw(B,b,p){ haven(B,b,"gallica",p,{straal:.4,aantal:32,schepen:4,schip:"kogge",tweedeSteiger:true,stad:.4,verdiepingen:2}); }},
+  larivage:{info:{vlak:[.4,.9,.7],open:1.1},bouw(B,b,p){ haven(B,b,"gallica",p,{huizen:160,schepen:6,schip:"kogge",muur:"steen"}); }},
   /* Les Sourges — een rivierstadje met een houten brug en een veerpont */
   lessourges:{info:{vlak:[.35,.8,.6],open:1.1},bouw(B,b){
-    B.dorp(b,"gallica",{straal:.32,aantal:20,weg:(u,v)=>rivierBij(B,b,u,v)});
+    stad(B,b,"gallica",{soort:3,zaad:88});
     brugOver(B,b,"#6B5138");
   }},
   /* Château Montsombre — het zwarte kasteel van Deparnieux, die zijn
      gevangenen in kooien langs de weg liet sterven */
-  montsombre:{info:{vlak:[.5,1.2,1],open:1.4},bouw(B,b){
+  /* het zwarte kasteel van Deparnieux: gedrongen en zwaar, dikke muren en
+     een zware toren op elke hoek, op een plateau midden in het bos, met
+     een smalle kronkelweg omhoog */
+  montsombre:{info:{vlak:[.5,1.2,1],open:.9,heuvel:{r:.8,hoogte:.012}},bouw(B,b){
     const zwart="#3E3B38", dak="#28282C";
-    kasteel(B,b,"gallica",{steen:zwart,dak,breed:76,muurH:12,vlag:"#1E1E22"});
+    kasteel(B,b,"araluen",{steen:zwart,dak,breed:70,muurH:13,torenR:8,donjonH:22,torenDak:"plat",vlag:"#1E1E22"});
     /* de kooien: palen met een kooi eraan, langs de weg naar de poort */
     for(let i=0;i<9;i++){
       const v=.3+i*.06, u=(i%2?.035:-.035);
@@ -1714,13 +1832,14 @@ export const BOUWERS={
 
   /* ---- Arrida ---- */
   /* Tabork — havenstad aan de Arridische kust */
-  tabork:{info:{vlak:[.45,1,.7],open:1},bouw(B,b,p){ haven(B,b,"arrida",p,{straal:.4,aantal:34,schepen:3,steiger:.35}); palmen(B,b,10,.5); }},
+  tabork:{info:{vlak:[.45,1,.7],open:1},bouw(B,b,p){ const H=haven(B,b,"arrida",p,{huizen:120,schepen:3}); if(H)palmen(B,H.c,10,.5); }},
   /* Socorro — de havenstad van de slavenmarkt */
   socorro:{info:{vlak:[.45,1,.7],open:1},bouw(B,b,p){
-    haven(B,b,"arrida",p,{straal:.4,aantal:34,schepen:3});
-    /* de markt: een open plein met een verhoogd podium */
-    const g=b.grond(0,0); b.blok(0,0,10*M,7*M,1.2*M,"#B89A6A",{y:g-.01,mat:"leem"});
-    palmen(B,b,8,.5);
+    /* een ommuurde havenstad; op de markt een verhoogd podium (de slavenmarkt) */
+    const H=haven(B,b,"arrida",p,{huizen:170,schepen:4,muur:"steen",vrij:[[60,70,14]]});
+    if(!H)return;
+    const [u,v]=H.lokaal(60,70), c=H.c, g=c.grond(u,v); c.blok(u,v,10*M,7*M,1.2*M,"#B89A6A",{y:g-.01,mat:"leem"});
+    palmen(B,c,8,.5);
   }},
   /* Al Shabah — de stad van wakir Selethen: ommuurd, met een fort */
   alshabah:{info:{vlak:[.5,1.1,.8],open:1},bouw(B,b){ woestijnstad(B,b,{straal:.36,aantal:36,kasba:true}); }},
@@ -1769,7 +1888,7 @@ export const BOUWERS={
     B.dorp(B.rond(...b.naast(+.8,+.4),.2,17),"nihon-ja",{straal:.36,aantal:30,zaad:8});
   }},
   /* Iwanai — de haven waar het gezelschap op zoek naar Arnaut aan land ging */
-  iwanai:{info:{vlak:[.4,.9,.7],open:1.1},bouw(B,b,p){ haven(B,b,"nihon-ja",p,{straal:.34,aantal:24,schepen:4,steiger:.3}); torii(B,b,.0,.32); }},
+  iwanai:{info:{vlak:[.4,.9,.7],open:1.1},bouw(B,b,p){ const H=haven(B,b,"nihon-ja",p,{huizen:100,schepen:4,vrij:[[0,95,8]]}); if(H)torii(B,H.c,...H.lokaal(0,95)); }},
   /* Ran-Koshi — een vergeten vesting in een bergdal, met een smalle toegang
      tussen steile rotswanden */
   rankoshi:{info:{vlak:[.4,.9,.8],open:1},bouw(B,b){
@@ -1800,8 +1919,8 @@ export const BOUWERS={
   /* Kawagishi — een vissersdorp waar de boten op het strand liggen en het hout
      uit het bergland wordt verscheept */
   kawagishi:{info:{vlak:[.35,.8,.6],open:1},bouw(B,b,p){
-    haven(B,b,"nihon-ja",p,{straal:.3,aantal:18,schepen:4,schip:"boot"});
-    for(let i=0;i<6;i++)b.blok(.18+i*1.6*M,-.18,1.4*M,10*M,1.4*M,"#8A6E50",{r:.1,mat:"hout"});   /* stapels stammen */
+    const H=haven(B,b,"nihon-ja",p,{huizen:50,schepen:4,schip:"boot",vrij:[[70,30,12]]});
+    if(H){ const [u,v]=H.lokaal(70,30); for(let i=0;i<6;i++)H.c.blok(u+i*1.6*M,v,1.4*M,10*M,1.4*M,"#8A6E50",{r:.1,mat:"hout"}); }   /* stapels stammen */   /* stapels stammen */
   }},
   /* Mizu Umi Bakudai — het uitgestrekte bergmeer (zie het meer in 3d-grond.js) */
   "mizu-umi-bakudai":{info:{meer:{r:4.2,diepte:.035}},bouw(B,b){
@@ -1819,64 +1938,63 @@ export const BOUWERS={
   /* Raguza — een wetteloze havenstad, bestuurd door piratenkapiteins; schepen
      betalen tien procent tol */
   raguza:{info:{vlak:[.45,1,.7],open:1},bouw(B,b,p){
-    haven(B,b,"toscana",p,{straal:.42,aantal:40,schepen:6,schip:["galei","kogge"],vloot:{zeil:"#3A3530"},tweedeSteiger:true,stad:.5,verdiepingen:2});
+    haven(B,b,"toscana",p,{huizen:200,schepen:7,steigers:4,schip:["galei","kogge"],vloot:{zeil:"#3A3530"},muur:"steen"});
     const a=B.zeeRichting(b.cx,b.cy,2.2);
     if(a!=null){ const t=B.waterlijn(b.cx,b.cy,a), c=B.rond(b.cx+Math.cos(a)*t,b.cy+Math.sin(a)*t,a,4); c.toren(-.03,.28,3.6*M,20*M,"#D2C4A6",{vierkant:true,dak:"plat",kantelen:"zwaluw"}); }
   }},
   /* Krall — een nederzetting aan de bovenloop van de Dan */
-  krall:{info:{vlak:[.3,.8,.6],open:1},bouw(B,b,p){ haven(B,b,"toscana",p,{straal:.26,aantal:14,schepen:2,schip:"boot"}); }},
+  krall:{info:{vlak:[.3,.8,.6],open:1},bouw(B,b,p){ haven(B,b,"toscana",p,{huizen:35,lengte:170,diepte:80,steigers:2,schepen:2,schip:"boot"}); }},
   /* Bayrath — een grote stad, bijna een metropool, aan de Dan; de corrupte
      Gatmeister liet de Reigers gevangenzetten */
   bayrath:{info:{vlak:[.7,1.5,.8],open:1.4},bouw(B,b){
-    B.dorp(b,"toscana",{straal:.56,aantal:70,stad:.6,verdiepingen:2});
-    const pts=[]; for(let i=0;i<18;i++){ const a=i/18*Math.PI*2; pts.push([Math.cos(a)*.66,Math.sin(a)*.66]); }
-    b.ring(pts,9*M,2.6*M,"#C8B794",{kantelen:"zwaluw",open:[4,13]});
-    for(const [u,v] of pts.filter((_,i)=>i%2===0))b.toren(u,v,3.2*M,13*M,"#C8B794",{vierkant:true,dak:"plat",kantelen:"zwaluw"});
-    /* het stadhuis van de Gatmeister, met een belforttoren */
-    const g=b.voet(.09,.06,10*M,7*M);
-    const top=b.blok(.09,.06,22*M,14*M,12*M,"#E3D8BE",{y:g-.02,mat:"pleister",verd:4.5*M,vloer:g});
-    b.schild(.09,.06,top-.2*M,23*M,15*M,3.5*M,"#A85E40",{mat:"pannen"});
-    b.toren(.09+14*M,.06,2.8*M,34*M,"#E3D8BE",{vierkant:true,dak:"kegel",dakKleur:"#A85E40",dakMat:"pannen",dakH:5*M,vlag:"#C9A94A",mat:"pleister",plint:false,krans:true,kantelenOok:false});
+    /* een grote stad, bijna een metropool, met een ringmuur */
+    const plan=stad(B,b,"toscana",{soort:4,zaad:4100,richting:0,vrij:[[0,42,20]]});
+    /* het stadhuis van de Gatmeister, met een belforttoren, aan het
+       marktplein tegenover de kerk */
+    const hu=plan.plein.x/K, hv=(plan.plein.y+plan.plein.d/2+12*METER)/K;
+    const g=b.voet(hu,hv,10*M,7*M);
+    const top=b.blok(hu,hv,22*M,14*M,12*M,"#E3D8BE",{y:g-.02,mat:"pleister",verd:4.5*M,vloer:g});
+    b.schild(hu,hv,top-.2*M,23*M,15*M,3.5*M,"#A85E40",{mat:"pannen"});
+    b.toren(hu+14*M,hv,2.8*M,34*M,"#E3D8BE",{vierkant:true,dak:"kegel",dakKleur:"#A85E40",dakMat:"pannen",dakH:5*M,vlag:"#C9A94A",mat:"pleister",plint:false,krans:true,kantelenOok:false});
   }},
   /* Byzantos — een jonge stadstaat aan de Gouden Reikwijdte, aan drie kanten
      door water beschermd en met dikke muren */
   byzantos:{info:{vlak:[.6,1.3,.8],open:1.2},bouw(B,b,p){
-    haven(B,b,"helleno",p,{straal:.46,aantal:50,schepen:5,schip:"galei",stad:.5,verdiepingen:2});
-    const a=B.zeeRichting(b.cx,b.cy,2.2)??0;
-    const t=B.waterlijn(b.cx,b.cy,a), c=B.rond(b.cx+Math.cos(a)*(t-.32*K),b.cy+Math.sin(a)*(t-.32*K),a+Math.PI/2,8);
-    /* de dikke landmuur, met torens */
-    c.muur(-.55,-.5,.55,-.5,12*M,5*M,"#D2C9B6",{kantelen:"blok"});
-    for(let i=0;i<7;i++)c.toren(-.55+i*.183,-.5,4.4*M,17*M,"#D2C9B6",{vierkant:true,dak:"plat"});
-    /* de grote koepelkerk van de keizerin */
-    const g=c.voet(0,-.18,14*M,14*M);
-    const top=c.blok(0,-.18,30*M,30*M,14*M,"#E8E1D2",{y:g-.02,mat:"marmer",verd:5*M,vloer:g});
-    c.koepel(0,-.18,top,13*M,12*M,"#B09A76",{mat:"lei"});
-    for(const [u,v] of [[-11,-11],[11,-11],[-11,11],[11,11]])c.koepel(u*M,-.18+v*M,top,4.4*M,4.4*M,"#B09A76",{mat:"lei"});
-    c.lamp(0,top+.03,-.18);
+    /* aan drie kanten water, aan de landkant een dikke muur; in het midden
+       de grote koepelkerk van de keizerin */
+    const H=haven(B,b,"helleno",p,{huizen:260,schepen:6,steigers:4,schip:"galei",muur:"steen",vrij:[[0,110,28]]});
+    if(!H)return;
+    const c=H.c, [u,v]=H.lokaal(0,110);
+    const g=c.voet(u,v,14*M,14*M);
+    const top=c.blok(u,v,30*M,30*M,14*M,"#E8E1D2",{y:g-.02,mat:"marmer",verd:5*M,vloer:g});
+    c.koepel(u,v,top,13*M,12*M,"#B09A76",{mat:"lei"});
+    for(const [du,dv] of [[-11,-11],[11,-11],[-11,11],[11,11]])c.koepel(u+du*M,v+dv*M,top,4.4*M,4.4*M,"#B09A76",{mat:"lei"});
+    c.lamp(u,top+.03,v);
   }},
   /* Sorato — een vallei in het noorden van Toscana, waar Will en Maddie de
      Temujai in een hinderlaag lieten lopen */
   sorato:{info:{vlak:[.3,.8,.6],open:1},bouw(B,b){
-    B.dorp(b,"toscana",{straal:.26,aantal:14,geenPlein:true});
+    stad(B,b,"toscana",{soort:2,zaad:61});
     b.toren(.14,-.14,3*M,20*M,"#D2C4A6",{vierkant:true,dak:"plat",vlag:"#8E2B2B",kantelen:"zwaluw"});
     for(let i=0;i<20;i++){ const u=-.34+i*.034; b.stuk("vast",B.S.kegel6,u,b.grond(u,.34)-.005,.34,.3*M,4*M,.3*M,0,"#5E4A38",{rx:.5}); }
   }},
   /* Genovesa — een Toscaanse stadstaat, berucht om zijn huurmoordenaars: een
      stad van hoge woontorens */
   genovesa:{info:{vlak:[.5,1.1,.8],open:1.1},bouw(B,b,p){
-    haven(B,b,"toscana",p,{straal:.4,aantal:36,schepen:3,schip:"galei",stad:.5,verdiepingen:2});
-    const a=B.zeeRichting(b.cx,b.cy,2.2)??0, t=B.waterlijn(b.cx,b.cy,a);
-    const c=B.rond(b.cx+Math.cos(a)*(t-.32*K),b.cy+Math.sin(a)*(t-.32*K),a,19);
-    for(let i=0;i<12;i++){ const u=(c.r(i)-.5)*.45, v=-(c.r(i+9))*.32; if(c.land(u,v))c.toren(u,v,2.4*M,(20+c.r(i+20)*16)*M,"#D4BF97",{vierkant:true,dak:"plat",mat:"pleister",plint:false,ramen:3.6*M}); }
+    /* een stad van hoge woontorens tussen de huizen */
+    const vrij=[]; for(let i=0;i<12;i++)vrij.push([(((i*37)%23)/23-.5)*260,40+((i*53)%29)/29*120,7]);
+    const H=haven(B,b,"toscana",p,{huizen:190,schepen:4,schip:"galei",muur:"steen",vrij});
+    if(!H)return;
+    vrij.forEach(([u,v],i)=>{ const [lu,lv]=H.lokaal(u,v); if(H.c.land(lu,lv))H.c.toren(lu,lv,2.4*M,(20+H.c.r(i+20)*16)*M,"#D4BF97",{vierkant:true,dak:"plat",mat:"pleister",plint:false,ramen:3.6*M}); });
   }},
   /* Palladio — een grote kuststad in het zuiden van Toscana */
   palladio:{info:{vlak:[.55,1.2,.7],open:1.1},bouw(B,b,p){
-    haven(B,b,"toscana",p,{straal:.46,aantal:48,schepen:4,schip:["galei","kogge"],stad:.5,verdiepingen:2});
-    const a=B.zeeRichting(b.cx,b.cy,2.2)??0, t=B.waterlijn(b.cx,b.cy,a);
-    const c=B.rond(b.cx+Math.cos(a)*(t-.36*K),b.cy+Math.sin(a)*(t-.36*K),a,23);
-    const g=c.voet(-.13,0,7*M,7*M);
-    const top=c.blok(-.13,0,16*M,12*M,10*M,"#E8DBC0",{y:g-.02,mat:"pleister",verd:5*M,vloer:g}); c.koepel(-.13,0,top,5.4*M,6*M,"#A85E40",{mat:"pannen"});
-    c.toren(-.13,.08,2.2*M,26*M,"#E8DBC0",{vierkant:true,dak:"kegel",dakKleur:"#A85E40",dakMat:"pannen",dakH:4*M,mat:"pleister",plint:false});
+    /* een grote kuststad; boven de huizen een koepelkerk met een klokkentoren */
+    const H=haven(B,b,"toscana",p,{huizen:220,schepen:5,steigers:4,schip:["galei","kogge"],muur:"steen",vrij:[[-40,120,18]]});
+    if(!H)return;
+    const c=H.c, [u,v]=H.lokaal(-40,120), g=c.voet(u,v,7*M,7*M);
+    const top=c.blok(u,v,16*M,12*M,10*M,"#E8DBC0",{y:g-.02,mat:"pleister",verd:5*M,vloer:g}); c.koepel(u,v,top,5.4*M,6*M,"#A85E40",{mat:"pannen"});
+    c.toren(u+10*M,v,2.2*M,26*M,"#E8DBC0",{vierkant:true,dak:"kegel",dakKleur:"#A85E40",dakMat:"pannen",dakH:4*M,mat:"pleister",plint:false});
   }},
   /* Rovo — de hoofdstad van het oude Rovo-rijk (keizer Coltonus de Grote):
      een tempel met losse zuilen, een half ingestort amfitheater, een stuk
@@ -1912,12 +2030,11 @@ export const BOUWERS={
   /* ---- Indus ---- */
   /* Indus — het meest oostelijke land van de Silasische Raad */
   "indus-haven":{info:{vlak:[.5,1.1,.7],open:1.1},bouw(B,b,p){
-    haven(B,b,"indus",p,{straal:.4,aantal:38,schepen:4,steiger:.3});
-    const a=B.zeeRichting(b.cx,b.cy,2.5)??0, t=B.waterlijn(b.cx,b.cy,a);
-    const c=B.rond(b.cx+Math.cos(a)*(t-.32*K),b.cy+Math.sin(a)*(t-.32*K),a,29);
-    const g=c.voet(-.16,0,8*M,8*M);
-    const top=c.blok(-.16,0,18*M,18*M,8*M,"#E4D6C4",{y:g-.02,mat:"leem",vloer:g}); c.ui(-.16,0,top,6*M,11*M,"#E8E0D2",{mat:"pleister"});
-    for(const [u,v] of [[-7,-7],[7,-7],[-7,7],[7,7]])c.ui(-.16+u*M,v*M,top,2*M,4*M,"#E8E0D2",{mat:"pleister"});
+    const H=haven(B,b,"indus",p,{huizen:150,schepen:4,vrij:[[30,90,16]]});
+    if(!H)return;
+    const c=H.c, [u,v]=H.lokaal(30,90), g=c.voet(u,v,8*M,8*M);
+    const top=c.blok(u,v,18*M,18*M,8*M,"#E4D6C4",{y:g-.02,mat:"leem",vloer:g}); c.ui(u,v,top,6*M,11*M,"#E8E0D2",{mat:"pleister"});
+    for(const [du,dv] of [[-7,-7],[7,-7],[-7,7],[7,7]])c.ui(u+du*M,v+dv*M,top,2*M,4*M,"#E8E0D2",{mat:"pleister"});
     palmen(B,c,10,.45);
   }}
 };
@@ -1970,8 +2087,15 @@ export const SOORTEN={
 };
 export const stijlVan=gebied=>STIJL_VAN[gebied]||"araluen";
 /* wat de grond moet doen rond deze plaats (voor 3d-grond.js) */
+/* hoe groot de lage vlakte aan het water onder een havenstad is (in
+   kaarteenheden); de rest krijgt HAVENVLAK */
+const HAVENVLAK=.6, HAVENMAAT={hallasholm:.8,selsey:.4,krall:.42,limmat:.5,kawagishi:.45,portcael:.5,cresthaven:.52,raguza:.7,byzantos:.75,palladio:.7,larivage:.7};
 export function modelInfo(p){
   const i=(BOUWERS[p.id]||SOORTEN[p.soort]||{}).info||{};
+  /* een havenstad ligt aan het water: de rekenploeg maakt daar het land laag
+     en vlak (zie haven() hieronder en afwerking() in 3d-grond.js) */
+  const isHaven=(p.soort==="haven"&&p.id!=="mulllinkeith")||p.id==="genovesa";
+  if(isHaven)return {...i,vlak:null,open:i.open?Math.max(.36,i.open*K*1.6):0,haven:{r:HAVENMAAT[p.id]||HAVENVLAK}};
   /* vlak en open plek horen bij het gebouw, en dat is met K verkleind; klif,
      kloof en meer zijn landschap en blijven zoals ze zijn */
   return {...i,vlak:i.vlak?[i.vlak[0]*K,i.vlak[1]*K*1.4,i.vlak[2]]:null,open:i.open?Math.max(.36,i.open*K*1.6):0};

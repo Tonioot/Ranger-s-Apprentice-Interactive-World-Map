@@ -473,6 +473,39 @@ function afwerking(G,T){
         h[q]=h[q]*(1-w)+.001*w;
       }
   }
+  /* Een kasteel op een heuvel (Redmont, Montsombre): een ronde bult in het
+     land, die hierna (vlak) bovenop wordt geëgaliseerd. */
+  for(const pl of plekken){
+    if(!pl.heuvel)continue;
+    const {r,hoogte}=pl.heuvel;
+    for(let y=Math.max(0,Math.floor((pl.y+M-r)*RES));y<=Math.min(RH-1,Math.ceil((pl.y+M+r)*RES));y++)
+      for(let x=Math.max(0,Math.floor((pl.x+M-r)*RES));x<=Math.min(RW-1,Math.ceil((pl.x+M+r)*RES));x++){
+        const q=y*RW+x; if(!land[q])continue;
+        const d=Math.hypot(x/RES-M-pl.x,y/RES-M-pl.y)/r; if(d>=1)continue;
+        h[q]+=hoogte*(1-glad(d));
+      }
+  }
+  /* Een havenstad ligt aan het water, op laag en vlak land: aan de kust
+     vóór de plaats (in de richting van de zee) wordt het land daarom
+     afgegraven tot net boven de waterlijn, over een stuk zo groot als de
+     stad, en loopt het daarachter weer op naar wat er lag. */
+  for(const pl of plekken){
+    if(!pl.haven)continue;
+    const lees=(x,y)=>{ const i=Math.round((x+M)*RES), j=Math.round((y+M)*RES); return i<0||j<0||i>=RW||j>=RH?0:land[j*RW+i]; };
+    let sx=0,sy=0;
+    for(let i=0;i<48;i++){ const a=i/48*Math.PI*2; for(const r of [1.1,2.2])if(!lees(pl.x+Math.cos(a)*r,pl.y+Math.sin(a)*r)){ sx+=Math.cos(a); sy+=Math.sin(a); } }
+    const l=Math.hypot(sx,sy); if(!l)continue;
+    const zx=sx/l, zy=sy/l;
+    let t=0; while(t<4&&lees(pl.x+zx*t,pl.y+zy*t))t+=.5/RES;
+    const R=pl.haven.r, qx=pl.x+zx*(t-R*.4), qy=pl.y+zy*(t-R*.4), R2=R*1.7, doel=.001;
+    for(let y=Math.max(0,Math.floor((qy+M-R2)*RES));y<=Math.min(RH-1,Math.ceil((qy+M+R2)*RES));y++)
+      for(let x=Math.max(0,Math.floor((qx+M-R2)*RES));x<=Math.min(RW-1,Math.ceil((qx+M+R2)*RES));x++){
+        const q=y*RW+x; if(!land[q])continue;
+        const d=Math.hypot(x/RES-M-qx,y/RES-M-qy); if(d>=R2)continue;
+        const w=d<R?1:1-glad((d-R)/(R2-R));
+        if(h[q]>doel)h[q]+=(doel-h[q])*w;
+      }
+  }
   /* Een kasteel staat niet scheef op een helling: de grond eronder is
      geëgaliseerd, en loopt daarbuiten zacht over in het land eromheen.
      Dorpen krijgen hetzelfde, iets minder streng. */
@@ -561,7 +594,7 @@ function gladdeKust(R,h,land,kustAfst,zeeAfst){
   for(let p=0;p<N;p++){
     const d=s[p]; if(Math.abs(d)>=2.4)continue;
     /* op het land loopt het zacht op, in zee wat steiler af */
-    const doel=d>0?d*.003:d*.02;
+    const doel=d>0?d*.003:d*.05;
     let w=1-glad(klem((Math.abs(d)-.6)/1.6,0,1));
     if(h[p]>0)w*=1-glad(klem((h[p]-.015)/.02,0,1));
     h[p]+=(doel-h[p])*w;
@@ -1049,39 +1082,42 @@ function richtingBij(wegen,x,y,anders){
   return best<1.5?r:anders;
 }
 /* ======================= het plan van een nederzetting =======================
-   Een naamloze nederzetting groeit niet langs één rechte lijn. Een gehucht
-   ligt op een kruising van karrensporen, met de huizen kriskras eromheen en
-   een paadje naar het erf dat wat achteraf ligt. Een dorp heeft een brink
-   (een driehoekig of ovaal grasveld met de kerk), met daarvandaan een paar
-   kronkelende straten en zijstraatjes, dicht bij de brink de huizen dicht op
-   elkaar en verder weg ruimer. Een marktstad heeft een marktplein, vier
-   hoofdstraten die de poorten in de stadsmuur halen, zijstraten ertussen,
-   huizen met de gevel aan de straat (in het midden met twee verdiepingen) en
-   buiten de poorten een voorstad langs de wegen.
-   Dit plan is een vaste uitkomst van het zaad: de rekenploeg legt er de
-   straten en paden mee in de grond, de bouwer zet er de huizen mee neer.
-   Alles in meters rond het midden; uit in kaarteenheden ten opzichte van
-   het midden. soort: 1 gehucht, 2 dorp, 3 marktstad. Een huis: x, y,
-   richting (van de nok), soort (0 huis, 1 schuur, 2 stadshuis), lagen, en
-   (ax, ay) de kant van de achtertuin. */
-export const DORPSOORTEN={1:{huizen:[5,10],straal:95},2:{huizen:[20,40],straal:220},3:{huizen:[150,210],straal:260}};
-export function dorpPlan(soort,zaad,a){
+   Een nederzetting groeit niet langs één rechte lijn. Een gehucht ligt op
+   een kruising van karrensporen, met de huizen kriskas eromheen en een
+   paadje naar het erf dat wat achteraf ligt. Een dorp heeft een brink (een
+   grasveld met de kerk), met daarvandaan een paar kronkelende straten en
+   zijstraatjes, dicht bij de brink de huizen dicht op elkaar en verder weg
+   ruimer. Een marktstad heeft een marktplein, vier hoofdstraten die de
+   poorten in de stadsmuur halen, zijstraten ertussen, huizen met de gevel
+   aan de straat (in het midden met twee verdiepingen) en buiten de poorten
+   een voorstad langs de wegen; een grote stad (de hoofdsteden en de grote
+   havens) is daar een ruimere uitvoering van. Een havenstad ligt langs de
+   echte waterlijn: een kade, een straat langs het water met de pakhuizen,
+   straten het land in en steigers met schepen.
+   Zo'n plan is een vaste uitkomst van het zaad: de rekenploeg legt er de
+   straten en paden van de naamloze plekken mee in de grond, de bouwer zet
+   er de huizen mee neer. Alles in meters; uit in kaarteenheden ten
+   opzichte van het midden. soort: 1 gehucht, 2 dorp, 3 marktstad, 4 grote
+   stad. Een huis: x, y, richting (van de nok), soort (0 huis, 1 schuur,
+   2 stadshuis, 3 pakhuis), lagen, en (ax, ay) de kant van de achtertuin. */
+export const DORPSOORTEN={1:{huizen:[5,10],straal:95},2:{huizen:[20,40],straal:220},3:{huizen:[150,210],straal:260},4:{huizen:[320,420],straal:340}};
+
+/* het gereedschap om een plan uit te zetten */
+function planner(zaad,soort){
   /* eigen toeval (mulberry32), los van elk ander toeval */
   let z=(zaad*2654435761+soort*97)>>>0;
   const r=()=>{ z=(z+0x6D2B79F5)>>>0; let t=z; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return((t^(t>>>14))>>>0)/4294967296; };
-  const tussen=(a0,a1)=>a0+(a1-a0)*r();
-  const straten=[], huizen=[], kand=[];
-  const cfg=DORPSOORTEN[soort];
-  const doel=Math.round(tussen(cfg.huizen[0],cfg.huizen[1]+.99));
+  const P={r,tussen:(a0,a1)=>a0+(a1-a0)*r(),straten:[],huizen:[],kand:[],plein:null,muur:null,kerk:null,extra:{}};
   /* een straat: een kronkelende lijn met om de zoveel meter een punt */
-  const laan=(x0,y0,hoek,lengte,breed,sl,kronkel,stap=20)=>{
+  P.laan=(x0,y0,hoek,lengte,breed,sl,kronkel,stap=20)=>{
     const pts=[[x0,y0]], n=Math.max(1,Math.round(lengte/stap));
     let x=x0, y=y0, h=hoek;
     for(let i=0;i<n;i++){ h+=(r()-.5)*kronkel; x+=Math.cos(h)*lengte/n; y+=Math.sin(h)*lengte/n; pts.push([x,y]); }
-    const st={pts,breed,soort:sl}; straten.push(st); return st;
+    const st={pts,breed,soort:sl}; P.straten.push(st); return st;
   };
+  P.lengteVan=st=>{ let L=0; for(let i=1;i<st.pts.length;i++)L+=Math.hypot(st.pts[i][0]-st.pts[i-1][0],st.pts[i][1]-st.pts[i-1][1]); return L; };
   /* een punt op een straat, op t meter van het begin, met de richting daar */
-  const opLaan=(st,t)=>{
+  P.opLaan=(st,t)=>{
     const p=st.pts;
     for(let i=1;i<p.length;i++){
       const l=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);
@@ -1089,138 +1125,244 @@ export function dorpPlan(soort,zaad,a){
       t-=l;
     }
   };
-  const lengteVan=st=>{ let L=0; for(let i=1;i<st.pts.length;i++)L+=Math.hypot(st.pts[i][0]-st.pts[i-1][0],st.pts[i][1]-st.pts[i-1][1]); return L; };
   /* hoe ver een punt van de dichtstbijzijnde straat ligt (min de halve breedte) */
-  const vanStraat=(x,y)=>{
+  P.vanStraat=(x,y)=>{
     let best=1e9;
-    for(const st of straten){ const p=st.pts; for(let i=1;i<p.length;i++){
+    for(const st of P.straten){ const p=st.pts; for(let i=1;i<p.length;i++){
       const [x0,y0]=p[i-1],[x1,y1]=p[i], dx=x1-x0, dy=y1-y0, ll=dx*dx+dy*dy||1e-9, t=klem(((x-x0)*dx+(y-y0)*dy)/ll,0,1);
       best=Math.min(best,Math.hypot(x0+dx*t-x,y0+dy*t-y)-st.breed/2);
     } }
     return best;
   };
   /* kandidaat-huizen langs een straat, aan beide kanten */
-  const langs=(st,o)=>{
-    const L=lengteVan(st);
+  P.langs=(st,o)=>{
+    const L=P.lengteVan(st);
     for(let t=o.van||0;t<L;t+=o.stap*(.75+.5*r())){
-      const [x,y,h]=opLaan(st,t);
-      for(const kant of [-1,1]){
-        const terug=tussen(o.terug[0],o.terug[1]), gevel=r()<(o.gevel||0);
+      const [x,y,h]=P.opLaan(st,t);
+      for(const kant of o.kanten||[-1,1]){
+        const terug=P.tussen(o.terug[0],o.terug[1]), gevel=r()<(o.gevel||0);
         const diep=gevel?11:7, af=st.breed/2+terug+diep/2;
         const nx=-Math.sin(h)*kant, ny=Math.cos(h)*kant;
         const hx=x+nx*af, hy=y+ny*af;
         let rr=h+(gevel?Math.PI/2:0)+(r()-.5)*(o.schuin||0);
         if(o.dwars&&r()<o.dwars)rr+=Math.PI/2;
-        kand.push({x:hx,y:hy,r:rr,ax:nx,ay:ny,d:Math.hypot(hx,hy)+r()*(o.ruis||0),soort:o.schuur&&r()<o.schuur?1:0,lagen:1,prio:o.prio||0});
+        P.kand.push({x:hx,y:hy,r:rr,ax:nx,ay:ny,d:Math.hypot(hx,hy)+r()*(o.ruis||0),soort:o.schuur&&r()<o.schuur?1:(o.huis||0),lagen:o.lagen||1,prio:o.prio||0});
       }
     }
   };
-  let plein=null, muur=null, kerk=null;
+  /* uitkiezen: van binnen naar buiten, niet op een straat en niet op elkaar */
+  P.kies=(doel,ruimte,o={})=>{
+    const {kand,huizen,plein,kerk}=P;
+    kand.sort((p,q)=>(q.prio-p.prio)||(p.d-q.d));
+    let binnen=0;
+    for(const k of kand){
+      if(huizen.length>=doel)break;
+      if(k.weg)continue;
+      if(o.binnenDeel&&!k.buiten&&binnen>=doel*o.binnenDeel)continue;
+      if(o.vrij&&!o.vrij(k))continue;
+      if(plein&&(plein.b?Math.abs(k.x-plein.x)<plein.b/2+3&&Math.abs(k.y-plein.y)<plein.d/2+3:Math.hypot(k.x-plein.x,k.y-plein.y)<plein.r+3))continue;
+      if(P.vanStraat(k.x,k.y)<(k.soort===2?3.2:k.soort===3?2.5:4.2))continue;
+      if(kerk&&Math.hypot(k.x-kerk.x,k.y-kerk.y)<17)continue;
+      const groot=k.soort===1||k.soort===3;
+      if(huizen.some(h=>Math.hypot(h.x-k.x,h.y-k.y)<ruimte*(groot||h.soort===1||h.soort===3?1.35:1)))continue;
+      huizen.push(k); if(!k.buiten)binnen++;
+      /* soms een erf wat achteraf, met een paadje erheen */
+      if(o.erven&&k.prio===0&&r()<o.erven&&huizen.length<doel){
+        const af=P.tussen(24,38), x=k.x+k.ax*af, y=k.y+k.ay*af;
+        if(P.vanStraat(x,y)>9&&!huizen.some(h=>Math.hypot(h.x-x,h.y-y)<ruimte*1.2)&&(!o.vrij||o.vrij({x,y}))){
+          huizen.push({x,y,r:k.r+(r()-.5)*1.2,ax:k.ax,ay:k.ay,soort:r()<.3?1:0,lagen:1});
+          P.straten.push({pts:[[k.x+k.ax*5,k.y+k.ay*5],[x-k.ax*5,y-k.ay*5]],breed:1.8,soort:2});
+        }
+      }
+    }
+  };
+  /* naar kaarteenheden, gedraaid over hoek a */
+  P.uit=(a,straal)=>{
+    const ca=Math.cos(a), sa=Math.sin(a), m=METER;
+    const naar=(u,v)=>[(u*ca-v*sa)*m,(u*sa+v*ca)*m];
+    const {plein,muur,kerk}=P;
+    return {
+      straten:P.straten.map(st=>({pts:st.pts.map(([u,v])=>naar(u,v)),breed:st.breed*m,soort:st.soort})),
+      huizen:P.huizen.map(h=>{ const [x,y]=naar(h.x,h.y), [ax,ay]=naar(h.ax,h.ay); return {x,y,r:h.r+a,soort:h.soort,lagen:h.lagen,ax:ax/m,ay:ay/m}; }),
+      plein:plein&&{...(()=>{ const [x,y]=naar(plein.x,plein.y); return {x,y}; })(),r:plein.r*m,b:plein.b&&plein.b*m,d:plein.d&&plein.d*m,hoek:a+(plein.hoek||0)},
+      kerk:kerk&&naar(kerk.x,kerk.y),
+      muur:muur&&{punten:muur.punten.map(([u,v])=>naar(u,v)),poorten:muur.poorten.map(([u,v,h])=>[...naar(u,v),h+a]),open:!!muur.open},
+      ...Object.fromEntries(Object.entries(P.extra).map(([k,l])=>[k,l.map(([u,v,h])=>[...naar(u,v),h!=null?h+a:undefined])])),
+      straal:straal*m
+    };
+  };
+  return P;
+}
+
+/* de poort: waar een straat de ring van de muur doorsnijdt */
+function poortIn(st,Rm){
+  const p=st.pts; let best=null;
+  for(let i=1;i<p.length;i++){ const d0=Math.hypot(...p[i-1]), d1=Math.hypot(...p[i]); if(d0<=Rm&&d1>Rm){ const f=(Rm-d0)/(d1-d0); best=[p[i-1][0]+(p[i][0]-p[i-1][0])*f,p[i-1][1]+(p[i][1]-p[i-1][1])*f,Math.atan2(p[i][1]-p[i-1][1],p[i][0]-p[i-1][0])]; } }
+  return best;
+}
+
+export function dorpPlan(soort,zaad,a,vrij=[]){
+  const P=planner(zaad,soort), {r,tussen}=P, cfg=DORPSOORTEN[soort];
+  /* plekken (in meters, voor het draaien) waar een bijzonder gebouw komt */
+  const leeg=k=>!vrij.some(([u,v,rr])=>Math.hypot(k.x-u,k.y-v)<rr);
+  const doel=Math.round(tussen(cfg.huizen[0],cfg.huizen[1]+.99));
   if(soort===1){
     /* ---- gehucht: een kruising van sporen ---- */
     const n=r()<.55?3:2;
     for(let i=0;i<n;i++){
       const h=i===0?0:i===1?Math.PI+(r()-.5)*.6:(r()<.5?1:-1)*tussen(1.1,2);
-      laan(0,0,h,tussen(55,95),3,2,.5,25);
+      P.laan(0,0,h,tussen(55,95),3,2,.5,25);
     }
-    for(const st of straten)langs(st,{stap:24,terug:[4,13],schuin:.9,dwars:.35,ruis:30,schuur:.25});
+    for(const st of P.straten)P.langs(st,{stap:24,terug:[4,13],schuin:.9,dwars:.35,ruis:30,schuur:.25});
+    P.kies(doel,15,{erven:.3,vrij:leeg});
   }else if(soort===2){
     /* ---- dorp: een brink met straten in alle richtingen ---- */
     const rb=tussen(16,24);
-    plein={x:0,y:0,r:rb};
+    P.plein={x:0,y:0,r:rb};
     const n=3+Math.floor(r()*2.6), hoeken=[];
     for(let i=0;i<n;i++)hoeken.push(i===0?0:i*Math.PI*2/n+(r()-.5)*.7);
-    const hoofd=hoeken.map(h=>laan(Math.cos(h)*rb*.8,Math.sin(h)*rb*.8,h,tussen(110,190),4,1,.35,30));
+    const hoofd=hoeken.map(h=>P.laan(Math.cos(h)*rb*.8,Math.sin(h)*rb*.8,h,tussen(110,190),4,1,.35,30));
     for(const st of hoofd)if(r()<.6){
-      const L=lengteVan(st), [x,y,h]=opLaan(st,L*tussen(.3,.6));
-      laan(x,y,h+(r()<.5?1:-1)*tussen(.9,1.4),tussen(40,80),3,1,.5,25);
+      const L=P.lengteVan(st), [x,y,h]=P.opLaan(st,L*tussen(.3,.6));
+      P.laan(x,y,h+(r()<.5?1:-1)*tussen(.9,1.4),tussen(40,80),3,1,.5,25);
     }
     /* de huizen rond de brink, met de voorkant naar het gras */
     const om=2*Math.PI*(rb+9);
     for(let t=0;t<om;t+=tussen(15,22)){
       const h=t/(rb+9), x=Math.cos(h)*(rb+9), y=Math.sin(h)*(rb+9);
-      kand.push({x,y,r:h+Math.PI/2+(r()-.5)*.3,ax:Math.cos(h),ay:Math.sin(h),d:r()*8,soort:0,lagen:1,prio:1});
+      P.kand.push({x,y,r:h+Math.PI/2+(r()-.5)*.3,ax:Math.cos(h),ay:Math.sin(h),d:r()*8,soort:0,lagen:1,prio:1});
     }
-    for(const st of straten)langs(st,{stap:st.breed>3?18:22,terug:[3,10],schuin:.6,dwars:.2,ruis:90,schuur:.15,gevel:.15});
+    for(const st of P.straten)P.langs(st,{stap:st.breed>3?18:22,terug:[3,10],schuin:.6,dwars:.2,ruis:90,schuur:.15,gevel:.15});
+    P.kies(doel,13,{erven:.15,vrij:leeg});
   }else{
-    /* ---- marktstad: een plein, vier hoofdstraten naar de poorten, zijstraten ---- */
-    const pb=tussen(34,42), pd=tussen(24,30);
-    plein={x:0,y:0,r:pb*.6,b:pb,d:pd};
+    /* ---- marktstad of grote stad: een plein, hoofdstraten naar de
+       poorten, zijstraten ertussen, een muur, voorsteden ---- */
+    const groot=soort===4;
+    const pb=groot?tussen(48,58):tussen(34,42), pd=groot?tussen(32,40):tussen(24,30);
+    P.plein={x:0,y:0,r:pb*.6,b:pb,d:pd};
     /* de kerk staat aan het plein, naast de straat die er aan die kant uit gaat */
-    kerk={x:-pb/4,y:-(pd/2+11)};
-    const Rm=tussen(105,130);
+    P.kerk={x:-pb/4,y:-(pd/2+(groot?14:11))};
+    const Rm=groot?tussen(165,190):tussen(105,130);
     const hoofd=[];
     for(let i=0;i<4;i++){
-      const h=i*Math.PI/2+(r()-.5)*.35;
-      const s0=(i%2?pd:pb)/2;
-      hoofd.push(laan(Math.cos(h)*s0,Math.sin(h)*s0,h,Rm-s0+tussen(70,110),6,1,.12,40));
+      const h=i*Math.PI/2+(r()-.5)*.35, s0=(i%2?pd:pb)/2;
+      hoofd.push(P.laan(Math.cos(h)*s0,Math.sin(h)*s0,h,Rm-s0+tussen(70,110),groot?7:6,1,.12,40));
     }
     /* zijstraten tussen de hoofdstraten, ongeveer haaks erop */
+    const plekken=groot?[[35,60],[80,105],[120,145]]:[[40,70],[90,125]];
     for(let i=0;i<4;i++){
       const st=hoofd[i];
-      for(const t of [tussen(40,70),tussen(90,125)]){
-        if(t>Rm-25)continue;
-        const [x,y,h]=opLaan(st,t), kant=r()<.5?1:-1;
-        laan(x,y,h+kant*Math.PI/2+(r()-.5)*.3,Math.min(tussen(70,120),Rm-15-t*.4),4,1,.25,30);
+      for(const [t0,t1] of plekken){
+        const t=tussen(t0,t1); if(t>Rm-25)continue;
+        const [x,y,h]=P.opLaan(st,t), kant=r()<.5?1:-1;
+        P.laan(x,y,h+kant*Math.PI/2+(r()-.5)*.3,Math.min(tussen(70,120),Rm-15-t*.4),4,1,.25,30);
       }
     }
+    /* in een grote stad nog een straat langs de binnenkant van de muur */
+    if(groot){
+      const n=28, ring=[];
+      for(let i=0;i<=n;i++){ const h=i/n*Math.PI*2; ring.push([Math.cos(h)*(Rm-16),Math.sin(h)*(Rm-16)]); }
+      P.straten.push({pts:ring,breed:4,soort:1});
+    }
     /* de muur: een ronde ring met een poort waar een hoofdstraat erdoor gaat */
-    const n=22, punten=[];
+    const n=groot?30:22, punten=[];
     for(let i=0;i<n;i++){ const h=i/n*Math.PI*2; punten.push([Math.cos(h)*Rm*(1+(r()-.5)*.08),Math.sin(h)*Rm*(1+(r()-.5)*.08)]); }
-    muur={punten,poorten:hoofd.map(st=>{ const p=st.pts; let best=null; for(let i=1;i<p.length;i++){ const d0=Math.hypot(...p[i-1]), d1=Math.hypot(...p[i]); if(d0<=Rm&&d1>Rm){ const f=(Rm-d0)/(d1-d0); best=[p[i-1][0]+(p[i][0]-p[i-1][0])*f,p[i-1][1]+(p[i][1]-p[i-1][1])*f,Math.atan2(p[i][1]-p[i-1][1],p[i][0]-p[i-1][0])]; } } return best; }).filter(Boolean)};
+    P.muur={punten,poorten:hoofd.map(st=>poortIn(st,Rm)).filter(Boolean)};
     /* rond het plein */
     for(const [sx,sy,ln] of [[1,0,pd],[-1,0,pd],[0,1,pb],[0,-1,pb]])for(let t=-ln/2+6;t<ln/2-5;t+=tussen(9,11)){
       const af=(sx?pb:pd)/2+7, x=sx*af+(sx?0:t), y=sy*af+(sy?0:t);
-      kand.push({x,y,r:Math.atan2(sy,sx)+Math.PI/2,ax:sx,ay:sy,d:0,soort:2,lagen:2,prio:2});
+      P.kand.push({x,y,r:Math.atan2(sy,sx)+Math.PI/2,ax:sx,ay:sy,d:0,soort:2,lagen:2,prio:2});
     }
-    for(const st of straten)langs(st,{stap:9,terug:[.5,1.5],schuin:.06,ruis:12,gevel:.35});
+    for(const st of P.straten)P.langs(st,{stap:9,terug:[.5,1.5],schuin:.06,ruis:12,gevel:.35});
     /* achter de huizen aan de straat nog een rij, aan steegjes en erven */
-    for(const k of kand.slice()){
+    for(const k of P.kand.slice()){
       if(k.prio||r()<.45)continue;
-      kand.push({...k,x:k.x+k.ax*15,y:k.y+k.ay*15,r:k.r+(r()<.3?Math.PI/2:0),d:k.d+25});
+      P.kand.push({...k,x:k.x+k.ax*15,y:k.y+k.ay*15,r:k.r+(r()<.3?Math.PI/2:0),d:k.d+25});
     }
-    for(const k of kand){
+    for(const k of P.kand){
       const d=Math.hypot(k.x,k.y);
       if(d>Rm-8&&d<Rm+12){ k.weg=1; continue; }        /* niet in of tegen de muur */
-      if(d<Rm*.6){ k.soort=2; k.lagen=r()<.75?2:1; }
+      if(d<Rm*.6){ k.soort=2; k.lagen=r()<(groot?.85:.75)?2:1; }
       else if(d<Rm){ k.soort=r()<.5?2:0; k.lagen=r()<.35?2:1; }
       else { k.buiten=1; k.lagen=1; k.soort=r()<.15?1:0; }  /* de voorstad */
     }
+    /* een zesde blijft over voor de voorsteden buiten de poorten */
+    P.kies(doel,8.2,{binnenDeel:.84,vrij:leeg});
   }
-  /* uitkiezen: van binnen naar buiten, niet op een straat en niet op elkaar */
-  kand.sort((p,q)=>(q.prio-p.prio)||(p.d-q.d));
-  const tussenRuimte=soort===3?8.2:soort===2?13:15;
-  /* in een stad blijft een zesde over voor de voorsteden buiten de poorten */
-  let binnen=0;
-  for(const k of kand){
-    if(huizen.length>=doel)break;
-    if(k.weg)continue;
-    if(soort===3&&!k.buiten&&binnen>=doel*.84)continue;
-    if(plein&&(plein.b?Math.abs(k.x)<plein.b/2+3&&Math.abs(k.y)<plein.d/2+3:Math.hypot(k.x-plein.x,k.y-plein.y)<plein.r+3))continue;
-    if(vanStraat(k.x,k.y)<(k.soort===2?3.2:4.2))continue;
-    if(kerk&&Math.hypot(k.x-kerk.x,k.y-kerk.y)<17)continue;
-    if(huizen.some(h=>Math.hypot(h.x-k.x,h.y-k.y)<tussenRuimte*(h.soort===1||k.soort===1?1.25:1)))continue;
-    huizen.push(k); if(!k.buiten)binnen++;
-    /* soms een erf wat achteraf, met een paadje erheen */
-    if(soort<3&&k.prio===0&&r()<(soort===1?.3:.15)&&huizen.length<doel){
-      const af=tussen(24,38), x=k.x+k.ax*af, y=k.y+k.ay*af;
-      if(vanStraat(x,y)>9&&!huizen.some(h=>Math.hypot(h.x-x,h.y-y)<tussenRuimte*1.2)){
-        huizen.push({x,y,r:k.r+(r()-.5)*1.2,ax:k.ax,ay:k.ay,soort:r()<.3?1:0,lagen:1});
-        straten.push({pts:[[k.x+k.ax*5,k.y+k.ay*5],[x-k.ax*5,y-k.ay*5]],breed:1.8,soort:2});
-      }
-    }
+  return P.uit(a,cfg.straal);
+}
+
+/* Een havenstad langs de waterlijn. kust(u) zegt hoe ver de waterlijn op
+   plek u (langs de kust, in meters) van de grondlijn af ligt, landinwaarts
+   gemeten; het water ligt aan de kant van -v. o: huizen (hoeveel), lengte
+   (langs de kust), diepte (landinwaarts), steigers, muur ("steen",
+   "palissade" of niets), vrij (plekken [u, v, straal] waar geen huis komt,
+   met v gemeten vanaf de waterlijn). Uit zoals dorpPlan, plus kade (de punten van de
+   kademuur) en steigers ([u, v, richting] bij de waterlijn, in kaartmaat). */
+export function havenPlan(zaad,kust,o,a){
+  const P=planner(zaad,5), {r,tussen}=P;
+  const L=o.lengte||300, D=o.diepte||170, doel=o.huizen||80;
+  const vc=u=>kust(u);
+  /* de straat langs het water: een meter of tien van de waterlijn, met de
+     kade ervoor */
+  const kadePts=[], kadeStraat=[];
+  for(let u=-L/2;u<=L/2+.1;u+=10){ kadePts.push([u,vc(u)-1.5]); }
+  for(let u=-L/2;u<=L/2+.1;u+=20)kadeStraat.push([u,vc(u)+11]);
+  const voor={pts:kadeStraat,breed:7,soort:1}; P.straten.push(voor);
+  /* straten het land in, om de vijftig meter */
+  const zij=[];
+  for(let u=-L/2+20+r()*15;u<L/2-15;u+=tussen(42,60)){
+    const lang=D*tussen(.65,1.05);
+    zij.push(P.laan(u,vc(u)+14.5,Math.PI/2+(r()-.5)*.25,lang,4.5,1,.18,30));
   }
-  /* naar kaarteenheden, gedraaid naar de richting van de plek */
-  const ca=Math.cos(a), sa=Math.sin(a), m=METER;
-  const naar=(u,v)=>[(u*ca-v*sa)*m,(u*sa+v*ca)*m];
-  return {
-    straten:straten.map(st=>({pts:st.pts.map(([u,v])=>naar(u,v)),breed:st.breed*m,soort:st.soort})),
-    huizen:huizen.map(h=>{ const [x,y]=naar(h.x,h.y), [ax,ay]=naar(h.ax,h.ay); return {x,y,r:h.r+a,soort:h.soort,lagen:h.lagen,ax:ax/m,ay:ay/m}; }),
-    plein:plein&&{...(()=>{ const [x,y]=naar(plein.x,plein.y); return {x,y}; })(),r:plein.r*m,b:plein.b&&plein.b*m,d:plein.d&&plein.d*m,hoek:a},
-    kerk:kerk&&naar(kerk.x,kerk.y),
-    muur:muur&&{punten:muur.punten.map(([u,v])=>naar(u,v)),poorten:muur.poorten.map(([u,v,h])=>[...naar(u,v),h+a])},
-    straal:cfg.straal*m
-  };
+  /* de middelste gaat door tot buiten de stad: de weg naar het binnenland */
+  const midden=zij.reduce((b,s)=>Math.abs(s.pts[0][0])<Math.abs(b.pts[0][0])?s:b,zij[0]);
+  if(midden){ const e=midden.pts[midden.pts.length-1]; midden.pts.push([e[0]+(r()-.5)*20,Math.max(e[1],D)+60]); }
+  /* dwarsstraten verder van het water */
+  for(const v0 of [D*.45,D*.85])if(r()<.85){
+    const pts=[]; for(let u=-L/2+30;u<=L/2-30;u+=25)pts.push([u,vc(u)+v0+(r()-.5)*6]);
+    P.straten.push({pts,breed:4,soort:1});
+  }
+  /* het plein: aan het water, in het midden; de kerk erachter */
+  const pu=(r()-.5)*L*.2;
+  P.plein={x:pu,y:vc(pu)+34,r:18,b:40,d:26};
+  P.kerk={x:pu+(r()<.5?-12:12),y:vc(pu)+34+13+14};
+  /* de pakhuizen langs de kadestraat, met de gevel naar het water */
+  for(let u=-L/2+8;u<L/2-8;u+=tussen(20,26)){
+    const v=vc(u)+11+3.5+9;
+    P.kand.push({x:u,y:v,r:0,ax:0,ay:1,d:Math.abs(u)*.3,soort:3,lagen:2,prio:2});
+  }
+  for(const st of P.straten)if(st!==voor)P.langs(st,{stap:9.5,terug:[.5,1.5],schuin:.08,ruis:20,gevel:.3,huis:2,lagen:2});
+  P.langs(voor,{stap:10,terug:[.5,1.5],schuin:.05,ruis:10,huis:2,lagen:2,kanten:[1]});
+  for(const k of P.kand){
+    if(k.soort===3)continue;
+    const v=k.y-vc(k.x);
+    if(v<17){ k.weg=1; continue; }                     /* tussen de kadestraat en het water: alleen pakhuizen */
+    k.d=Math.hypot(k.x*.7,v-30)+r()*25;
+    if(v>D*.6){ k.soort=r()<.6?0:2; k.lagen=r()<.3?2:1; }
+  }
+  /* de muur of palissade aan de landkant, met een poort waar de weg het
+     land in gaat */
+  if(o.muur){
+    const m=12, top=D+18;
+    const punten=[[-L/2-m,vc(-L/2-m)-4],[-L/2-m,top],[L/2+m,top],[L/2+m,vc(L/2+m)-4]];
+    const poorten=[];
+    if(midden){ const p=midden.pts; for(let i=1;i<p.length;i++)if(p[i-1][1]<=top&&p[i][1]>top){ const f=(top-p[i-1][1])/(p[i][1]-p[i-1][1]); poorten.push([p[i-1][0]+(p[i][0]-p[i-1][0])*f,top,Math.PI/2]); } }
+    P.muur={punten,poorten,open:true};
+    for(const k of P.kand)if(k.y>top-6&&k.y<top+12)k.weg=1;
+  }
+  const vrij=o.vrij||[];
+  P.kies(doel,8.4,{vrij:k=>k.y>vc(k.x)+13&&!vrij.some(([u,v,r])=>Math.hypot(k.x-u,k.y-vc(u)-v)<r)});
+  /* de steigers: van de kade het water in, haaks op de kust */
+  const steigers=[], ns=o.steigers??3;
+  for(let i=0;i<ns;i++){
+    const u=-L*.38+(i+.5)*(L*.76/ns)+(r()-.5)*12;
+    const helling=(vc(u+5)-vc(u-5))/10;
+    steigers.push([u,vc(u)-1,-Math.PI/2+Math.atan(helling)]);
+  }
+  P.extra.kade=kadePts.map(([u,v])=>[u,v]);
+  P.extra.steigers=steigers;
+  return P.uit(a,Math.max(L/2,D)+20);
 }
 export const WEGRAND=.03;
 /* De wegen voor de shader: alle lijnstukken (uitgedund waar de weg recht

@@ -494,7 +494,7 @@ export async function maak3D(ctx){
     for(const p of ctx.PLAATSEN){
       const pos=POS[p.id]; if(!pos)continue;
       const m=modelVoor(p);
-      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null,plateau:m.plateau||null});
+      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null,plateau:m.plateau||null,haven:m.haven||null,heuvel:m.heuvel||null});
     }
     /* op een hoogvlakte loopt in 3D geen rivier (de platte kaart tekent er
        wel een, als lijntje op het reliëf) */
@@ -1141,7 +1141,7 @@ export async function maak3D(ctx){
         float fres=.02+.98*pow(1.0-ndv,5.0);
         vec3 R=reflect(-V,n); R.y=abs(R.y);
         vec3 spiegel=luchtKleur(R);
-        float t=1.0-exp(-diepte*.42);
+        float t=1.0-exp(-diepte*1.1);
         float ws=wolkSchaduw(vW);
         vec3 licht=uZonKleur*max(uZonRicht.y,0.0)*.55*ws+uZenit*.35+uNevelKleur*.25;
         vec3 lichaam=mix(uOndiep,uDiep,t)*licht;
@@ -1156,7 +1156,9 @@ export async function maak3D(ctx){
         /* van ver wordt de schuimstreep een harde witte rand: dan zachter */
         schuim*=mix(1.0,.35,smoothstep(30.0,250.0,afst));
         kleur=mix(kleur,uSchuim*(licht*1.3+.12),clamp(schuim,0.0,1.0)*.65);
-        float alfa=clamp(mix(.18,1.0,t)+fres*.55+schuim,0.0,1.0);
+        /* ook ondiep water is water: van dichtbij zag een brede ondiepe
+           strook langs de kust eruit als strand */
+        float alfa=clamp(mix(.62,1.0,t)+fres*.55+schuim,0.0,1.0);
         /* diep water is ondoorzichtig: wat eronder ligt doet er dan niet meer
            toe, en de oceaan voorbij het raster sluit naadloos aan */
         alfa=max(alfa,smoothstep(3.5,5.5,diepte))*(1.0-opLand);
@@ -1197,9 +1199,27 @@ export async function maak3D(ctx){
         gl_FragColor.rgb=nevel(gl_FragColor.rgb,vW);
       }`
   });
+  /* Het water is een schijf rond de camera, in ringen die naar buiten toe
+     steeds breder worden: fijn vlakbij, grof tot aan de horizon. Eén groot
+     vlak van twee driehoeken (zoals eerst) gaf van dichtbij een diepte die zo
+     onnauwkeurig was dat het water over het land heen getekend werd. */
+  function waterSchijf(){
+    const N=64, ringen=[0];
+    for(let r=.02;r<120000;r*=1.18)ringen.push(r);
+    ringen.push(120000);
+    const pos=[], idx=[];
+    for(const r of ringen)for(let i=0;i<N;i++){ const a=i/N*Math.PI*2; pos.push(Math.cos(a)*r,0,Math.sin(a)*r); }
+    for(let k=0;k<ringen.length-1;k++)for(let i=0;i<N;i++){
+      const a=k*N+i, b=k*N+(i+1)%N, c=a+N, d=b+N;
+      idx.push(a,b,c, b,d,c);
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+    g.setIndex(idx);
+    return g;
+  }
   function maakWater(){
-    water=new THREE.Mesh(new THREE.PlaneGeometry(1,1),waterMat);
-    water.rotation.x=-Math.PI/2; water.scale.set(120000,120000,1);
+    water=new THREE.Mesh(waterSchijf(),waterMat);
     water.renderOrder=1; water.frustumCulled=false;
     scene.add(water);
   }
