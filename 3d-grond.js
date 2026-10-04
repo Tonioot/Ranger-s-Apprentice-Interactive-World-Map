@@ -903,7 +903,12 @@ function kleur(G,T){
       if(kust[q]<30){ const t=1-kust[q]/30; meng(ZAND,t*t*.85*(1-glad(klem((hh-.025)/.03,0,1)))); }
       if(grens[q]){ meng(GRENS,.22); }
       let r=k[0]*m, g=k[1]*m, b=k[2]*m, nat=0;
-      if(rivier[q]){ const t=rivier[q]/255; r+=(RIV[0]-r)*t; g+=(RIV[1]-g)*t; b+=(RIV[2]-b)*t; nat=t*.9; }
+      /* langs een rivier: de uiterwaard, nat en weelderig groen. Het water
+         zelf is in 3D een eigen smal lint (maakRivieren in 3d.js); hier
+         alleen nog een zweem van de rivierkleur */
+      if(rivier[q]){ const t=rivier[q]/255;
+        const ur=r*.8+(RIV[0]-r*.8)*.15, ug=g*.92+(RIV[1]-g*.92)*.15, ub=b*.78+(RIV[2]-b*.78)*.15;
+        r+=(ur-r)*t; g+=(ug-g)*t; b+=(ub-b)*t; nat=t*.5; }
       uit[u]=klem(r,0,255); uit[u+1]=klem(g,0,255); uit[u+2]=klem(b,0,255);
       uit[u+3]=255-nat*255;
     }

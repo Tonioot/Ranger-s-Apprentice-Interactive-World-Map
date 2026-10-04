@@ -2143,6 +2143,120 @@ export async function maak3D(ctx){
     }
   }
 
+  /* ======================= rivieren: water en bruggen =======================
+     Het raster is te grof voor een rivier (~200 m per punt): daar is een
+     rivier een brede natte strook, de uiterwaard. Het water zelf is een smal
+     lint langs de middenlijn van de rivier zoals de kaart hem tekent, op de
+     hoogte van de grond, 35 tot 90 m breed naar de dikte op de kaart. Waar
+     een weg die middenlijn kruist, ligt een brug: van steen over een brede
+     rivier, van hout over een smalle. */
+  let rivierWater=null, bruggenMesh=null;
+  const METER3D=1/650;
+  function rivierLijnen(){
+    const uit=[];
+    for(const r of ctx.rivieren()){
+      const breed=/\br3\b/.test(r.klasse)?.14:/\br2\b/.test(r.klasse)?.09:.055;
+      const pad=document.createElementNS("http://www.w3.org/2000/svg","path");
+      pad.setAttribute("d",r.d); hulpSvg.appendChild(pad);
+      const L=pad.getTotalLength(), n=Math.max(2,Math.ceil(L/.12));
+      let stuk=[], vorige=null;
+      const sluit=()=>{ if(stuk.length>1)uit.push({pts:stuk,breed}); stuk=[]; };
+      for(let i=0;i<=n;i++){
+        const q=pad.getPointAtLength(i/n*L), x=q.x, y=q.y;
+        /* een sprong in het pad (een tweede stuk), of de zee: daar stopt het lint */
+        if((vorige&&Math.hypot(x-vorige[0],y-vorige[1])>1)||hNorm(x,y)<-.02){ sluit(); vorige=null; if(hNorm(x,y)<-.02)continue; }
+        stuk.push(vorige=[x,y]);
+      }
+      sluit(); pad.remove();
+    }
+    return uit;
+  }
+  function maakRivieren(){
+    const lijnen=rivierLijnen();
+    /* het water: per punt twee hoekpunten, links en rechts van de middenlijn */
+    const pos=[], idx=[];
+    for(const {pts,breed} of lijnen){
+      const b0=pos.length/3;
+      for(let i=0;i<pts.length;i++){
+        const a=pts[Math.max(0,i-1)], c=pts[Math.min(pts.length-1,i+1)];
+        let tx=c[0]-a[0], ty=c[1]-a[1]; const l=Math.hypot(tx,ty)||1; tx/=l; ty/=l;
+        const [x,y]=pts[i], y3=Math.max(yOp(x,y),0)+.0012, h=breed/2;
+        pos.push(X(x-ty*h),y3,Z(y+tx*h), X(x+ty*h),y3,Z(y-tx*h));
+      }
+      for(let i=0;i<pts.length-1;i++){ const k=b0+i*2; idx.push(k,k+2,k+1, k+1,k+2,k+3); }
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+    g.setIndex(idx); g.computeVertexNormals();
+    const m=new THREE.MeshStandardMaterial({color:0x3A6272,roughness:.6,metalness:0,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,side:THREE.DoubleSide});
+    m.onBeforeCompile=sh=>{ metNevel(sh);
+      /* de normaal wijst altijd recht omhoog: water ligt vlak. De zon
+         spiegelt erin, maar gedempt: anders wordt een rivier van ver een
+         felwitte vlek */
+      sh.fragmentShader=sh.fragmentShader
+        .replace("#include <normal_fragment_begin>","#include <normal_fragment_begin>\nnormal=normalize((viewMatrix*vec4(0.0,1.0,0.0,0.0)).xyz);")
+        .replace("#include <lights_fragment_end>","#include <lights_fragment_end>\nreflectedLight.directSpecular*=.12;"); };
+    rivierWater=new THREE.Mesh(g,m); rivierWater.receiveShadow=true; wereld.add(rivierWater);
+    /* de bruggen: waar een weg de middenlijn kruist */
+    const vak=new Map(), VK=2;
+    lijnen.forEach((ln,li)=>{ for(let i=1;i<ln.pts.length;i++){ const [x,y]=ln.pts[i]; const k=Math.floor(x/VK)+","+Math.floor(y/VK); if(!vak.has(k))vak.set(k,[]); vak.get(k).push([li,i]); } });
+    const kruis=(p,q,r,s2)=>{ const d=(q[0]-p[0])*(s2[1]-r[1])-(q[1]-p[1])*(s2[0]-r[0]); if(Math.abs(d)<1e-9)return null;
+      const t=((r[0]-p[0])*(s2[1]-r[1])-(r[1]-p[1])*(s2[0]-r[0]))/d, u=((r[0]-p[0])*(q[1]-p[1])-(r[1]-p[1])*(q[0]-p[0]))/d;
+      return t>=0&&t<=1&&u>=0&&u<=1?[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t]:null; };
+    const bruggen=[];
+    for(const w of D.wegen){
+      for(let i=1;i<w.p.length;i++){
+        const p=w.p[i-1], q=w.p[i], gezien=new Set();
+        for(let gy=Math.floor(Math.min(p[1],q[1])/VK)-1;gy<=Math.floor(Math.max(p[1],q[1])/VK)+1;gy++)
+          for(let gx=Math.floor(Math.min(p[0],q[0])/VK)-1;gx<=Math.floor(Math.max(p[0],q[0])/VK)+1;gx++)
+            for(const [li,j] of vak.get(gx+","+gy)||[]){
+              const key=li+":"+j; if(gezien.has(key))continue; gezien.add(key);
+              const ln=lijnen[li], x=kruis(p,q,ln.pts[j-1],ln.pts[j]);
+              if(x&&!bruggen.some(b=>Math.hypot(b.x-x[0],b.y-x[1])<.3))bruggen.push({x:x[0],y:x[1],a:Math.atan2(q[1]-p[1],q[0]-p[0]),breed:ln.breed});
+            }
+      }
+    }
+    bouwBruggen(bruggen);
+  }
+  /* een brug uit blokken: het dek, de borstweringen en (van steen) de pijlers */
+  function bouwBruggen(lijst){
+    const blokken=[];
+    const blok=(x,y,a,lu,lv,l,b,yb,h,kleur)=>{ const c=Math.cos(a), s=Math.sin(a); blokken.push({x:x+c*lu-s*lv,y:y+s*lu+c*lv,a,l,b,yb,h,kleur}); };
+    for(const br of lijst){
+      const steen=br.breed>.07, L=br.breed+(steen?10:6)*METER3D, B=(steen?6:4)*METER3D;
+      const c=Math.cos(br.a), s=Math.sin(br.a);
+      /* het dek ligt net boven het water; liggen de oevers hoger (het raster
+         is grof), dan loopt het daar de oever in */
+      const yw=Math.max(yOp(br.x,br.y),0);
+      const dek=yw+(steen?4:2.5)*METER3D;
+      const kl=steen?"#8E877A":"#6A5440", dik=(steen?1.4:.6)*METER3D;
+      blok(br.x,br.y,br.a,0,0,L,B,dek-dik,dik,kl);
+      for(const z of [-1,1])blok(br.x,br.y,br.a,0,z*(B/2-.25*METER3D),L,.5*METER3D,dek,(steen?1:.9)*METER3D,steen?"#9A9385":"#5A4634");
+      /* pijlers in het water (steen) of palen (hout) */
+      const n=steen?Math.max(1,Math.round(br.breed/(28*METER3D))):Math.max(1,Math.round(br.breed/(12*METER3D)));
+      for(let i=1;i<=n;i++){ const lu=-br.breed/2+br.breed*i/(n+1);
+        if(steen)blok(br.x,br.y,br.a,lu,0,3*METER3D,B*1.05,yw-.004,dek-dik-yw+.004,"#857E72");
+        else for(const z of [-1,1])blok(br.x,br.y,br.a,lu,z*B*.4,.5*METER3D,.5*METER3D,yw-.003,dek-yw+.003,"#5A4634"); }
+    }
+    const g=new THREE.BoxGeometry(1,1,1).translate(0,.5,0);
+    const m=new THREE.MeshStandardMaterial({roughness:.9});
+    m.onBeforeCompile=sh=>metNevel(sh);
+    bruggenMesh=new THREE.InstancedMesh(g,m,Math.max(1,blokken.length));
+    bruggenMesh.castShadow=bruggenMesh.receiveShadow=true;
+    const M4=new THREE.Matrix4(), Q=new THREE.Quaternion(), P=new THREE.Vector3(), S=new THREE.Vector3(), as=new THREE.Vector3(0,1,0), kc=new THREE.Color();
+    blokken.forEach((b,i)=>{
+      /* langs de weg: lokale x is de wegrichting; in de wereld is z de kaart-y */
+      M4.compose(P.set(X(b.x),b.yb,Z(b.y)),Q.setFromAxisAngle(as,-b.a),S.set(b.l,b.h,b.b));
+      bruggenMesh.setMatrixAt(i,M4); bruggenMesh.setColorAt(i,kc.set(b.kleur));
+    });
+    bruggenMesh.count=blokken.length;
+    wereld.add(bruggenMesh);
+  }
+  function ruimRivieren(){
+    for(const o of [rivierWater,bruggenMesh])if(o){ wereld.remove(o); o.geometry.dispose(); o.material.dispose(); }
+    rivierWater=bruggenMesh=null;
+  }
+
   /* ================================ namen ================================ */
   const namen=[];
   function maakNamen(){
@@ -2416,6 +2530,7 @@ export async function maak3D(ctx){
     await ctx.adem();
     maakGebouwen();
     maakWegen();
+    maakRivieren();
     verdeelGehuchten();
     if(!randBomen)maakRandBomen();
     if(!stenen)maakStenen();
@@ -2434,6 +2549,7 @@ export async function maak3D(ctx){
     if(lichtjes){ wereld.remove(lichtjes); lichtjes.geometry.dispose(); lichtjes=null; }
     gebouwPlekken.length=0; plaatsVak=null;
     ruimGehuchten();
+    ruimRivieren();
     for(const n of namen)wereld.remove(n.obj); namen.length=0;
     ruimLijnen(routeGroep); ruimLijnen(keuzeGroep);
     gebouwd=false;
