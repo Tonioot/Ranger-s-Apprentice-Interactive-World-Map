@@ -2376,7 +2376,22 @@ export const SOORTEN={
   stad:{info:{vlak:[.45,1,.8],open:1.2},bouw(B,b,p,stijl){ if(stijl==="arrida")woestijnstad(B,b,{straal:.36,aantal:32}); else stad(B,b,stijl,{straal:.38,aantal:30}); }},
   haven:{info:{vlak:[.45,1,.7],open:1.1},bouw(B,b,p,stijl){ haven(B,b,stijl,p,{straal:.34,aantal:24}); }},
   ruine:{info:{vlak:[.4,.9,.8],open:.9},bouw(B,b,p,stijl){ ruine(B,b,stijl,{}); }},
-  slagveld:{info:{open:1.2},bouw(B,b,p,stijl){ slagveld(B,b,stijl,{}); }}
+  slagveld:{info:{open:1.2},bouw(B,b,p,stijl){ slagveld(B,b,stijl,{}); }},
+  /* een oase (alleen in 3D): een vijver in een kom (meer, zie afwerking in
+     3d-grond.js), een dichte ring palmen, wat lemen huisjes met platte
+     daken en een paar nomadententen aan de rand */
+  oase:{info:{meer:{r:.15,diepte:.008},open:0},bouw(B,b,p){
+    /* maten op de kaart, omgerekend naar modelmaat (/K): de vijver heeft een
+       straal van ~0,15, de palmen staan daar dicht omheen */
+    palmen(B,b,40,.24/K);
+    palmen(B,b,30,.4/K);
+    palmen(B,b,14,.62/K);
+    for(let i=0;i<11;i++){ const a=b.r(i+200)*Math.PI*2, d=(.55+b.r(i+210)*.3)/K, u=Math.cos(a)*d, v=Math.sin(a)*d;
+      if(b.land(u,v))B.huis(b,u,v,"arrida",{r:a,nr:i+300,maat:.9,aanbouw:false}); }
+    for(let i=0;i<4;i++){ const a=b.r(i+230)*Math.PI*2, d=(1.0+b.r(i+240)*.3)/K, u=Math.cos(a)*d, v=Math.sin(a)*d;
+      if(b.land(u,v))b.tent(u,v,3.2*M,3.6*M,["#4A3A2E","#5E4A3A","#3E3430"][i%3],{nok:true,r:a}); }
+    b.straal=1.0/K;
+  }}
 };
 export const stijlVan=gebied=>STIJL_VAN[gebied]||"araluen";
 /* wat de grond moet doen rond deze plaats (voor 3d-grond.js) */

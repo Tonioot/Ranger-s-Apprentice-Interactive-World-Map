@@ -64,7 +64,7 @@ const THEMA={
 /* ---- hoe dicht een land bewoond is ----
    Naar de bouwstijl van het land, en naar wat er groeit: op akkerland wonen
    de meeste mensen, in het naaldbos en de woestijn bijna niemand. */
-const DICHT_STIJL={araluen:1,hibernia:.8,picta:.3,skandia:.35,teutlandt:.9,gallica:1,iberion:.7,toscana:.95,helleno:.6,arrida:.16,indus:.55,"nihon-ja":.8,steppen:.1};
+const DICHT_STIJL={araluen:1,hibernia:.8,picta:.3,skandia:.35,teutlandt:.9,gallica:1,iberion:.85,toscana:.95,helleno:.6,arrida:.16,indus:.55,"nihon-ja":.8,steppen:.1};
 /* Het landschap per land in 3D. De platte kaart heeft in data.json een
    terrein per gebied (reliëf en begroeiing) dat voor een kaart werkt; in 3D
    moet het kloppen met hoe die landen in de boeken (en hun voorbeelden in
@@ -77,7 +77,8 @@ const DICHT_STIJL={araluen:1,hibernia:.8,picta:.3,skandia:.35,teutlandt:.9,galli
      Gallica      Frankrijk: landbouw, bossen, wijngaarden; naar het zuiden
                   en oosten hoger (zie RELIEF3D)
      Celtica      Wales: kale hoogvlakten en ravijnen
-     Iberion      Spanje: droog en zonnig, olijfgaarden, wat hoger bos
+     Iberion      Spanje: droog en zonnig, graan, steppe en kale heuvels,
+                  dorpen met witte muren
      Toscana      Italië: glooiend cultuurland, bergen in het noordwesten */
 const TERREIN3D={
   picta:{relief:"bergen",begroeiing:["heide","moeras","heide","naaldbos"],koud:1},
@@ -86,7 +87,7 @@ const TERREIN3D={
   teutlandt:{relief:"heuvels",begroeiing:["naaldbos","loofbos","akker"],koud:1},
   gallica:{relief:"heuvels",begroeiing:["akker","loofbos","grasland"]},
   celtica:{relief:"hoogland",begroeiing:["kaal","grasland"]},
-  iberion:{relief:"heuvels",begroeiing:["kaal","grasland","loofbos"]},
+  iberion:{relief:"heuvels",begroeiing:["steppe","akker","kaal","steppe"]},
   toscana:{relief:"heuvels",begroeiing:["akker","grasland","kaal"]}
 };
 /* Reliëf dat niet een heel land beslaat (zie extraRelief in 3d-grond.js).
@@ -110,6 +111,11 @@ const RELIEF3D={
 for(const r of RELIEF3D.ruggen){ const m=r.breed+r.uitloop*1.6+4; r.doos=[Math.min(...r.pts.map(p=>p[0]))-m,Math.min(...r.pts.map(p=>p[1]))-m,Math.max(...r.pts.map(p=>p[0]))+m,Math.max(...r.pts.map(p=>p[1]))+m]; }
 /* plekken met een eigen begroeiing die alleen in 3D bestaan: het bos rond
    Montsombre (het kasteel staat op een plateau midden in het bos) */
+/* Oases in de woestijn van Arrida: alleen in 3D, zonder naam (ze staan niet
+   op de kaart). Een vijver in een kom, palmen eromheen, een paar lemen
+   huisjes en tenten (zie SOORTEN.oase in 3d-modellen.js). */
+const OASES3D=[[262,640],[330,690],[388,702],[282,688],[346,652],[240,622],[318,668]]
+  .map(([x,y],i)=>({id:"oase-"+(i+1),soort:"oase",gebied:"arrida",x,y,naam:"",drie:true}));
 const VLEKKEN3D=[{x:202.2,y:365.1,r:10,soort:"loofbos",gebied:"gallica"}];
 /* hoeveel kleine bosjes er tussen de akkers liggen (0–1 per land) */
 const BOSJES={araluen:1,gallica:1,teutlandt:.8,hibernia:.7,iberion:.4,toscana:.5};
@@ -620,6 +626,8 @@ export async function maak3D(ctx){
     });
     const POS={};
     for(const p of ctx.PLAATSEN){ if(p.wacht)continue; const r=ctx.plek(p); if(r)POS[p.id]=r; }
+    /* de oases staan alleen in 3D; alleen op land */
+    for(const o of OASES3D){ const fx=Math.floor((o.x+MARGE)*RES), fy=Math.floor((o.y+MARGE)*RES); if(land[fy*RW+fx])POS[o.id]=[o.x,o.y]; }
     const vlekken=[];
     for(const p of ctx.PLAATSEN){
       if(!T.GROEI[p.begroeiing]||!POS[p.id])continue;
@@ -627,10 +635,12 @@ export async function maak3D(ctx){
       vlekken.push({x,y,r:p.straal||14,rr:(p.straal||14)*1.75,soort:p.begroeiing,gebied:p.gebied});
     }
     for(const v of VLEKKEN3D)vlekken.push({...v,rr:v.r*1.75});
+    /* rond elke oase een groene vlek: gras waar het water de grond vochtig houdt */
+    for(const o of OASES3D)if(POS[o.id])vlekken.push({x:o.x,y:o.y,r:.75,rr:1.2,soort:"grasland",gebied:"arrida"});
     /* per plaats: hoe breed de grond eronder vlak wordt, en hoe groot de
        open plek in het bos eromheen (een kasteel ligt tussen zijn akkers) */
     const plekken=[];
-    for(const p of ctx.PLAATSEN){
+    for(const p of ctx.PLAATSEN.concat(OASES3D)){
       const pos=POS[p.id]; if(!pos)continue;
       const m=modelVoor(p);
       plekken.push({id:p.id,x:pos[0],y:pos[1],regio:ids.indexOf(p.gebied)+1,vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null,plateau:m.plateau||null,haven:m.haven||null,heuvel:m.heuvel||null});
@@ -2084,7 +2094,7 @@ export async function maak3D(ctx){
     return best;
   };
   function maakGebouwen(){
-    const m=bouwModellen({PLAATSEN:ctx.PLAATSEN,POS:D.POS,X,Z,yOp,hNorm,opLand,hash2:T.hash2,rivierOp,rivierBij,kloven:D.kloven});
+    const m=bouwModellen({PLAATSEN:ctx.PLAATSEN.concat(OASES3D),POS:D.POS,X,Z,yOp,hNorm,opLand,hash2:T.hash2,rivierOp,rivierBij,kloven:D.kloven});
     Object.assign(plekBoven,m.boven); Object.assign(plekMidden,m.midden);
     gebouwPlekken.push(...m.plekken);
     losseBomen=m.bomen;
