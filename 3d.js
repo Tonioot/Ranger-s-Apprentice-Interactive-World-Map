@@ -1915,7 +1915,7 @@ export async function maak3D(ctx){
     for(let i=0;i<P.count;i++){
       if(D.getX(i)<.5)continue;
       v.fromBufferAttribute(P,i).sub(hart).normalize(); n.fromBufferAttribute(N,i);
-      n.lerp(v,.7).normalize(); N.setXYZ(i,n.x,n.y,n.z);
+      n.lerp(v,.5).normalize(); N.setXYZ(i,n.x,n.y,n.z);
     }
     return g;
   }
@@ -1936,7 +1936,7 @@ export async function maak3D(ctx){
           else{
             /* groepjes blad: lichter waar de zon op een groepje valt, donker ertussen */
             float b1=texture2D(uDetail,vObj.xy*1.7+vObj.z*.9+vZaad*.137).r, b2=texture2D(uDetail,vObj.zy*3.1+vZaad*.071).r;
-            diffuseColor.rgb*=.62+.62*(b1*.6+b2*.4);
+            diffuseColor.rgb*=.5+.78*(b1*.6+b2*.4);
           }`)
         .replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuseColor.rgb*uGebouwLicht*1.4;")
         .replace("#include <lights_fragment_end>","#include <lights_fragment_end>\nfloat ws=wolkSchaduw(vWolkW); reflectedLight.directDiffuse*=ws; reflectedLight.directSpecular*=ws;");
@@ -2020,7 +2020,7 @@ export async function maak3D(ctx){
     const h=v[i+3]*1.15, br=v[i+3]*(naald?.7:.95);
     boomM.compose(boomP.set(v[i],v[i+1],v[i+2]),boomQ.setFromAxisAngle(boomAs,v[i+5]*6.283),boomS.set(br,h,br));
     bak.setMatrixAt(n,boomM);
-    const f=1.25+.4*v[i+5];
+    const f=1.02+.38*v[i+5];
     bak.instanceColor.setXYZ(n,v[i+6]*f,v[i+7]*f,v[i+8]*f);
     bomen3D.n[k]=n+1;
     /* de voetschaduw: iets breder dan de kruin, net boven de grond */
