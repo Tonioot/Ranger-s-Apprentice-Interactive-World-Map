@@ -44,27 +44,15 @@ const WOLKHOOGTE=58;
 const THEMA={
   licht:{
     zon:[-.56,.40,-.72], zonKleur:"#FFE2BE", zonSterkte:3.2,
-    hemelLicht:"#C9DCEA", grondLicht:"#80765E", hemiSterkte:1.0,
+    hemelLicht:"#C9DCEA", grondLicht:"#80765E", hemiSterkte:1.3,
     zenit:"#4A82C0", nevel:"#CCD8DF", gloed:"#FFC88A",
     nevelDicht:.0026, nevelVal:.030,
     ondiep:"#4FA3A3", diep:"#123F55", schuim:"#F4F0E4",
-    belichting:1.0, sterren:0, lichtjes:0,
+    belichting:.92, sterren:0, lichtjes:0,
     wolkLicht:"#FFFFFF", wolkDonker:"#A9B4C2", wolkDekking:.9, wolkSchaduw:.42,
-    rivier:"#5C8F9C", zand:"#DCCDA2", bodemOndiep:"#C9BE98", bodemDiep:"#4E747E",
+    rivier:"#4C7480", zand:"#B9A882", bodemOndiep:"#A39878", bodemDiep:"#46666E",
     akkers:["#C9B77E","#8F9E5E","#8C7A60","#A9B07C","#B9A06A"],
-    weg:"#D3C49E", dorp:"#8E7866", heg:"#55663E"
-  },
-  donker:{
-    zon:[-.44,.62,-.65], zonKleur:"#B4C8EC", zonSterkte:2.0,
-    hemelLicht:"#3A5078", grondLicht:"#10141A", hemiSterkte:.95,
-    zenit:"#03060D", nevel:"#152230", gloed:"#6A82AA",
-    nevelDicht:.0034, nevelVal:.028,
-    ondiep:"#1A454C", diep:"#02080D", schuim:"#7F909B",
-    belichting:1.45, sterren:1, lichtjes:1,
-    wolkLicht:"#5A6A80", wolkDonker:"#161E29", wolkDekking:.6, wolkSchaduw:.3,
-    rivier:"#2E4F59", zand:"#4E4936", bodemOndiep:"#3B3A2D", bodemDiep:"#0A171C",
-    akkers:["#5C5531","#3E4B2A","#3B3225","#4B5333","#504A2C"],
-    weg:"#5A5440", dorp:"#3A3530", heg:"#1E2A18"
+    weg:"#A69878", dorp:"#6E5E50", heg:"#3D4A2C"
   }
 };
 
@@ -72,6 +60,50 @@ const THEMA={
    Naar de bouwstijl van het land, en naar wat er groeit: op akkerland wonen
    de meeste mensen, in het naaldbos en de woestijn bijna niemand. */
 const DICHT_STIJL={araluen:1,hibernia:.8,picta:.3,skandia:.35,teutlandt:.9,gallica:1,iberion:.7,toscana:.95,helleno:.6,arrida:.16,indus:.55,"nihon-ja":.8,steppen:.1};
+/* Het landschap per land in 3D. De platte kaart heeft in data.json een
+   terrein per gebied (reliëf en begroeiing) dat voor een kaart werkt; in 3D
+   moet het kloppen met hoe die landen in de boeken (en hun voorbeelden in
+   onze wereld) zijn. Hier wat daarvan afwijkt; de platte kaart blijft zoals
+   hij is.
+     Picta        Schotland: ruige hooglanden met bergen, heide en veen
+     Skandia      Scandinavië: een centrale bergrug, taiga, kale toppen
+     Sonderland   IJsland/Denemarken: kaal, open heide en grasland, boomloos
+     Teutlandt    Duitsland: heuvelachtig, dicht donker woud, rivierdalen
+     Gallica      Frankrijk: landbouw, bossen, wijngaarden; naar het zuiden
+                  en oosten hoger (zie RELIEF3D)
+     Celtica      Wales: kale hoogvlakten en ravijnen
+     Iberion      Spanje: droog en zonnig, olijfgaarden, wat hoger bos
+     Toscana      Italië: glooiend cultuurland, bergen in het noordwesten */
+const TERREIN3D={
+  picta:{relief:"bergen",begroeiing:["heide","moeras","heide","naaldbos"],koud:1},
+  skandia:{relief:"bergen",begroeiing:["naaldbos","naaldbos","toendra"],koud:1},
+  sonderland:{relief:"heuvels",begroeiing:["heide","grasland"],koud:1},
+  teutlandt:{relief:"heuvels",begroeiing:["naaldbos","loofbos","akker"],koud:1},
+  gallica:{relief:"heuvels",begroeiing:["akker","loofbos","grasland"]},
+  celtica:{relief:"hoogland",begroeiing:["kaal","grasland"]},
+  iberion:{relief:"heuvels",begroeiing:["kaal","grasland","loofbos"]},
+  toscana:{relief:"heuvels",begroeiing:["akker","grasland","kaal"]}
+};
+/* Reliëf dat niet een heel land beslaat (zie extraRelief in 3d-grond.js).
+   Kaartcoördinaten; hoogte in de maat van het hoogteveld (bergen ≈ 1). */
+const RELIEF3D={
+  ruggen:[
+    /* de Pyreneeën, op de grens van Gallica en Iberion */
+    {pts:[[138,431],[155,433],[175,434],[195,440],[205,448]],breed:4,uitloop:11,hoogte:.5,zaad:11},
+    /* het gebergte in het noordwesten van Toscana */
+    {pts:[[247,423],[252,440],[258,458],[268,472]],breed:4,uitloop:12,hoogte:.45,zaad:23},
+    /* Gallica loopt in het oosten op naar de voet van Alpina */
+    {pts:[[255,356],[262,385],[260,414]],breed:4,uitloop:12,hoogte:.3,zaad:37}
+  ],
+  /* de vulkanen van Nihon-Ja */
+  kegels:[{x:872,y:386,r:10,hoogte:.9},{x:896,y:430,r:8,hoogte:.7},{x:852,y:422,r:7,hoogte:.6}],
+  /* het heuvelland rond Montsombre */
+  heuvels:[{x:202.2,y:365.1,r:11,amp:.2}]
+};
+for(const r of RELIEF3D.ruggen){ const m=r.breed+r.uitloop*1.6+4; r.doos=[Math.min(...r.pts.map(p=>p[0]))-m,Math.min(...r.pts.map(p=>p[1]))-m,Math.max(...r.pts.map(p=>p[0]))+m,Math.max(...r.pts.map(p=>p[1]))+m]; }
+/* plekken met een eigen begroeiing die alleen in 3D bestaan: het bos rond
+   Montsombre (het kasteel staat op een plateau midden in het bos) */
+const VLEKKEN3D=[{x:202.2,y:365.1,r:10,soort:"loofbos",gebied:"gallica"}];
 /* hoeveel kleine bosjes er tussen de akkers liggen (0–1 per land) */
 const BOSJES={araluen:1,gallica:1,teutlandt:.8,hibernia:.7,iberion:.4,toscana:.5};
 /* landen die in 3D grauw steen zijn, hoe sterk: de kale bergen van Morgarath */
@@ -79,6 +111,54 @@ const GRAUW={"mountains-of-rain-and-night":.8};
 /* hoeveel sneeuw er op het hoogland van een land ligt (0–1): Picta en het
    noorden vaak, Teutlandt nauwelijks */
 const SNEEUWLAND={picta:1,skandia:1,sonderland:1,skorghijl:1,alpina:.8,aslava:.5,celtica:.4,"mountains-of-rain-and-night":.35,"nihon-ja":.2,teutlandt:.2,ursali:.3};
+/* ---- de kleuren van het land in 3D ----
+   De platte kaart heeft heldere kaartkleuren (GROEI in index.html); van
+   boven gezien is land veel donkerder en minder verzadigd. Dit is de kleur
+   van elke begroeiing zoals een luchtfoto hem toont, per seizoen. */
+const PALET3D={
+  zomer:{akker:"#7A7646",grasland:"#56693A",steppe:"#8B8352",heide:"#5F5244",loofbos:"#41582A",naaldbos:"#3A4D32",
+         jungle:"#21401A",woestijn:"#B4925F",moeras:"#495236",toendra:"#6D6E58",kaal:"#7A6E57"},
+  lente:{akker:"#6C7A42",grasland:"#5B7637",steppe:"#7D8650",heide:"#5A5143",loofbos:"#557335",naaldbos:"#3A4C31",
+         jungle:"#24461B",woestijn:"#B4925F",moeras:"#4C5A36",toendra:"#6A6B57",kaal:"#7A6F58"},
+  herfst:{akker:"#766445",grasland:"#5F6A3B",steppe:"#91804F",heide:"#5E4636",loofbos:"#7A5A2C",naaldbos:"#3A4C30",
+         jungle:"#2A421B",woestijn:"#B4925F",moeras:"#545134",toendra:"#7A6B4E",kaal:"#7A6C55"},
+  winter:{akker:"#6E6553",grasland:"#66674F",steppe:"#837B5C",heide:"#5A4E44",loofbos:"#5A5244",naaldbos:"#384A3B",
+          jungle:"#22401B",woestijn:"#B0905F",moeras:"#4D4F40",toendra:"#7C7D72",kaal:"#77705F"}
+};
+/* de akkers in de lappendeken, per seizoen: groen koren in de lente, rijp
+   koren en stoppels in de zomer, geploegd in de herfst, kaal in de winter */
+const AKKERS3D={
+  lente:["#6E7D45","#5C7238","#7A6A4C","#839150","#66763E"],
+  zomer:["#93844F","#61733A","#6F5E42","#7A8445","#86784A"],
+  herfst:["#6B5841","#73703F","#5E4E3A","#667040","#857550"],
+  winter:["#6A6050","#76705E","#5F574A","#6E6A58","#7A7262"]
+};
+/* Elk land heeft zijn eigen bodem: het groene, vochtige Hibernia en
+   Araluen, het warme Gallica, het droge, zongebleekte Iberion en Toscana,
+   het koele, grijzige Skandia. Een vermenigvuldiging per kleurkanaal. */
+const LANDTINT={
+  araluen:[.97,1.04,.94],hibernia:[.9,1.09,.88],picta:[1.02,.95,.97],skandia:[.9,.96,1.0],sonderland:[.96,.98,.95],
+  teutlandt:[.86,.94,.86],gallica:[1.05,1.03,.9],iberion:[1.16,1.02,.8],toscana:[1.1,1.02,.82],helleno:[1.12,1.04,.86],
+  arrida:[1.06,1.0,.92],baralat:[1.1,1.0,.86],alpina:[.95,.98,1.0],celtica:[.95,.97,.95],"eastern-steps":[1.1,1.05,.84],
+  aslava:[.96,1.0,.94],ursali:[1.0,1.0,.93],"middle-kingdoms":[1.05,1.03,.9],"nihon-ja":[.92,1.06,.95],indus:[.94,1.05,.9],
+  "mountains-of-rain-and-night":[.9,.9,.92]
+};
+/* het gesteente per land: graniet in Skandia, kalksteen in Alpina en
+   Toscana, leisteen in Celtica, rode zandsteen in Arrida, donker vulkanisch
+   gesteente in Nihon-Ja */
+const ROTS3D={
+  skandia:"#717271",sonderland:"#737570",alpina:"#98968E",picta:"#6B6760",celtica:"#656A6D","mountains-of-rain-and-night":"#5D5C57",
+  arrida:"#B88B60",baralat:"#AA825D",toscana:"#A39680",iberion:"#A88B6A",helleno:"#A89E91","nihon-ja":"#5A5551",gallica:"#8E8881",
+  teutlandt:"#73706A",araluen:"#868177",hibernia:"#7A7C75"
+};
+/* Hoeveel sneeuw er in de winter op het lage land ligt, per land: het
+   noorden helemaal wit, Araluen soms, het zuiden nooit. */
+const WINTERSNEEUW={skandia:1,sonderland:1,skorghijl:1,picta:.9,alpina:1,aslava:.85,ursali:.75,"eastern-steps":.6,teutlandt:.7,
+  "middle-kingdoms":.45,celtica:.5,"mountains-of-rain-and-night":.55,araluen:.3,hibernia:.2,gallica:.3,"nihon-ja":.5,toscana:.08,iberion:.04};
+/* wat een seizoen met de sneeuw doet: de sneeuwgrens in de bergen (lager
+   is meer sneeuw) en hoeveel van de sneeuw op het land blijft liggen */
+const SEIZOENEN=["lente","zomer","herfst","winter"];
+const SEIZOENSNEEUW={lente:{grens:-.08,land:.8,winter:.35},zomer:{grens:.12,land:.4,winter:0},herfst:{grens:.02,land:.7,winter:.08},winter:{grens:-.3,land:1.3,winter:1}};
 const GROEI_DICHT={akker:1.3,grasland:1,steppe:.5,heide:.4,loofbos:.6,naaldbos:.35,jungle:.3,woestijn:.12,moeras:.15,toendra:.15,kaal:.25};
 
 /* ---- nevel en lucht, als shadercode ----
@@ -152,15 +232,14 @@ function installeerNevel(){
 const klem=(v,a,b)=>v<a?a:v>b?b:v;
 const glad=t=>t*t*(3-2*t);
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-/* Dag of nacht in de 3D-wereld. Dat staat los van het thema van de pagina:
-   een donker thema is een keuze voor het scherm, geen tijdstip. De knop naast
-   de 3D-knop zet het om (en het wordt onthouden). */
-let nachtModus=false;
-try{ nachtModus=localStorage.getItem("gj-tijd")==="nacht"; }catch(e){}
-const isDonker=()=>nachtModus;
-/* De kleuren van de wereld (rots, sneeuw, de tinten van de landen) staan in
-   de CSS, per thema. De wereld neemt ze van het lichte thema overdag en van
-   het donkere 's nachts, wat de pagina ook toont. */
+/* Het seizoen in de 3D-wereld: sneeuw, loof en akkers. De knop naast de
+   3D-knop zet het om (en het wordt onthouden). Het is altijd dag; een
+   donker thema van de pagina maakt de wereld alleen iets donkerder. */
+let seizoen="zomer";
+try{ const s=localStorage.getItem("gj-seizoen"); if(SEIZOENEN.includes(s))seizoen=s; }catch(e){}
+const donkerThema=()=>document.documentElement.getAttribute("data-theme")==="dark";
+/* De kleuren van de wereld (rots, sneeuw) staan in de CSS van het lichte
+   thema; de wereld is in beide thema's dezelfde. */
 let themaVars=null;
 function wcss(n){
   if(!themaVars){
@@ -175,7 +254,7 @@ function wcss(n){
       }
     }
   }
-  return (nachtModus?themaVars.donker[n]:themaVars.licht[n])||themaVars.licht[n]||css(n);
+  return themaVars.licht[n]||css(n);
 }
 const rgb=hex=>{ const s=hex.replace("#",""); const n=parseInt(s.length===3?s.replace(/./g,"$&$&"):s,16); return [n>>16&255,n>>8&255,n&255]; };
 const mengIn=(k,doel,t)=>{ k[0]+=(doel[0]-k[0])*t; k[1]+=(doel[1]-k[1])*t; k[2]+=(doel[2]-k[2])*t; };
@@ -473,7 +552,7 @@ export async function maak3D(ctx){
     const SOORTEN=Object.keys(T.GROEI);
     const info={}, werkInfo={};
     ids.forEach((id,i)=>{
-      const tr=T.terreinVan(id);
+      const tr=TERREIN3D[id]||T.terreinVan(id);
       const meta=ctx.GEBIEDEN[id]||ctx.PLAATSEN.find(p=>p.vorm===id);
       const soorten=[].concat(tr.begroeiing||"grasland").map(s=>T.GROEI[s]?s:"grasland");
       const r=T.RELIEF[tr.relief]||T.RELIEF.heuvels;
@@ -488,6 +567,7 @@ export async function maak3D(ctx){
       const [x,y]=POS[p.id];
       vlekken.push({x,y,r:p.straal||14,rr:(p.straal||14)*1.75,soort:p.begroeiing,gebied:p.gebied});
     }
+    for(const v of VLEKKEN3D)vlekken.push({...v,rr:v.r*1.75});
     /* per plaats: hoe breed de grond eronder vlak wordt, en hoe groot de
        open plek in het bos eromheen (een kasteel ligt tussen zijn akkers) */
     const plekken=[];
@@ -523,7 +603,7 @@ export async function maak3D(ctx){
       const [g0,g1]=groveRijen(R,y0,y1);
       const G={R,y0,y1,go:g0*PW,
         land:snij(land,RW,y0,y1),rivier:snij(rivier,RW,y0,y1),kustAfst:snij(ak.kustAfst,RW,y0,y1),zeeAfst:snij(az.zeeAfst,RW,y0,y1),
-        fAmp:snij(v.fAmp,PW,g0,g1),fRug:snij(v.fRug,PW,g0,g1),fKust:snij(fKust,PW,g0,g1),fFijn:snij(fFijn,PW,g0,g1)};
+        fAmp:snij(v.fAmp,PW,g0,g1),fRug:snij(v.fRug,PW,g0,g1),fKust:snij(fKust,PW,g0,g1),fFijn:snij(fFijn,PW,g0,g1),relief3d:RELIEF3D};
       const r=await ploeg.doe("hoogte",G,mee(G));
       h.set(r.h,y0*RW); kust.set(r.kust,y0*RW);
     }));
@@ -601,23 +681,23 @@ export async function maak3D(ctx){
      begroeiing en de tint van het land, zacht over de grenzen —, en na
      afloop de lappendeken van akkers rond dorpen en kastelen. */
   async function bouwKleur(){
-    const donker=isDonker(), th=donker?THEMA.donker:THEMA.licht;
+    const th=THEMA.licht, pal=PALET3D[seizoen];
     const {PW,PH}=R, {pReg,info}=D;
     const M2=PW*PH;
     const fR=new Float32Array(M2), fG=new Float32Array(M2), fB=new Float32Array(M2);
     const fKorrel=new Float32Array(M2), fVlek=new Float32Array(M2);
-    const kleurVan=s=>rgb(donker?T.GROEI[s].donker:T.GROEI[s].licht);
-    const tonen={}; for(const k of "abcdef")tonen[k]=rgb(wcss("--tone-"+k)||"#888888");
-    const TOON=.30;      /* zelfde als in bouwGrond() */
+    const kleurVan=s=>rgb(pal[s]||T.GROEI[s].licht);
+    /* de bodemtint van het land (LANDTINT) */
+    const tint=(k,id)=>{ const t=LANDTINT[id]; return t?[k[0]*t[0],k[1]*t[1],k[2]*t[2]]:k; };
     const middel=kleurVan("grasland");
     fR.fill(middel[0]); fG.fill(middel[1]); fB.fill(middel[2]);
     fKorrel.fill(T.GROEI.grasland.korrel); fVlek.fill(T.GROEI.grasland.vlek);
     for(let p=0;p<M2;p++){
       const g=info[pReg[p]]; if(!g)continue;
       const a=D.SOORTEN[D.mixA[p]], b=D.SOORTEN[D.mixB[p]], mf=D.mixF[p];
-      const ka=kleurVan(a), kb=kleurVan(b), o=tonen[g.tint]||tonen.a;
-      const k=[ka[0]+(kb[0]-ka[0])*mf,ka[1]+(kb[1]-ka[1])*mf,ka[2]+(kb[2]-ka[2])*mf];
-      fR[p]=k[0]+(o[0]-k[0])*TOON; fG[p]=k[1]+(o[1]-k[1])*TOON; fB[p]=k[2]+(o[2]-k[2])*TOON;
+      const ka=kleurVan(a), kb=kleurVan(b);
+      const k=tint([ka[0]+(kb[0]-ka[0])*mf,ka[1]+(kb[1]-ka[1])*mf,ka[2]+(kb[2]-ka[2])*mf],D.ids[pReg[p]-1]);
+      fR[p]=k[0]; fG[p]=k[1]; fB[p]=k[2];
 
       const ga=T.GROEI[a], gb=T.GROEI[b];
       fKorrel[p]=ga.korrel+(gb.korrel-ga.korrel)*mf; fVlek[p]=ga.vlek+(gb.vlek-ga.vlek)*mf;
@@ -630,8 +710,7 @@ export async function maak3D(ctx){
       bosKleur.value[0].setRGB(lb[0]/255,lb[1]/255,lb[2]/255,THREE.SRGBColorSpace);
       bosKleur.value[1].setRGB(nb[0]/255,nb[1]/255,nb[2]/255,THREE.SRGBColorSpace); }
     for(const v of D.vlekken){
-      const meta=ctx.GEBIEDEN[v.gebied], o=tonen[(meta&&meta.tint)||"a"]||tonen.a, kl=kleurVan(v.soort);
-      const k=[kl[0]+(o[0]-kl[0])*TOON,kl[1]+(o[1]-kl[1])*TOON,kl[2]+(o[2]-kl[2])*TOON];
+      const k=tint(kleurVan(v.soort),v.gebied);
       const gr=T.GROEI[v.soort];
       for(let y=Math.max(-MARGE,Math.floor(v.y-v.rr));y<=Math.min(PH-1-MARGE,Math.ceil(v.y+v.rr));y++)
         for(let x=Math.max(-MARGE,Math.floor(v.x-v.rr));x<=Math.min(PW-1-MARGE,Math.ceil(v.x+v.rr));x++){
@@ -647,9 +726,17 @@ export async function maak3D(ctx){
     { const rt=rgb(wcss("--rots")||"#9C9782"), l=(rt[0]+rt[1]+rt[2])/3*.78;
       for(let p=0;p<M2;p++){ const gr=GRAUW[D.ids[pReg[p]-1]]; if(!gr)continue;
         fR[p]+=(l*.97-fR[p])*gr; fG[p]+=(l*.98-fG[p])*gr; fB[p]+=(l*.97-fB[p])*gr; } }
-    const fSneeuw=new Float32Array(M2);
-    for(let p=0;p<M2;p++)if(pReg[p])fSneeuw[p]=SNEEUWLAND[D.ids[pReg[p]-1]]||0;
-    T.veeg(fSneeuw,PW,PH,8);
+    /* hoeveel sneeuw er op het land ligt: in de koude landen op het
+       hoogland, en in de winter (en wat in herfst en lente) ook laag, naar
+       het land */
+    const SZ=SEIZOENSNEEUW[seizoen];
+    const fSneeuw=new Float32Array(M2), fWinter=new Float32Array(M2);
+    for(let p=0;p<M2;p++)if(pReg[p]){ const id=D.ids[pReg[p]-1]; fSneeuw[p]=(SNEEUWLAND[id]||0)*SZ.land; fWinter[p]=(WINTERSNEEUW[id]||0)*SZ.winter; }
+    T.veeg(fSneeuw,PW,PH,8); T.veeg(fWinter,PW,PH,10);
+    /* de kleur van het gesteente per land */
+    const rotsStd=rgb(wcss("--rots")||"#6E6A62"), fRotsR=new Float32Array(M2), fRotsG=new Float32Array(M2), fRotsB=new Float32Array(M2);
+    for(let p=0;p<M2;p++){ const id=pReg[p]?D.ids[pReg[p]-1]:null, k=ROTS3D[id]?rgb(ROTS3D[id]):rotsStd; fRotsR[p]=k[0]; fRotsG[p]=k[1]; fRotsB[p]=k[2]; }
+    for(const f of [fRotsR,fRotsG,fRotsB])T.veeg(f,PW,PH,6);
     const kl={ROTS:rgb(wcss("--rots")||"#9C9782"),SNEEUW:rgb(wcss("--sneeuw")||"#F1EFE4"),GRENS:rgb(wcss("--coast")||"#5A6356"),
       ZAND:rgb(th.zand),RIV:rgb(th.rivier),BO:rgb(th.bodemOndiep),BD:rgb(th.bodemDiep)};
     const uit=new Uint8Array(N*4);
@@ -660,13 +747,14 @@ export async function maak3D(ctx){
         h:snij(D.h,RW,hr0,hr1),land:snij(D.land,RW,y0,y1),kust:snij(D.kust,RW,y0,y1),grens:snij(D.grens,RW,y0,y1),
         rivier:snij(D.rivier,RW,y0,y1),bos:snij(D.bos,RW,y0,y1),
         fR:snij(fR,PW,g0,g1),fG:snij(fG,PW,g0,g1),fB:snij(fB,PW,g0,g1),fKorrel:snij(fKorrel,PW,g0,g1),
-        fVlek:snij(fVlek,PW,g0,g1),fKoud:snij(D.fKoud,PW,g0,g1),fSneeuw:snij(fSneeuw,PW,g0,g1)};
+        fVlek:snij(fVlek,PW,g0,g1),fKoud:snij(D.fKoud,PW,g0,g1),fSneeuw:snij(fSneeuw,PW,g0,g1),fWinter:snij(fWinter,PW,g0,g1),
+        fRotsR:snij(fRotsR,PW,g0,g1),fRotsG:snij(fRotsG,PW,g0,g1),fRotsB:snij(fRotsB,PW,g0,g1),sneeuwGrens:SZ.grens};
       const r=await ploeg.doe("kleur",G,mee(G));
       uit.set(r.kleur,y0*RW*4);
     }));
     /* de akkers rond dorpen en kastelen, en rond elke naamloze nederzetting;
        van ver is een gehucht een vlekje daken tussen zijn akkers */
-    const akk=th.akkers.map(rgb), {land,h,rivier}=D, dk=rgb(th.dorp);
+    const akk=AKKERS3D[seizoen].map(rgb), {land,h,rivier}=D, dk=rgb(th.dorp);
     for(const [cx,cy,Ra] of akkerPlekken()){
       const hk=T.hash2(cx*13|0,cy*7|0), rot=hk*Math.PI, co=Math.cos(rot), si=Math.sin(rot);
       for(let y=Math.max(0,Math.floor((cy+MARGE-Ra)*RES));y<=Math.min(RH-1,Math.ceil((cy+MARGE+Ra)*RES));y++)
@@ -900,7 +988,11 @@ export async function maak3D(ctx){
           if(wand>.002){
             float laag=texture2D(uDetail,vec2((vWolkW.x+vWolkW.z)*.05,vWolkW.y*.9)).r;
             float voor=texture2D(uDetail,vec2((vWolkW.x-vWolkW.z)*1.3,vWolkW.y*.12)).r;
-            vec3 rots=uRots*(.72+.4*laag)*(.93+.12*voor);
+            /* de kleur van het gesteente van het land, uit het kleurplaatje
+               (waar de wand al rots is), wat ontkleurd: groen wordt grijs,
+               zandsteen blijft warm */
+            vec3 bk=diffuseColor.rgb; float bl=dot(bk,vec3(.3,.5,.2));
+            vec3 rots=mix(vec3(bl)*vec3(1.03,1.0,.96),bk,.45)*(.78+.4*laag)*(.93+.12*voor);
             diffuseColor.rgb=mix(diffuseColor.rgb,rots,wand);
           }
           float loof=texture2D(uLoof,vMapUv).r;
@@ -930,11 +1022,30 @@ export async function maak3D(ctx){
           /* waar de kruinen te klein worden om te tekenen: groepjes bomen,
              open plekken en schaduw ertussen, zodat bos ook van ver bos is */
           if(bosM>.01){
-            diffuseColor.rgb=mix(diffuseColor.rgb,mix(uBosKl[1],uBosKl[0],loof)*.8,bosDek*.85);
+            diffuseColor.rgb=mix(diffuseColor.rgb,mix(uBosKl[1],uBosKl[0],loof),bosDek*.85);
             float pol=texture2D(uDetail,vWolkW.xz*1.3).r*.6+texture2D(uDetail,vWolkW.xz*.37).r*.4;
-            diffuseColor.rgb*=mix(1.0,.54+.42*pol,bosDek*(1.0-bosZicht));
+            diffuseColor.rgb*=mix(1.0,.66+.4*pol,bosDek*(1.0-bosZicht));
           }
           if(bosZicht>.002)diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht*gKruinEr);
+          /* De zandwoestijn: duinen in lange ruggen dwars op de wind, met een
+             flauwe loefzijde en een steile, donkere lijzijde, met fijne
+             ribbels erop; en hier en daar een kale, witte zoutvlakte. Elk
+             patroon gaat in zijn gemiddelde over zodra het te fijn wordt. */
+          float duin=texture2D(uLoof,vMapUv).b*(1.0-bosDek);
+          if(duin>.01){
+            vec2 dp=vWolkW.xz;
+            vec2 dw=(vec2(texture2D(uDetail,dp*.021).r,texture2D(uDetail,dp*.021+vec2(.31,.77)).r)-.5)*1.6;
+            vec2 dq=dp+dw;
+            float ds=dot(dq,vec2(.94,.33))*1.5, df=fract(ds);
+            float vorm=smoothstep(0.0,.78,df)*(1.0-smoothstep(.78,.95,df));
+            float dLod=1.0-smoothstep(.25,.7,length(fwidth(vec2(ds))));
+            float rib=.5+.5*sin(dot(dq,vec2(.33,-.94))*70.0);
+            float rLod=1.0-smoothstep(.15,.5,length(fwidth(dq*11.0)));
+            float duinLicht=mix(.8,1.1,vorm)*(.96+.08*rib*rLod);
+            diffuseColor.rgb*=mix(1.0,duinLicht,duin*dLod);
+            float zout=smoothstep(.72,.78,texture2D(uDetail,dp*.009+vec2(.5,.2)).r)*duin;
+            diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.62,.6,.56)*(.92+.12*texture2D(uDetail,dp*1.7).r),zout*.85);
+          }
           /* De lappendeken van akkers. Twee lagen: kavels (grote cellen van
              een paar eenheden, elk met een eigen richting en een eigen
              overheersend gewas) die tot ver weg te zien zijn, en daarin
@@ -1002,7 +1113,9 @@ export async function maak3D(ctx){
             vec3 akkerRes=mix(gewas,uHeg*(.85+.3*texture2D(uDetail,vWolkW.xz*9.0).r),heg*.9);
             akkerRes=mix(akkerRes,uWegKleur,pad*(1.0-heg));
             float zKavel=1.0-smoothstep(.16,.45,akPx);
-            diffuseColor.rgb=mix(diffuseColor.rgb,akkerRes*(.94+.12*korrel),akker*.7*zKavel);
+            /* onder de sneeuw geen akkers */
+            float onderSneeuw=1.0-smoothstep(.45,.65,dot(diffuseColor.rgb,vec3(.333)));
+            diffuseColor.rgb=mix(diffuseColor.rgb,akkerRes*(.94+.12*korrel),akker*.7*zKavel*onderSneeuw);
           }
           /* De wegen. Per cel van een eenheid staat in uWegCel welke
              lijnstukken er langs komen (wegLijnen() in 3d-grond.js); hier de
@@ -1551,7 +1664,7 @@ export async function maak3D(ctx){
     }
     return (Math.sqrt(b2)-Math.sqrt(b1))*1.0*.5;
   }
-  const akkerOp=(wx,wy)=>{ if(!akkerData)return 0; const i=Math.floor(wx+MARGE), j=Math.floor(wy+MARGE); return i<0||j<0||i>=R.PW||j>=R.PH?0:akkerData[(j*R.PW+i)*2+1]/255; };
+  const akkerOp=(wx,wy)=>{ if(!akkerData)return 0; const i=Math.floor(wx+MARGE), j=Math.floor(wy+MARGE); return i<0||j<0||i>=R.PW||j>=R.PH?0:akkerData[(j*R.PW+i)*4+1]/255; };
   function detailIn(cx,cy){
     const sl=cx+","+cy; let v=detailVakken.get(sl); if(v)return v;
     const uit=[], {land,bos,rivier,h}=D;
@@ -1766,7 +1879,9 @@ export async function maak3D(ctx){
     for(const k of ["aBoom","aSoort","aKleur"]){ const at=g.getAttribute(k); at.needsUpdate=true; at.clearUpdateRanges?.(); at.addUpdateRange?.(0,n*at.itemSize); }
     /* de stenen in de vakken dichtbij */
     if(stenen){
-      steenK.set(wcss("--rots")||"#9C9782");
+      /* een steen heeft de kleur van de grond waar hij ligt: het gesteente
+         van dat land (of de sneeuw eromheen), iets lichter */
+      const kd=landKleurTex&&landKleurTex.image.data;
       let ns=0;
       for(const [d,cx,cy] of vakken2){
         if(Math.hypot(d,boven)>=DETAILVER)continue;
@@ -1774,6 +1889,9 @@ export async function maak3D(ctx){
         for(let i=0;i<v.length&&ns<STEENMAX;i+=6,ns++){
           steenM.compose(steenP.set(v[i],v[i+1],v[i+2]),steenQ.setFromAxisAngle(steenAs,v[i+4]),steenS.set(v[i+3],v[i+3],v[i+3]));
           stenen.setMatrixAt(ns,steenM);
+          if(kd){ const px=Math.min(RW-1,Math.max(0,Math.round((v[i]+W/2+MARGE)*RES))), py=Math.min(RH-1,Math.max(0,Math.round((v[i+2]+H/2+MARGE)*RES))), q=(py*RW+px)*4;
+            steenK.setRGB(kd[q]/255*1.1,kd[q+1]/255*1.1,kd[q+2]/255*1.08,THREE.SRGBColorSpace); }
+          else steenK.set(wcss("--rots")||"#9C9782");
           stenen.instanceColor.setXYZ(ns,steenK.r*v[i+5],steenK.g*v[i+5],steenK.b*v[i+5]);
         }
         if(ns>=STEENMAX)break;
@@ -2166,7 +2284,7 @@ export async function maak3D(ctx){
   /* ================================ thema ================================ */
   let landKleurTex=null, landNormTex=null, loofTex=null, wolkDek=.9, wolkSch=.4;
   function zetThema(){
-    const th=isDonker()?THEMA.donker:THEMA.licht;
+    const th=THEMA.licht;
     const zr=new THREE.Vector3(...th.zon).normalize();
     GEDEELD.uZonRicht.value.copy(zr);
     GEDEELD.uZonGloed.value.set(th.gloed);
@@ -2174,11 +2292,12 @@ export async function maak3D(ctx){
     GEDEELD.uNevelDicht.value=th.nevelDicht; GEDEELD.uNevelVal.value=th.nevelVal;
     GEDEELD.uZenit.value.set(th.zenit);
     luchtMat.uniforms.uZonKleur.value.set(th.zonKleur);
-    luchtMat.uniforms.uZonSchijf.value=isDonker()?.35:1;
+    luchtMat.uniforms.uZonSchijf.value=1;
     zon.color.set(th.zonKleur); zon.intensity=th.zonSterkte;
     hemi.color.set(th.hemelLicht); hemi.groundColor.set(th.grondLicht); hemi.intensity=th.hemiSterkte;
-    renderer.toneMappingExposure=th.belichting;
-    sterren.visible=!!th.sterren;
+    /* een donker thema van de pagina: de wereld iets donkerder, verder gelijk */
+    renderer.toneMappingExposure=th.belichting*(donkerThema()?.8:1);
+    sterren.visible=false;
     waterMat.uniforms.uOndiep.value.set(th.ondiep); waterMat.uniforms.uDiep.value.set(th.diep);
     waterMat.uniforms.uSchuim.value.set(th.schuim); waterMat.uniforms.uZonKleur.value.set(th.zonKleur);
     wolkDek=th.wolkDekking; wolkSch=th.wolkSchaduw;
@@ -2188,12 +2307,12 @@ export async function maak3D(ctx){
       wolken.material.uniforms.uDekking.value=intro?0:wolkDek;
       GEDEELD.uWolkSterkte.value=intro?0:wolkSch;
     }
-    if(lichtjes)lichtjes.visible=!!th.lichtjes;
-    GEDEELD.uGebouwLicht.value=isDonker()?.04:.13;
-    GEDEELD.uNacht.value=isDonker()?1:0;
+    if(lichtjes)lichtjes.visible=false;
+    GEDEELD.uGebouwLicht.value=.13;
+    GEDEELD.uNacht.value=0;
     rotsKleur.value.set(wcss("--rots")||"#9C9782");
     wegKleur.value.set(th.weg);
-    th.akkers.forEach((k,i)=>akkU.value[i].set(k)); hegKleur.value.set(th.heg);
+    AKKERS3D[seizoen].forEach((k,i)=>akkU.value[i].set(k)); hegKleur.value.set(th.heg);
     if(D)tekenRoutes();
   }
 
@@ -2218,12 +2337,14 @@ export async function maak3D(ctx){
     landNormTex.needsUpdate=true;
     await ctx.adem();
     /* Op het grove rooster: hoeveel loof (en hoeveel naald) het bos heeft (R),
-       en hoeveel van het land akkerland is (G), niet op het strand */
-    { const MM=R.PW*R.PH, l=new Uint8Array(MM*2), ak=new Float32Array(MM), A=D.SOORTEN.indexOf("akker");
+       hoeveel van het land akkerland is (G), niet op het strand, en hoeveel
+       zandwoestijn (B, voor de duinen) */
+    { const MM=R.PW*R.PH, l=new Uint8Array(MM*4), ak=new Float32Array(MM), duin=new Float32Array(MM), A=D.SOORTEN.indexOf("akker"), Wo=D.SOORTEN.indexOf("woestijn");
       for(let i=0;i<MM;i++){
         if(!D.pReg[i])continue;
         const x=i%R.PW, y=(i/R.PW)|0, fp=Math.min(RH-1,Math.floor((y+.5)*RES))*RW+Math.min(RW-1,Math.floor((x+.5)*RES));
         ak[i]=((D.mixA[i]===A?1-D.mixF[i]:0)+(D.mixB[i]===A?D.mixF[i]:0))*klem((D.kust[fp]/18-1.2)/1.2,0,1)*(1-glad(klem((D.h[fp]-.12)/.12,0,1)));
+        duin[i]=((D.mixA[i]===Wo?1-D.mixF[i]:0)+(D.mixB[i]===Wo?D.mixF[i]:0))*klem((D.kust[fp]/18-.4)/.8,0,1);
       }
       for(const [cx,cy,Ra] of akkerPlekken()){
         for(let y=Math.floor(cy-Ra);y<=Math.ceil(cy+Ra);y++)for(let x=Math.floor(cx-Ra);x<=Math.ceil(cx+Ra);x++){
@@ -2234,10 +2355,10 @@ export async function maak3D(ctx){
           ak[i]=Math.max(ak[i],t*klem((D.kust[fp]/18-.6)/1,0,1));
         }
       }
-      T.veeg(ak,R.PW,R.PH,2);
-      for(let i=0;i<MM;i++){ l[i*2]=klem(D.fLoof[i],0,1)*255; l[i*2+1]=klem(ak[i],0,1)*255; }
+      T.veeg(ak,R.PW,R.PH,2); T.veeg(duin,R.PW,R.PH,3);
+      for(let i=0;i<MM;i++){ l[i*4]=klem(D.fLoof[i],0,1)*255; l[i*4+1]=klem(ak[i],0,1)*255; l[i*4+2]=klem(duin[i],0,1)*255; l[i*4+3]=255; }
       akkerData=l;
-      loofTex=new THREE.DataTexture(l,R.PW,R.PH,THREE.RGFormat);
+      loofTex=new THREE.DataTexture(l,R.PW,R.PH,THREE.RGBAFormat);
       loofTex.minFilter=loofTex.magFilter=THREE.LinearFilter; loofTex.needsUpdate=true; }
     landMat=maakLandMat(landKleurTex,landNormTex,loofTex);
     maakVakken();
@@ -2568,11 +2689,13 @@ export async function maak3D(ctx){
       if(!gebouwd)return;
       zetThema(); tekenKeuze(gekozen);
     },
-    /* dag of nacht: de kleuren van het land zijn erin gebakken, dus die opnieuw */
-    async wisselTijd(){
-      nachtModus=!nachtModus;
-      try{ localStorage.setItem("gj-tijd",nachtModus?"nacht":"dag"); }catch(e){}
-      if(!gebouwd)return nachtModus;
+    /* het seizoen: de kleuren van het land zijn erin gebakken, dus die opnieuw */
+    get seizoen(){ return seizoen; },
+    async zetSeizoen(nieuw){
+      if(!SEIZOENEN.includes(nieuw)||nieuw===seizoen)return seizoen;
+      seizoen=nieuw;
+      try{ localStorage.setItem("gj-seizoen",seizoen); }catch(e){}
+      if(!gebouwd)return seizoen;
       ctx.laad.aan(); await ctx.adem();
       try{
         const k=await opnieuwBijFout(bouwKleur);
@@ -2580,7 +2703,7 @@ export async function maak3D(ctx){
         randVakken.clear(); detailVakken.clear(); werkRandBomenBij(true);
         zetThema();
       }finally{ ctx.laad.weg(); }
-      return nachtModus;
+      return seizoen;
     },
     zoom(f){
       vlucht=null;

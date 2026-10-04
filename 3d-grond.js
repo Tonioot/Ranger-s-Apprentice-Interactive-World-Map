@@ -337,7 +337,7 @@ function hoogte(G,T){
   const R=G.R, {RW,RES,M}=R, {y0,y1}=G;
   const n=(y1-y0)*RW, o=y0*RW, go=G.go;
   const h=new Float32Array(n), kust=new Uint8Array(n);
-  const {land,rivier,kustAfst,zeeAfst,fAmp,fRug,fKust,fFijn}=G;
+  const {land,rivier,kustAfst,zeeAfst,fAmp,fRug,fKust,fFijn}=G, relief3d=G.relief3d||null;
   /* de bergketen doet verder dan zijn uitloop niets meer: dan hoeft hij ook niet gemeten */
   const doos=[1e9,1e9,-1e9,-1e9];
   for(const k of T.BERGKETENS)for(const [x,y,r] of k.punten){
@@ -379,12 +379,48 @@ function hoogte(G,T){
          die afloop korter, anders blijft er van het gebergte niets over. */
       const afloop=glad(Math.min(1,dk/Math.min(12,fK*1.1)));
       let v=Math.min(1,basis+(kH-basis)*kT)*afloop;
+      if(relief3d)v=extraRelief(relief3d,wx,wy,v,afloop,T);
       /* een rivier slijt een smalle geul uit */
       if(rivier[q])v=Math.max(0,v-rivier[q]/255*Math.min(.012,v*.5));
       h[q]=v;
     }
   }
   return {h,kust};
+}
+
+/* ---- reliëf dat alleen de 3D-kaart kent ----
+   Waar een land maar voor een deel bergachtig is (de Pyreneeën tussen
+   Gallica en Iberion, het gebergte in het noordwesten van Toscana), een
+   vulkaan (Nihon-Ja) of een heuvelachtige streek rond één plaats
+   (Montsombre). ruggen: een lijn met een breedte (de kam) en een uitloop
+   (de voet); kegels: een vulkaan; heuvels: golvend land in een cirkel. */
+function extraRelief(E,wx,wy,v,afloop,T){
+  for(const r of E.ruggen||[]){
+    const [x0,y0,x1,y1]=r.doos; if(wx<x0||wx>x1||wy<y0||wy>y1)continue;
+    let d=1e9; const p=r.pts;
+    for(let i=1;i<p.length;i++){
+      const [ax,ay]=p[i-1],[bx,by]=p[i], dx=bx-ax, dy=by-ay, ll=dx*dx+dy*dy||1e-9, t=klem(((wx-ax)*dx+(wy-ay)*dy)/ll,0,1);
+      d=Math.min(d,Math.hypot(ax+dx*t-wx,ay+dy*t-wy));
+    }
+    d+=(T.fbm(wx*.09+r.zaad,wy*.09-r.zaad,3,.2)-.5)*r.breed*1.2;
+    const w=1-glad(klem((d-r.breed)/r.uitloop,0,1)); if(w<=0)continue;
+    /* een kam met graten: geribbelde ruis, scherper naar de top */
+    const n=1-Math.abs(T.fbm(wx*.08+r.zaad,wy*.08+7,4,.4)*2-1);
+    const n2=T.fbm(wx*.3-r.zaad,wy*.3+3,3,.3);
+    v=Math.max(v,r.hoogte*glad(w)*(.55+.35*n+.1*n2)*afloop);
+  }
+  for(const k of E.kegels||[]){
+    const d=Math.hypot(wx-k.x,wy-k.y)/k.r; if(d>=1)continue;
+    /* steil naar de top, met een kratertje erin */
+    const kegel=Math.pow(1-d,1.6)*(1+.06*(T.ruis(wx*1.3,wy*1.3)-.5)), krater=d<.07?(.07-d)*2.2:0;
+    v=Math.max(v,(k.hoogte*kegel-krater*k.hoogte)*afloop);
+  }
+  for(const h of E.heuvels||[]){
+    const d=Math.hypot(wx-h.x,wy-h.y)/h.r; if(d>=1)continue;
+    const w=1-glad(d), n=T.fbm(wx*.32+5,wy*.32-9,4,.3);
+    v+=h.amp*w*Math.max(0,n-.25)*afloop;
+  }
+  return v;
 }
 
 /* ======================= taak 3: afwerking =======================
@@ -808,12 +844,24 @@ function kleur(G,T){
       const xl=x>0?hp-1:hp, xr=x<RW-1?hp+1:hp, yo=hp-RW>=0?hp-RW:hp, yb=hp+RW<h.length?hp+RW:hp;
       const gx=(Yvan(h[xr])-Yvan(h[xl]))*RES*.5, gz=(Yvan(h[yb])-Yvan(h[yo]))*RES*.5;
       const helling=Math.sqrt(gx*gx+gz*gz);
-      /* rots: hoog in de bergen, en op elke steile wand */
-      if(hh>.30)meng(ROTS,Math.min(1,(hh-.30)/.40));
-      meng(ROTS,glad(klem((helling-.8)/1.3,0,1))*.8);
+      /* Rots: hoog in de bergen, en op elke steile wand. Het gesteente
+         verschilt per land (fRots), en heeft textuur: lagen die met de
+         hoogte meegaan (een beetje golvend), vlekken van verwering, en aan
+         de voet van een wand een lichtere puinhelling. */
+      const rots=G.fRotsR?[leesVeld(G.fRotsR,go,R,wx,wy),leesVeld(G.fRotsG,go,R,wx,wy),leesVeld(G.fRotsB,go,R,wx,wy)]:ROTS.slice();
+      const wand=glad(klem((helling-.8)/1.3,0,1));
+      { const laag=.5+.5*Math.sin(hh*140+T.fbm(wx*.6,wy*.6,3,.3)*7), verw=T.fbm(wx*1.7+5,wy*1.7-3,3,.2);
+        /* de lagen alleen in een wand: op een flauwe helling zouden ze als
+           hoogtelijnen over de berg lopen */
+        const f=.9+.22*(laag-.5)*wand+.24*(verw-.5); rots[0]*=f; rots[1]*=f; rots[2]*=f; }
+      if(hh>.30)meng(rots,Math.min(1,(hh-.30)/.40)*(.45+.55*wand));
+      meng(rots,wand*.85);
+      /* puin: net onder steile stukken, grijs en korrelig */
+      const puin=glad(klem((helling-.45)/.35,0,1))*(1-wand)*glad(klem((hh-.12)/.15,0,1));
+      if(puin>0){ const g=.95+.25*T.ruis(wx*6.1,wy*6.1); meng([rots[0]*1.12*g,rots[1]*1.12*g,rots[2]*1.12*g],puin*.55); }
       const dK=(wx<doos[0]-40||wx>doos[2]+40||wy<doos[1]-40||wy>doos[3]+40)?999:T.afstandTotKeten(wx,wy);
       const kk=glad(klem(1-dK/30,0,1));
-      const koud=Math.max(leesVeld(fKoud,go,R,wx,wy),kk), sg=.90-.6*koud;
+      const koud=Math.max(leesVeld(fKoud,go,R,wx,wy),kk), sg=.90-.6*koud+(G.sneeuwGrens||0);
       if(hh>sg)meng(SNEEUW,Math.min(1,(hh-sg)/.30)*(1-glad(klem((helling-1.6)/1.6,0,1))*.7));
       /* in een koud land ligt ook op het hoogland sneeuw: in kommen en op
          de noordhellingen, plekkerig, en meer naarmate het hoger is */
@@ -823,12 +871,21 @@ function kleur(G,T){
         const t=glad(klem((hh-.012)/.06,0,1))*Math.min(1,sneeuwLand*1.3)*glad(klem((vlek*.7+luw*.5-(.7-.26*sneeuwLand))/.1,0,1));
         meng(SNEEUW,t*(1-glad(klem((helling-1.4)/1.2,0,1))));
       }
+      /* sneeuw op het lage land (winter, en wat in herfst en lente): een dek
+         dat dunner wordt waar het minder koud is, met plekken waar het gras
+         of de akker erdoor komt; niet op steile wanden */
+      const winter=G.fWinter?leesVeld(G.fWinter,go,R,wx,wy):0;
+      if(winter>.02){
+        const vlek=T.fbm(wx*.9-7,wy*.9+13,3,.2)*.7+T.ruis(wx*3.1,wy*3.1)*.3;
+        const t=glad(klem((winter*1.15-.15+(vlek-.5)*.6)/.25,0,1))*Math.min(1,winter*1.4);
+        meng(SNEEUW,t*(1-glad(klem((helling-1.2)/1.2,0,1))));
+      }
       let m=1+(T.fbm(wx*.42,wy*.42,4,0)-.5)*leesVeld(fKorrel,go,R,wx,wy)*1.25
              +(T.ruis(wx*.085+311,wy*.085-127)-.5)*leesVeld(fVlek,go,R,wx,wy);
       /* Bos is van boven een donker dek van kruinen; dat dek staat precies
          waar het bladerdak staat. */
       const bw=bos[q]/255;
-      if(bw>0){ m*=1-.5*bw; k[1]+=(k[1]*.08)*bw; k[0]-=k[0]*.1*bw; k[2]-=k[2]*.05*bw; }
+      if(bw>0){ m*=1-.3*bw; k[1]+=(k[1]*.08)*bw; k[0]-=k[0]*.1*bw; k[2]-=k[2]*.05*bw; }
       m*=klem(1+holte[hp]*.07,.68,1.14);
       /* zand langs de kust, maar niet boven op een klif */
       if(kust[q]<30){ const t=1-kust[q]/30; meng(ZAND,t*t*.85*(1-glad(klem((hh-.025)/.03,0,1)))); }
