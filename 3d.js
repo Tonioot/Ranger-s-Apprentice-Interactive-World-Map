@@ -44,11 +44,11 @@ const WOLKHOOGTE=58;
 const THEMA={
   licht:{
     zon:[-.56,.40,-.72], zonKleur:"#FFE2BE", zonSterkte:3.2,
-    hemelLicht:"#C9DCEA", grondLicht:"#80765E", hemiSterkte:1.3,
-    zenit:"#4A82C0", nevel:"#CCD8DF", gloed:"#FFC88A",
+    hemelLicht:"#BCCFDD", grondLicht:"#80765E", hemiSterkte:1.3,
+    zenit:"#36679C", nevel:"#B6C3CB", gloed:"#FFC88A",
     nevelDicht:.0026, nevelVal:.030,
     ondiep:"#4FA3A3", diep:"#123F55", schuim:"#F4F0E4",
-    belichting:.92, sterren:0, lichtjes:0,
+    belichting:.80, sterren:0, lichtjes:0,
     wolkLicht:"#FFFFFF", wolkDonker:"#A9B4C2", wolkDekking:.9, wolkSchaduw:.42,
     rivier:"#4C7480", zand:"#B9A882", bodemOndiep:"#A39878", bodemDiep:"#46666E",
     akkers:["#C9B77E","#8F9E5E","#8C7A60","#A9B07C","#B9A06A"],
@@ -197,9 +197,21 @@ float nevelHoeveel(vec3 wp){
   float n=uNevelDicht*exp(-uNevelVal*max(cameraPosition.y,0.0))*afst*f;
   return 1.0-exp(-max(n,0.0));
 }
+/* Kleurcorrectie, zoals een fotograaf die doet: echte landschapsfoto's zijn
+   minder verzadigd dan een kaart, met wat meer verschil tussen licht en donker.
+   Iets minder kleur (12%), en een zachte S-curve rond het midden die de
+   schaduwen dieper maakt zonder het licht uit te branden. Ze geldt voor alles
+   wat nevel krijgt (land, water, gebouwen); de lucht en de nevel zelf blijven
+   zoals ze zijn, zodat de horizon blijft aansluiten. */
+vec3 kleurCorrectie(vec3 c){
+  float l=dot(c,vec3(.2126,.7152,.0722));
+  c=mix(vec3(l),c,.88);
+  c=clamp(c,0.0,1.0);
+  return mix(c,c*c*(3.0-2.0*c),.22);
+}
 vec3 nevel(vec3 schermKleur,vec3 wp){
   vec3 rd=normalize(wp-cameraPosition);
-  return mix(schermKleur,naarScherm(nevelKleurVoor(rd)),nevelHoeveel(wp));
+  return mix(kleurCorrectie(schermKleur),naarScherm(nevelKleurVoor(rd)),nevelHoeveel(wp));
 }`;
 const LUCHT_GLSL=`
 uniform vec3 uZenit;
@@ -1177,10 +1189,13 @@ export async function maak3D(ctx){
           normal=texture2D(normalMap,vNormalMapUv).xyz*2.0-1.0;
           normal.xz+=kruinHelling*bosZicht;
           normal=normalize(normalMatrix*normalize(normal));`)
-        /* nat land (rivieren) glanst: de alfa van het kleurplaatje zegt hoe nat */
+        /* nat land (rivieren) glanst: de alfa van het kleurplaatje zegt hoe nat.
+           Niet te glad: een rivierband is van ver een paar honderd meter breed,
+           en met een spiegelglad oppervlak werd de zon daarin een felwitte
+           streep. Zo glimt het, zonder te verblinden. */
         .replace("#include <roughnessmap_fragment>",`#include <roughnessmap_fragment>
           float nat=1.0-texture2D(map,vMapUv).a;
-          roughnessFactor=mix(roughnessFactor,.12,nat);`)
+          roughnessFactor=mix(roughnessFactor,.42,nat*nat);`)
         .replace("#include <lights_fragment_end>",`#include <lights_fragment_end>
           float ws=wolkSchaduw(vWolkW);
           reflectedLight.directDiffuse*=ws; reflectedLight.directSpecular*=ws;`);
@@ -2308,8 +2323,8 @@ export async function maak3D(ctx){
     luchtMat.uniforms.uZonSchijf.value=1;
     zon.color.set(th.zonKleur); zon.intensity=th.zonSterkte;
     hemi.color.set(th.hemelLicht); hemi.groundColor.set(th.grondLicht); hemi.intensity=th.hemiSterkte;
-    /* een donker thema van de pagina: de wereld iets donkerder, verder gelijk */
-    renderer.toneMappingExposure=th.belichting*(donkerThema()?.8:1);
+    /* een donker thema van de pagina: de wereld iets donkerder (15%), verder gelijk */
+    renderer.toneMappingExposure=th.belichting*(donkerThema()?.85:1);
     sterren.visible=false;
     waterMat.uniforms.uOndiep.value.set(th.ondiep); waterMat.uniforms.uDiep.value.set(th.diep);
     waterMat.uniforms.uSchuim.value.set(th.schuim); waterMat.uniforms.uZonKleur.value.set(th.zonKleur);
