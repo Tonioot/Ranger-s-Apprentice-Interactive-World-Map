@@ -32,13 +32,25 @@ westen, op een heuvel; roodbruine steen; een zware vierkante donjon met
 hoektorentjes en een vlaggentoren; drie slaapzalen; paradeplein; de
 oefenplaats van de Krijgsschool en de hut van Halt buiten de muren.
 **Open:** de Tarbus als gracht met ophaalbrug.
+(Ronde 6: de muur aan de poortzijde ontbrak, op het poortgebouw na; die is terug.)
 
 **Wensley** — het dorp onder aan de heuvel. *Model:* dorp met brink en kerk.
 
-**Kasteel Araluen** — de hoofdstad: grote blokken honingkleurige hardsteen,
-enorme torens en steunberen met bijna levende gratie; het zwaarst
-verdedigde kasteel van het rijk. *Model:* honingkleurige ringmuur met slanke
-hoge torens en leien spitsen, tuinen. **Open:** de stad eromheen.
+**Kasteel Araluen** — de hoofdstad en de zetel van koning Duncan: enorme
+blokken honingkleurige hardsteen, zware torens en steunberen met een bijna
+levende gratie; het zwaarst verdedigde kasteel van het rijk, met massieve
+muren en hoge torens vanwaar verdedigers water, kokende olie, pijlen en
+stenen konden gooien, en smalle pijlspleten. Een enorme ophaalbrug met een
+groot mechaniek en een valhek; de donjon midden op het plein; een hoge
+zuidtoren (waar Duncan en Cassandra opgesloten zaten); een troonzaal voor
+honderden hovelingen; de Semath stroomt door het dorp bij het kasteel.
+*Model:* een vierkant van ~160×136 m binnen een gracht met water; hoge, dikke
+muren met steunberen en een uitkragende rand onder de kantelen; zware ronde
+hoektorens met een ingetogen spits en halfronde tussentorens; een poortgebouw
+met ophaalbrug; midden op het plein de donjon met hoektorens, de hoge
+zuidtoren met de koninklijke vlag en de troonzaal ertegenaan; barakken en
+stallen langs de muren; de tuinen achter het kasteel en een marktstad voor de
+poort. **Open:** de Semath stroomt nog niet door het dorp.
 
 **Kasteel Macindaw** — groot, vierkant, helemaal van graniet; dikke muren,
 een ophaalbrug voor de hoofdpoort op het zuiden; meer vesting dan kasteel,
