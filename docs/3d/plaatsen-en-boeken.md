@@ -95,8 +95,8 @@ naar het westen, die overgaan in De Spleet, en naar zee de kustkliffen. De
 Driestappas (drie treden in de rots) is de enige toegang. Op het plateau had
 Morgarath zijn hoofdkwartier: een burcht van waaruit hij de Wargals
 aanstuurde. *Model:* het hele gebied uit de kaart is hoogland, met een klif
-langs de hele rand; de hoogvlakte grenst aan de Noordelijke kliffen en heeft
-een rand zonder vaste vorm, de bergen liggen erachter naar het zuiden; bij de
+langs de hele rand; binnen de kliffen overal bergland, met in het midden een
+vlakker, glooiend stuk (de hoogvlakte) met een rand zonder vaste vorm; bij de
 Driestappas een gang door de klif met drie treden. Op de hoogvlakte het kamp
 van de Wargals en de burcht: een onregelmatige vijfhoek van donkere
 breuksteen, met platte torens, een hoge smalle donjon en een uitkijktoren met
