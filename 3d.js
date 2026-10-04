@@ -1959,13 +1959,15 @@ export async function maak3D(ctx){
   const modelVoor=p=>modelInfo(p);
   let gebouwen=null, lichtjes=null, losseBomen=[], wegenVanPlaatsen=[], gebouwMat=null, doekMat=null, wiekMat=null;
   const plekBoven={};            /* plaats-id → hoogte van de top (voor het naambordje) */
+  const plekMidden={};           /* plaats-id → waar het model echt staat (een haven ligt aan het water) */
+  const middenVan=id=>plekMidden[id]||D.POS[id];
   const rivierOp=(wx,wy)=>{
     const x=Math.floor((wx+MARGE)*RES), y=Math.floor((wy+MARGE)*RES);
     return x>=0&&y>=0&&x<RW&&y<RH?D.rivier[y*RW+x]:0;
   };
   function maakGebouwen(){
     const m=bouwModellen({PLAATSEN:ctx.PLAATSEN,POS:D.POS,X,Z,yOp,hNorm,opLand,hash2:T.hash2,rivierOp,kloven:D.kloven});
-    Object.assign(plekBoven,m.boven);
+    Object.assign(plekBoven,m.boven); Object.assign(plekMidden,m.midden);
     gebouwPlekken.push(...m.plekken);
     losseBomen=m.bomen;
     wegenVanPlaatsen=m.wegen;
@@ -2158,7 +2160,8 @@ export async function maak3D(ctx){
       namen.push({el,obj,id,x,y,z:z??3,soort:klasse,uit:true});
     };
     for(const p of ctx.PLAATSEN){
-      const pos=D.POS[p.id]; if(!pos)continue;
+      if(!D.POS[p.id])continue;
+      const pos=middenVan(p.id);
       const natuur=/^(natuur|landschap|rivier)$/.test(p.soort);
       maak(p.naam,natuur?"l3-natuur":"l3-plaats",p.id,pos[0],pos[1],plekBoven[p.id]??(Math.max(yOp(...pos),0)+.2),p.z,false);
     }
@@ -2316,7 +2319,7 @@ export async function maak3D(ctx){
     if(id.startsWith("gebied:")){
       for(const s of grensPunten(id.slice(7)))keuzeGroep.add(lijnOverLand(s,accent,2.6,{boven:.15,dekking:.95}));
     }else if(D.POS[id]){
-      const [x,y]=D.POS[id], R=(gebouwPlekken.find(g=>g[0]===x&&g[1]===y)||[0,0,.5])[2]+.25, pts=[];
+      const [x,y]=middenVan(id), R=(gebouwPlekken.find(g=>g[3]===id)||[0,0,.5])[2]+.25, pts=[];
       for(let i=0;i<=64;i++){ const a=i/64*Math.PI*2; pts.push([x+Math.cos(a)*R,y+Math.sin(a)*R]); }
       ringLijn=lijnOverLand(pts,accent,2.4,{boven:.08}); keuzeGroep.add(ringLijn);
     }
@@ -2717,7 +2720,7 @@ export async function maak3D(ctx){
         const p=ctx.PLAATSEN.find(p=>p.id===id);
         /* een plaats op ware schaal is klein: dichterbij dan een landschap */
         const afst=p&&/^(natuur|landschap|rivier)$/.test(p.soort)?Math.max(20,(p.straal||8)*2.8):1.8;
-        vlieg(D.POS[id][0],D.POS[id][1],afst,1.02);
+        vlieg(...middenVan(id),afst,1.02);
       }
     },
     kies(id){

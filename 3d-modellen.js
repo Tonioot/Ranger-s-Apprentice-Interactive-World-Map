@@ -1419,6 +1419,10 @@ function haven(B,b,stijl,p,o={}){
   const anker=Math.max(0,(o.schepen??3)-ns);
   if(anker)B.vloot(C[0],C[1],a,soorten.length>1?soorten:soorten[0],anker,zaad%999,{richting:hoek,van:.9,tot:1.2,...(o.vloot||{})});
   b.top=Math.max(b.top,c.top); b.straal=Math.max(b.straal,plan.straal/K*.8);
+  /* het midden van de stad: niet de plek op de kaart (die ligt vaak wat
+     landinwaarts), maar halverwege de huizen, vanaf de waterlijn gemeten.
+     Daar komen in 3D het naambordje en de ring van de gekozen plaats. */
+  b.midden=[C[0]+nx*(kust(0)+diepte*.5)*METER,C[1]+ny*(kust(0)+diepte*.5)*METER];
   /* een plek in het plan (u langs de kust, v landinwaarts vanaf de
      waterlijn, in meters) in de maat van c */
   const lokaal=(u,v)=>{ const vv=v+kust(u); return [(tx*u+nx*vv)*METER/K,(ty*u+ny*vv)*METER/K]; };
@@ -2219,7 +2223,7 @@ export function gehuchtBomen(plek,stijl,opLand,hash2,uit){
 export function bouwModellen(omg){
   const B=maakBouwer(omg);
   B.kloven=omg.kloven;
-  const boven={}, plekken=[];
+  const boven={}, plekken=[], midden={};
   for(const p of omg.PLAATSEN){
     const pos=omg.POS[p.id]; if(!pos)continue;
     const def=BOUWERS[p.id]||SOORTEN[p.soort];
@@ -2232,8 +2236,10 @@ export function bouwModellen(omg){
       catch(e){ console.warn("3D-model van",p.id,e); }
     }else b.straal=0;
     boven[p.id]=b.wy(b.top)+.03;
-    if(b.straal)plekken.push([cx,cy,b.straal*b.k]);
+    /* waar het model echt staat (een haven ligt aan de waterlijn) */
+    const [mx,my]=b.midden||[cx,cy]; midden[p.id]=[mx,my];
+    if(b.straal)plekken.push([mx,my,b.straal*b.k,p.id]);
   }
   return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo(),schepen:B.bakken.schip.geo(),plas:B.bakken.plas.geo(),
-    lampjes:new Float32Array(B.lampjes),bomen:B.bomen,wegen:B.wegen,boven,plekken};
+    lampjes:new Float32Array(B.lampjes),bomen:B.bomen,wegen:B.wegen,boven,plekken,midden};
 }
