@@ -42,6 +42,7 @@
    de kaart. Hoogtes zijn absolute wereldhoogtes (y), zoals yOp() ze geeft.
    ========================================================================== */
 import * as THREE from "three";
+import {dorpPlan,METER} from "./3d-grond.js";
 
 const klem=(v,a,b)=>v<a?a:v>b?b:v;
 /* Eén meter in de maten van de modellen. De bouwers rekenen in die maat; elk
@@ -1050,28 +1051,102 @@ export function maakBouwer(omg){
       for(let i=0;i<4;i++){ if(i===0&&b.r(8)<.5)continue; const [p0,p1]=[pts[i],pts[(i+1)%4]]; if(b.land(...p0)&&b.land(...p1))b.heg(p0[0],p0[1],p1[0],p1[1],"#6B5640",1*M,.3*M); }
     }
   }
-  /* Een naamloze nederzetting (zie nederzettingen() in 3d-grond.js): een
-     boerderij, een gehucht langs zijn straat, of een dorp met een plein; en
-     in de korenlanden soms een molen op het hoogste punt in de buurt. */
+  /* Een naamloze nederzetting (zie nederzettingen() en dorpPlan() in
+     3d-grond.js): een boerderij, een gehucht, een dorp met een brink of een
+     marktstad met een muur. Het plan zegt waar de straten en de huizen
+     liggen; hier komen de huizen erop, elk alleen waar het op droog en niet
+     te steil land past. In de korenlanden soms een molen op het hoogste punt
+     in de buurt. */
   function gehucht(plek,stijl){
     const [x,y,soort,zaad,a]=plek;
     const b=rond(x,y,0,zaad%997);
     const st=STIJLEN[stijl]||STIJLEN.araluen;
     if(soort===0)boerderij(b,stijl,zaad%89);
     else{
-      const n=soort===2?10+Math.floor(b.r(2)*9):4+Math.floor(b.r(2)*5);
-      dorp(b,stijl,{straal:soort===2?.32:.2,rek:soort===2?1.31:1.3,aantal:n,richting:a,enkel:true,buig:0,
-        geenPlein:soort!==2,geenWeg:true,tuinen:false,zaad:zaad%71});
+      const plan=dorpPlan(soort,zaad,a);
+      const ru=7*M;
+      let nr=(zaad%71)*41;
+      for(const h of plan.huizen){
+        const u=h.x/K, v=h.y/K;
+        if(!b.land(u,v)||!b.land(u+ru,v)||!b.land(u-ru,v)||!b.land(u,v+ru)||!b.land(u,v-ru))continue;
+        if(omg.rivierOp&&omg.rivierOp(x+h.x,y+h.y)>20)continue;
+        const g=b.grond(u,v); if(Math.abs(b.grond(u+ru,v)-g)+Math.abs(b.grond(u,v+ru)-g)>ru*1.1)continue;
+        nr++;
+        let t;
+        if(h.soort===1&&st.huis!=="plat"&&st.huis!=="joert")
+          /* een schuur: groter, lager, van donker hout */
+          t=huis(b,u,v,stijl,{r:h.r,nr,maat:1.15,lang:1.35,aanbouw:false,muur:"#6E5A44",muurMat:"hout"});
+        else if(h.soort===2)
+          /* een stadshuis: smal en hoog, met de gevel aan de straat */
+          t=huis(b,u,v,stijl,{r:h.r,nr,maat:.85,lang:.8,aanbouw:false,verdiepingen:h.lagen});
+        else t=huis(b,u,v,stijl,{r:h.r,nr,verdiepingen:h.lagen>1?h.lagen:undefined});
+        b.top=Math.max(b.top,t||0);
+      }
+      const pl=plan.plein;
+      if(pl&&soort===2){
+        /* de kerk op de brink */
+        if(b.land(pl.x/K,pl.y/K))pleinGebouw(b,stijl,pl.x/K,pl.y/K,a+Math.PI/2);
+      }
+      if(pl&&soort===3){
+        /* aan het marktplein de kerk, op de rest kraampjes met gekleurde
+           luifels */
+        const c=Math.cos(a), s=Math.sin(a), op=(du,dv)=>[(du*c-dv*s)/K,(du*s+dv*c)/K];
+        if(b.land(0,0)){
+          const g=b.grond(0,0);
+          b.blok(0,0,pl.b/K,pl.d/K,.25*M,"#9A9282",{r:a,y:g-.15*M,mat:"kassei",var:.04});
+        }
+        const [ku,kv]=[plan.kerk[0]/K,plan.kerk[1]/K];
+        if(b.land(ku,kv))pleinGebouw(b,stijl,ku,kv,a);
+        const luifel=["#B5523A","#D8C9A0","#4F6E8E","#C9A24A","#7A8A4E"];
+        for(let i=0;i<9;i++){
+          const [mu,mv]=op((b.r(200+i)-.5)*(pl.b-10*METER),(b.r(220+i)-.5)*(pl.d-10*METER));
+          if(!b.land(mu,mv))continue;
+          const g=b.grond(mu,mv);
+          b.blok(mu,mv,3*M,2.2*M,1.1*M,"#7A6248",{r:a,y:g-.005,mat:"hout"});
+          b.lessenaar(mu,mv,g+2.3*M,3.6*M,2.8*M,.5*M,luifel[i%5],{r:a,mat:"vlak"});
+        }
+      }
+      if(plan.muur)stadsmuur(b,st,plan.muur);
     }
-    if(soort>0&&(st.huis==="zadel"||st.huis==="steil")&&b.r(9)<(soort===2?.5:.25)){
-      /* de molen: wat buiten het dorp, op de hoogste plek van een paar kandidaten */
-      let best=null;
-      for(let i=0;i<6;i++){ const t=b.r(20+i)*Math.PI*2, d=.26+b.r(30+i)*.12, u=Math.cos(t)*d, v=Math.sin(t)*d; if(!b.land(u,v))continue; const g=b.grond(u,v); if(!best||g>best[2])best=[u,v,g]; }
+    if(soort>0&&(st.huis==="zadel"||st.huis==="steil")&&b.r(9)<(soort>=2?.5:.25)){
+      /* de molen: buiten het dorp, op de hoogste plek van een paar kandidaten */
+      let best=null; const ver=(soort===3?.3:soort===2?.18:.1)/K;
+      for(let i=0;i<6;i++){ const t=b.r(20+i)*Math.PI*2, d=ver+b.r(30+i)*.12, u=Math.cos(t)*d, v=Math.sin(t)*d; if(!b.land(u,v))continue; const g=b.grond(u,v); if(!best||g>best[2])best=[u,v,g]; }
       if(best)molen(b,best[0],best[1],b.r(40)*Math.PI*2);
     }
   }
+  /* De muur om een marktstad: in het zuiden en westen van steen, met torens
+     om de zoveel meter en een poort met twee torens waar een hoofdstraat de
+     stad in gaat; in het hoge noorden en op de steppe een palissade van
+     palen. In stukken van een meter of acht, zodat hij het land volgt. */
+  function stadsmuur(b,st,muur){
+    const steen=st.huis!=="lang"&&st.huis!=="plag"&&st.huis!=="joert"&&st.huis!=="japans";
+    const kleur=st.steen[0], P=muur.punten, n=P.length;
+    const poortBij=(x,y)=>muur.poorten.some(([px,py])=>Math.hypot(px-x,py-y)<9*METER);
+    for(let i=0;i<n;i++){
+      const [x0,y0]=P[i], [x1,y1]=P[(i+1)%n], L=Math.hypot(x1-x0,y1-y0), k=Math.max(1,Math.round(L/(8*METER))), r=Math.atan2(y1-y0,x1-x0);
+      for(let j=0;j<k;j++){
+        const mx=x0+(x1-x0)*(j+.5)/k, my=y0+(y1-y0)*(j+.5)/k; if(poortBij(mx,my))continue;
+        const u=mx/K, v=my/K; if(!b.land(u,v))continue;
+        const g=b.grond(u,v), l=L/k/K+.3*M;
+        if(steen)b.blok(u,v,l,2.4*M,8*M,kleur,{r,y:g-1.5*M,mat:st.steenMat,var:.06});
+        else b.stuk("vast",S.blok,u,g-1*M,v,l,4.2*M,.7*M,r,"#5E4A36",{mat:"hout",var:.15});
+      }
+      /* een toren op elke tweede hoek */
+      if(steen&&i%2===0&&!poortBij(x0,y0)&&b.land(x0/K,y0/K))
+        b.toren(x0/K,y0/K,3.4*M,11*M,kleur,{dak:"kegel",dakKleur:st.torendak[0],dakH:5*M,mat:st.steenMat,krans:false,plint:false});
+    }
+    for(const [px,py,h] of muur.poorten){
+      const c=Math.cos(h+Math.PI/2), s=Math.sin(h+Math.PI/2);
+      for(const z of [-1,1]){
+        const u=(px+c*z*6.5*METER)/K, v=(py+s*z*6.5*METER)/K; if(!b.land(u,v))continue;
+        if(steen)b.toren(u,v,3.8*M,13*M,kleur,{vierkant:true,r:h,dak:"kegel",dakKleur:st.torendak[0],dakH:5.5*M,mat:st.steenMat,krans:false,plint:false});
+        else b.stuk("vast",S.blok,u,b.grond(u,v)-1*M,v,3*M,7*M,3*M,h,"#5E4A36",{mat:"hout",var:.1});
+      }
+    }
+  }
 
-  return {opLand,rond,huis,dorp,pleinGebouw,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
+  return {opLand,rond,huis,dorp,pleinGebouw,stadsmuur,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
 }
 
 /* ======================= generieke modellen per soort ======================= */
@@ -1932,11 +2007,18 @@ export function gehuchtBomen(plek,stijl,opLand,hash2,uit){
     }
     return;
   }
-  const n=soort===2?14:7, R=(soort===2?.42:.28)*K, c=Math.cos(a), s=Math.sin(a);
-  for(let i=0;i<n;i++){
-    const t=(r(40+i)-.5)*2*R, z=(r(60+i)<.5?-1:1)*(.045+r(80+i)*.08)*K;
-    const px=x+c*t-s*z, py=y+s*t+c*z;
+  /* in de achtertuinen (in een stad alleen in de voorsteden en achter de
+     lage huizen), en een paar op de brink */
+  const plan=dorpPlan(soort,zaad,a), kans=soort===3?.12:.45;
+  plan.huizen.forEach((h,i)=>{
+    if(r(40+i)>kans||(soort===3&&h.lagen>1))return;
+    const af=(9+r(60+i)*7)*M, dw=(r(80+i)-.5)*8*M;
+    const px=x+h.x+h.ax*af-h.ay*dw, py=y+h.y+h.ay*af+h.ax*dw;
     if(opLand(px,py))uit.push(px,py,soortBoom,(.38+r(90+i)*.12)*K);
+  });
+  if(soort===2&&plan.plein)for(let i=0;i<3;i++){
+    const t=r(120+i)*Math.PI*2, d=plan.plein.r*(.55+r(130+i)*.3), px=x+Math.cos(t)*d, py=y+Math.sin(t)*d;
+    if(opLand(px,py))uit.push(px,py,soortBoom,(.5+r(140+i)*.12)*K);
   }
 }
 

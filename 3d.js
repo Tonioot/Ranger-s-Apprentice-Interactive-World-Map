@@ -550,7 +550,7 @@ export async function maak3D(ctx){
     const nz=await ploeg.doe("nederzettingen",{R,h:a.h,land:a.land,rivier:a.rivier,reg:a.reg,fBos:v.fBos,dicht,wegLand,plaatsen:plaatsLijst,meren:a.meren});
     /* een gehucht ligt in een open plek in het bos, net als een plaats */
     const bosPlekken=plekken.slice();
-    for(let i=0;i<nz.plekken.length;i+=6)bosPlekken.push({x:nz.plekken[i],y:nz.plekken[i+1],open:[.3,.36,.45][nz.plekken[i+2]]});
+    for(let i=0;i<nz.plekken.length;i+=6)bosPlekken.push({x:nz.plekken[i],y:nz.plekken[i+1],open:[.3,.36,.45,.55][nz.plekken[i+2]]});
     /* het bladerdak en de normalen, per strook (met twee rijen rand) */
     const bos=new Uint8Array(N), normalen=new Uint8Array(N*4);
     await Promise.all(stroken().map(async([y0,y1])=>{
@@ -913,7 +913,7 @@ export async function maak3D(ctx){
           vec2 kp=vWolkW.xz/${KRUINCEL};
           /* alleen waar het echt bos is: een vleugje bos aan de rand mag geen
              halve kruinen op de akker tekenen */
-          float bosZicht=smoothstep(.12,.3,bosM)*(1.0-smoothstep(.3,.65,length(fwidth(kp))));
+          float bosZicht=smoothstep(.12,.3,bosM)*(1.0-smoothstep(.25,.95,length(fwidth(kp))));
           vec2 kruinHelling=vec2(0.0);
           /* bladclusters binnen een kruin: dezelfde korrel, fijner */
           float blad=texture2D(uDetail,vWolkW.xz*7.5).r;
@@ -932,7 +932,7 @@ export async function maak3D(ctx){
           if(bosM>.01){
             diffuseColor.rgb=mix(diffuseColor.rgb,mix(uBosKl[1],uBosKl[0],loof)*.8,bosDek*.85);
             float pol=texture2D(uDetail,vWolkW.xz*1.3).r*.6+texture2D(uDetail,vWolkW.xz*.37).r*.4;
-            diffuseColor.rgb*=mix(1.0,.66+.5*pol,bosDek*(1.0-bosZicht));
+            diffuseColor.rgb*=mix(1.0,.54+.42*pol,bosDek*(1.0-bosZicht));
           }
           if(bosZicht>.002)diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht*gKruinEr);
           /* De lappendeken van akkers. Twee lagen: kavels (grote cellen van
@@ -1009,13 +1009,14 @@ export async function maak3D(ctx){
              echte afstand tot elk ervan, dus scherp op elke afstand. Is een
              weg smaller dan een beeldpunt, dan dekt hij maar een deel ervan;
              langs de rand een strookje berm, in het midden de sporen van de
-             karren. Straten (soort 1) zijn wat grijzer: daar ligt grind. */
+             karren. Straten (soort 1) zijn wat grijzer: daar ligt grind; een
+             voetpad (soort 2) heeft geen karrensporen. */
           vec2 wKp=vWolkW.xz+vec2(${(W/2).toFixed(1)},${(H/2).toFixed(1)});
           float wCel=texelFetch(uWegCel,ivec2(floor(wKp+${MARGE.toFixed(1)})),0).r;
           if(wCel>0.0){
-            int wO=int(floor(wCel/32.0)), wN=int(wCel-floor(wCel/32.0)*32.0);
+            int wO=int(floor(wCel/64.0)), wN=int(wCel-floor(wCel/64.0)*64.0);
             float wE=1e3, wS=0.0, wH=.01;
-            for(int i=0;i<31;i++){
+            for(int i=0;i<63;i++){
               if(i>=wN)break;
               int li=wO+i;
               int sk=int(texelFetch(uWegLijst,ivec2(li%${LIJSTBREED},li/${LIJSTBREED}),0).r);
@@ -1033,8 +1034,8 @@ export async function maak3D(ctx){
               /* onder een gesloten bladerdak zie je de weg niet */
               float weg=(1.0-smoothstep(-wAA,wAA,wE))*dek*(1.0-smoothstep(.5,.9,bosM));
               float berm=(1.0-smoothstep(0.0,.008+wAA,wE))*(1.0-weg)*.2*dek;
-              float spoor=(1.0-smoothstep(.0011,.0011+wAA,abs(wE+wH*.55)))*clamp(.003/max(wPx,1e-5),0.0,1.0)*(1.0-wS);
-              vec3 wk=mix(uWegKleur,uWegKleur*vec3(.9,.9,.93),wS)*(.88+.24*texture2D(uDetail,wKp*2.3).r)*(1.0-.16*spoor);
+              float spoor=(1.0-smoothstep(.0011,.0011+wAA,abs(wE+wH*.55)))*clamp(.003/max(wPx,1e-5),0.0,1.0)*(wS<.5?1.0:0.0);
+              vec3 wk=mix(uWegKleur,uWegKleur*vec3(.9,.9,.93),wS>.5&&wS<1.5?1.0:0.0)*(.88+.24*texture2D(uDetail,wKp*2.3).r)*(1.0-.16*spoor);
               diffuseColor.rgb=mix(diffuseColor.rgb*(1.0-berm),wk,weg*.94);
             }
           }`)
@@ -1557,7 +1558,7 @@ export async function maak3D(ctx){
       const {seg,lijst,cel}=wegL, gezien=new Set();
       for(let j=cy*RANDVAK;j<(cy+1)*RANDVAK;j++)for(let i=cx*RANDVAK;i<(cx+1)*RANDVAK;i++){
         const ci=(j+MARGE)*R.PW+i+MARGE, c=cel[ci]; if(!(c>0))continue;
-        const o=Math.floor(c/32), n=c-o*32;
+        const o=Math.floor(c/64), n=c-o*64;
         for(let t=0;t<n;t++){
           const k=lijst[o+t]; if(gezien.has(k))continue; gezien.add(k);
           const a=((Math.floor(k/SEGBREED)*SEGBREED*2)+(k%SEGBREED)*2)*4;
@@ -1885,7 +1886,10 @@ export async function maak3D(ctx){
       const k=Math.floor(P[i]/GTEGEL)+","+Math.floor(P[i+1]/GTEGEL);
       let l=gPerTegel.get(k); if(!l)gPerTegel.set(k,l=[]);
       l.push([P[i],P[i+1],P[i+2],P[i+3],P[i+4],P[i+5]]);
+      /* ook hier geen losse veldboom tussen de huizen */
+      gebouwPlekken.push([P[i],P[i+1],[.03,.1,.22,.3][P[i+2]]]);
     }
+    plaatsVak=null;
   }
   function werkGehuchtenBij(){
     if(!gPerTegel||!gebouwMat)return;
