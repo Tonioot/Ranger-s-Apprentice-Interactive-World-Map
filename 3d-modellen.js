@@ -738,8 +738,9 @@ export function maakBouwer(omg){
       straten.push(pts);
     };
     const lengte=R*(o.rek||1.15);
-    straat(ri,-lengte,lengte,.1);
-    if(aantal>9||b.r(2)<.5){ const a2=ri+Math.PI/2+(b.r(3)-.5)*.6; straat(a2,b.r(4)<.5?-R*.9:0,R*.95,.08); }
+    straat(ri,-lengte,lengte,o.buig??.1);
+    if(o.enkel){}
+    else if(aantal>9||b.r(2)<.5){ const a2=ri+Math.PI/2+(b.r(3)-.5)*.6; straat(a2,b.r(4)<.5?-R*.9:0,R*.95,.08); }
     if(aantal>26){ straat(ri+(b.r(5)-.5)*.5,-R*.9,R*.9,.06); straten[straten.length-1]=straten[straten.length-1].map(([u,v])=>[u-Math.sin(ri)*R*.42,v+Math.cos(ri)*R*.42]); }
     if(aantal>40){ straat(ri+(b.r(6)-.5)*.5,-R*.9,R*.9,.06); straten[straten.length-1]=straten[straten.length-1].map(([u,v])=>[u+Math.sin(ri)*R*.42,v-Math.cos(ri)*R*.42]); }
     const plein=o.geenPlein?0:(5+aantal*.25)*M+.03;
@@ -789,11 +790,7 @@ export function maakBouwer(omg){
       }
     }
     /* de straten tekenen in de grond */
-    for(const pts of straten){
-      /* alleen het stuk waar huizen staan, plus een eindje: daarbuiten wordt
-         het een gewone weg (de wegen tussen de plaatsen nemen het over) */
-      b.weg(pts,(o.breedStraat??2.2)*2*M,1);
-    }
+    if(!o.geenWeg)for(const pts of straten)b.weg(pts,(o.breedStraat??2.2)*2*M,1);
     /* het plein: kerk, hal, tempel of moskee, en een put */
     if(!o.geenPlein)pleinGebouw(b,stijl,pu+Math.cos(ri+Math.PI/2)*plein*.55,pv+Math.sin(ri+Math.PI/2)*plein*.55,ri);
     b.straal=Math.max(b.straal,R*1.1);
@@ -988,7 +985,69 @@ export function maakBouwer(omg){
     return [x0,y0];
   }
 
-  return {rond,huis,dorp,pleinGebouw,schip,vloot,steiger,kade,zeeRichting,waterlijn,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
+  /* ---- een windmolen: een stenen torenmolen met een kap en vier wieken ---- */
+  function molen(b,u,v,r){
+    const g=b.voet(u,v,3*M,3*M);
+    b.stuk("vast",S.afgeknot,u,g-.01,v,3.4*M,10*M+.01,3.4*M,0,"#C9C1AE",{mat:"pleister",var:.06});
+    const top=g+10*M;
+    b.koepel(u,v,top-.2*M,3.1*M,3.2*M,"#6E5A44",{mat:"schindel"});
+    /* de as wijst naar lokaal r; de wieken in een vlak loodrecht erop */
+    const c=Math.cos(r), s=Math.sin(r), au=u+c*3.4*M, av=v+s*3.4*M, ay=top+1.6*M;
+    for(let i=0;i<4;i++){
+      const hk=i*Math.PI/2+.35;
+      b.stuk("vast",S.blok,au,ay,av,.35*M,9.5*M,.35*M,r+Math.PI/2,"#5E4A38",{rz:hk,mat:"hout"});
+      b.stuk("doek",S.vlak,au,ay,av,1.6*M,8*M,1,r+Math.PI/2,"#D8CFB8",{rz:hk+Math.PI,var:.04});
+    }
+  }
+  /* ---- een boerenerf: het woonhuis, een schuur, een hooiberg, een omheinde wei ---- */
+  function boerderij(b,stijl,zaad){
+    const st=STIJLEN[stijl]||STIJLEN.araluen, a=b.r(1)*Math.PI*2, c=Math.cos(a), s=Math.sin(a);
+    if(!b.land(0,0))return;
+    if(st.huis==="joert"){ for(let i=0;i<3;i++){ const t=i*2.1+b.r(i); huis(b,Math.cos(t)*7*M,Math.sin(t)*7*M,stijl,{nr:zaad+i}); } return; }
+    huis(b,0,0,stijl,{r:a,nr:zaad,maat:1.05});
+    /* de schuur: haaks op het huis, met de erf ertussen */
+    const su=-s*15*M+c*4*M, sv=c*15*M+s*4*M;
+    if(b.land(su,sv)&&st.huis!=="plat"&&st.huis!=="japans"){
+      const g=b.kruin(su,sv,8*M,5*M), top=b.blok(su,sv,16*M,9*M,4.6*M,stijl==="skandia"?st.muur[0]:"#8A7058",{r:a+Math.PI/2,mat:"hout",verd:-1,vloer:g});
+      b.zadel(su,sv,top-.2*M,16.8*M,10.6*M,6*M,st.dak[Math.floor(b.r(3)*st.dak.length)],{r:a+Math.PI/2,mat:st.dakMat[0]==="pannen"?"pannen":st.dakMat[0],gevel:{kleur:"#8A7058",mat:"hout",verd:-1}});
+    }else if(b.land(su,sv)){
+      huis(b,su,sv,stijl,{r:a+Math.PI/2,nr:zaad+7,maat:.8,aanbouw:false});
+    }
+    /* een hooiberg of twee */
+    if(st.huis==="zadel"||st.huis==="steil"||st.huis==="plag")for(let i=0;i<1+Math.floor(b.r(5)*2);i++){
+      const hu=c*(9+i*4)*M+s*9*M, hv=s*(9+i*4)*M-c*9*M; if(!b.land(hu,hv))continue;
+      const g=b.grond(hu,hv); b.cil(hu,hv,2*M,2.4*M,"#C2A866",{mat:"riet",y:g-.005}); b.kegel(hu,hv,g+2.4*M,2.2*M,2.2*M,"#B89E5E",{mat:"riet"});
+    }
+    /* een omheinde wei achter het erf */
+    if(b.r(6)<.6&&st.huis!=="plat"){
+      const wu=c*26*M, wv=s*26*M, L=22*M, D=16*M;
+      const hoek=(x,z)=>[wu+x*c-z*s,wv+x*s+z*c];
+      const pts=[hoek(-L/2,-D/2),hoek(L/2,-D/2),hoek(L/2,D/2),hoek(-L/2,D/2)];
+      for(let i=0;i<4;i++){ if(i===0&&b.r(8)<.5)continue; const [p0,p1]=[pts[i],pts[(i+1)%4]]; if(b.land(...p0)&&b.land(...p1))b.heg(p0[0],p0[1],p1[0],p1[1],"#6B5640",1*M,.3*M); }
+    }
+  }
+  /* Een naamloze nederzetting (zie nederzettingen() in 3d-grond.js): een
+     boerderij, een gehucht langs zijn straat, of een dorp met een plein; en
+     in de korenlanden soms een molen op het hoogste punt in de buurt. */
+  function gehucht(plek,stijl){
+    const [x,y,soort,zaad,a]=plek;
+    const b=rond(x,y,0,zaad%997);
+    const st=STIJLEN[stijl]||STIJLEN.araluen;
+    if(soort===0)boerderij(b,stijl,zaad%89);
+    else{
+      const n=soort===2?10+Math.floor(b.r(2)*9):4+Math.floor(b.r(2)*5);
+      dorp(b,stijl,{straal:soort===2?.32:.2,rek:soort===2?1.31:1.3,aantal:n,richting:a,enkel:true,buig:0,
+        geenPlein:soort!==2,geenWeg:true,tuinen:false,zaad:zaad%71});
+    }
+    if(soort>0&&(st.huis==="zadel"||st.huis==="steil")&&b.r(9)<(soort===2?.5:.25)){
+      /* de molen: wat buiten het dorp, op de hoogste plek van een paar kandidaten */
+      let best=null;
+      for(let i=0;i<6;i++){ const t=b.r(20+i)*Math.PI*2, d=.26+b.r(30+i)*.12, u=Math.cos(t)*d, v=Math.sin(t)*d; if(!b.land(u,v))continue; const g=b.grond(u,v); if(!best||g>best[2])best=[u,v,g]; }
+      if(best)molen(b,best[0],best[1],b.r(40)*Math.PI*2);
+    }
+  }
+
+  return {rond,huis,dorp,pleinGebouw,schip,vloot,steiger,kade,zeeRichting,waterlijn,molen,boerderij,gehucht,bakken,lampjes,bomen,wegen,S,rivierOp:omg.rivierOp};
 }
 
 /* ======================= generieke modellen per soort ======================= */
@@ -1808,6 +1867,44 @@ export const SOORTEN={
 export const stijlVan=gebied=>STIJL_VAN[gebied]||"araluen";
 /* wat de grond moet doen rond deze plaats (voor 3d-grond.js) */
 export function modelInfo(p){ return (BOUWERS[p.id]||SOORTEN[p.soort]||{}).info||{}; }
+
+/* ======================= de naamloze nederzettingen =======================
+   Per tegel rond de camera (zie 3d.js): de huizen van alle plekken in de
+   tegel, samen in één vorm. plekken: [x, y, soort, toeval, richting, gebied]
+   per plek, gebiedStijl: gebied-nummer → bouwstijl. */
+export function bouwGehuchten(omg,plekken,gebiedStijl){
+  const B=maakBouwer(omg);
+  for(const p of plekken){
+    try{ B.gehucht(p,gebiedStijl(p[5])); }catch(e){ console.warn("gehucht",e); }
+  }
+  return {vast:B.bakken.vast.geo(),doek:B.bakken.doek.geo()};
+}
+/* De bomen bij een nederzetting: een boomgaard bij een boerderij, wat
+   bomen rond een gehucht of dorp (niet op de straat). Los van de huizen
+   uitgerekend, zodat ze ook van verder weg al kunnen staan dan de huizen. */
+export function gehuchtBomen(plek,stijl,opLand,hash2,uit){
+  const [x,y,soort,zaad,a]=plek;
+  const st=STIJLEN[stijl]||STIJLEN.araluen;
+  const r=i=>hash2((zaad*7+i*131)|0,(zaad%977+i*17)|0);
+  const soortBoom=st.huis==="plat"?4:stijl==="toscana"||stijl==="helleno"?7:st.huis==="japans"?6:2;
+  if(soort===0){
+    /* een boomgaard in rijen naast het erf */
+    if(st.huis==="joert")return;
+    const t=r(1)*Math.PI*2, c=Math.cos(t), s=Math.sin(t), ox=x-s*24*M-c*14*M, oy=y+c*24*M-s*14*M;
+    for(let i=0;i<4;i++)for(let k=0;k<3;k++){
+      if(r(10+i*3+k)<.2)continue;
+      const px=ox+c*i*7*M-s*k*7*M, py=oy+s*i*7*M+c*k*7*M;
+      if(opLand(px,py))uit.push(px,py,soortBoom,.34+r(30+i)*.08);
+    }
+    return;
+  }
+  const n=soort===2?14:7, R=soort===2?.42:.28, c=Math.cos(a), s=Math.sin(a);
+  for(let i=0;i<n;i++){
+    const t=(r(40+i)-.5)*2*R, z=(r(60+i)<.5?-1:1)*(.045+r(80+i)*.08);
+    const px=x+c*t-s*z, py=y+s*t+c*z;
+    if(opLand(px,py))uit.push(px,py,soortBoom,.38+r(90+i)*.12);
+  }
+}
 
 /* ======================= alles bouwen =======================
    omg: X, Z, yOp, hNorm, opLand, hash2, rivierOp, en de plaatsen. Geeft de

@@ -559,7 +559,17 @@ function bos(G,T){
   const R=G.R, {RW,RH,RES,M}=R, {y0,y1,hr0,hr1}=G, ho=hr0*RW;
   const {h,land,rivier,kust,fBos,plekken}=G, meren=G.meren||[];
   const rijen=hr1-hr0, b=new Uint8Array(rijen*RW);
-  const open=plekken.filter(p=>p.open);
+  /* de open plekken in vakjes van 4 eenheden, zodat elk punt alleen naar
+     de plekken in zijn buurt hoeft te kijken */
+  const OV=4, openVak=new Map();
+  for(const p of plekken){ if(!p.open)continue; const k=Math.floor(p.x/OV)+","+Math.floor(p.y/OV); if(!openVak.has(k))openVak.set(k,[]); openVak.get(k).push(p); }
+  const openCache=new Map(), LEEG=[];
+  const openBij=(x,y)=>{
+    const i0=Math.floor(x/OV), j0=Math.floor(y/OV), sl=i0*100003+j0;
+    let uit=openCache.get(sl); if(uit)return uit;
+    uit=[]; for(let j=j0-1;j<=j0+1;j++)for(let i=i0-1;i<=i0+1;i++){ const l=openVak.get(i+","+j); if(l)for(const p of l)uit.push(p); }
+    if(!uit.length)uit=LEEG; openCache.set(sl,uit); return uit;
+  };
   /* het bladerdak voor de strook plus een rij erboven en eronder: die zijn
      nodig voor de normalen aan de rand */
   for(let y=Math.max(1,y0-1,hr0+1);y<Math.min(RH-1,y1+1,hr1-1);y++){
@@ -577,7 +587,9 @@ function bos(G,T){
       let v=bw*(.62+.76*(c-.5)*1.6)*(1-glad(klem((hh-.36)/.26,0,1)))*(1-glad(klem((steil-1.1)/1.2,0,1)));
       v*=klem((kust[q]/18-.35)/.5,0,1);
       if(rivier[q])v*=1-rivier[q]/60;
-      for(const pl of open){
+      /* een weg loopt door het bos als een laan: daar is het bladerdak open */
+      if(G.weg){ const e=G.weg[q]/255*WEGVER-WEGRAND; if(e<.16)v*=glad(klem((e-.03)/.13,0,1)); }
+      for(const pl of openBij(wx,wy)){
         const dx=wx-pl.x, dy=wy-pl.y; if(dx*dx+dy*dy>(pl.open+1.2)*(pl.open+1.2))continue;
         const d=Math.sqrt(dx*dx+dy*dy)+(T.ruis(wx*1.3,wy*1.3)-.5)*.5;
         v*=glad(klem((d-pl.open)/1.0,0,1));
@@ -677,7 +689,319 @@ function kleur(G,T){
   return {kleur:uit};
 }
 
-export const TAKEN={voorbereiding,afstand,hoogte,afwerking,bos,kleur};
+
+/* ======================= taak 5: nederzettingen en wegen =======================
+   Het land tussen de plaatsen op de kaart is niet leeg: daar wonen de mensen
+   die de akkers bewerken. Deze taak legt vast waar (en hoe groot) de
+   naamloze boerderijen, gehuchten en dorpen liggen, en welke wegen alles met
+   elkaar verbinden. Alles uit vast toeval, dus bij elke keer laden
+   hetzelfde.
+
+   Waar iemand woont
+     Een rooster van vakken van VAKN eenheden, met in elk vak één plek op een
+     eigen toevallige positie. Of daar echt iets ligt, hangt af van hoe dicht
+     het land bewoond is (per gebied: dicht[], uit het land en zijn begroeiing),
+     en van de plek zelf: laag en vlak land, niet in het bos, niet in de
+     rivier, niet te dicht bij de zee, en niet vlak bij een plaats van de
+     kaart (die heeft zijn eigen dorp al).
+
+   De wegen
+     Grote wegen lopen tussen de plaatsen van de kaart en de dorpen, zoals
+     echte wegen lopen: van elk punt naar zijn buren, maar niet naar een buur
+     waar je via een ander punt even goed komt (de "relatieve buurgraaf").
+     Elk stuk weg zoekt over een grof rooster de goedkoopste route: steile
+     hellingen, bos en rivieren kosten meer, de zee kan niet, en een weg die
+     er al ligt kost minder, zodat wegen samenkomen in plaats van naast
+     elkaar te lopen. Gehuchten en boerderijen krijgen een karrespoor naar de
+     dichtstbijzijnde weg.
+
+   De uitkomst
+     de plekken (x, y, soort, toeval, richting van de straat), de wegen als
+     lijnen, de bruggen, en een afstandsveld: per rasterpunt de afstand tot
+     de dichtstbijzijnde weg en de breedte daarvan. Uit dat veld tekent de
+     shader de wegen scherp, ook al is één rasterpunt een derde eenheid. */
+export const VAKN=2.3, WEGVER=.6;
+export const SOORT_PLEK={boerderij:0,gehucht:1,dorp:2};
+function nederzettingen(G,T){
+  const R=G.R, {RW,RH,RES,M,PW,PH,W,H}=R;
+  const {h,land,rivier,reg,fBos,dicht,wegLand,plaatsen,meren}=G;
+  const MM=PW*PH;
+  /* ---- het grove rooster: een punt per eenheid ---- */
+  const fijn=(i,j)=>Math.min(RH-1,Math.floor((j+.5)*RES))*RW+Math.min(RW-1,Math.floor((i+.5)*RES));
+  const hc=new Float32Array(MM), op=new Uint8Array(MM), riv=new Uint8Array(MM), rg=new Uint8Array(MM);
+  for(let j=0;j<PH;j++)for(let i=0;i<PW;i++){
+    const c=j*PW+i, p=fijn(i,j);
+    hc[c]=h[p]; op[c]=land[p]; rg[c]=reg[p];
+    /* een rivier ergens in de cel */
+    let r=0; const x0=Math.floor(i*RES), y0=Math.floor(j*RES);
+    for(let y=y0;y<Math.min(RH,y0+RES);y++)for(let x=x0;x<Math.min(RW,x0+RES);x++)if(rivier[y*RW+x]>r)r=rivier[y*RW+x];
+    riv[c]=r;
+  }
+  for(const m of meren||[])for(let j=Math.max(0,Math.floor(m.y+M-m.r));j<=Math.min(PH-1,Math.ceil(m.y+M+m.r));j++)
+    for(let i=Math.max(0,Math.floor(m.x+M-m.r));i<=Math.min(PW-1,Math.ceil(m.x+M+m.r));i++)
+      if(Math.hypot(i+.5-M-m.x,j+.5-M-m.y)<m.r)op[j*PW+i]=0;
+  const helling=new Float32Array(MM);
+  for(let j=1;j<PH-1;j++)for(let i=1;i<PW-1;i++){
+    const c=j*PW+i; if(!op[c])continue;
+    const gx=(Yvan(Math.max(0,hc[c+1]))-Yvan(Math.max(0,hc[c-1])))*.5, gz=(Yvan(Math.max(0,hc[c+PW]))-Yvan(Math.max(0,hc[c-PW])))*.5;
+    helling[c]=Math.hypot(gx,gz);
+  }
+  /* de afstand tot de zee, op het grove rooster (voor de vissersplekken en de kust) */
+  const zeeAf=afstandVeld(op,PW,PH,1);
+  const grof=(x,y)=>{ const i=Math.floor(x+M), j=Math.floor(y+M); return i<0||j<0||i>=PW||j>=PH?-1:j*PW+i; };
+
+  /* ---- de plekken ---- */
+  const plekken=[];
+  const nx=Math.ceil(W/VAKN), ny=Math.ceil(H/VAKN);
+  const vrijVan=plaatsen.map(p=>[p.x,p.y,p.r]);
+  for(let vj=0;vj<ny;vj++)for(let vi=0;vi<nx;vi++){
+    const a=T.hash2(vi*7+311,vj*13-77), b=T.hash2(vi*3-41,vj*5+919), k=T.hash2(vi+5,vj*31+3);
+    const x=(vi+.15+.7*a)*VAKN, y=(vj+.15+.7*b)*VAKN, c=grof(x,y);
+    if(c<0||!op[c])continue;
+    const d=dicht[rg[c]]||0; if(d<=0)continue;
+    if(hc[c]>.2||helling[c]>.55||riv[c]>40||zeeAf[c]<1.2)continue;
+    /* bos: een open plek kan, maar diep in het bos woont bijna niemand */
+    const bos=leesVeld(fBos,0,R,x,y);
+    let kans=d*(1-.82*klem(bos,0,1))*(hc[c]<.1?1:.65)*(helling[c]<.25?1:.6);
+    if(k>kans*.62)continue;
+    if(vrijVan.some(([px,py,pr])=>Math.hypot(px-x,py-y)<pr+.9))continue;
+    /* hoe groot: de meeste plekken zijn een boerderij, een op de zoveel een dorp */
+    const g=T.hash2(vi*17+3,vj*7+101);
+    const soort=g<.1*Math.min(1.6,d)?2:g<.42?1:0;
+    plekken.push({x,y,soort,zaad:Math.floor(T.hash2(vi,vj)*1e6),r:rg[c],a:T.hash2(vi*5+1,vj*9+2)*Math.PI,weg:wegLand[rg[c]]});
+  }
+
+  /* ---- het kostenveld voor de wegen ---- */
+  const kost=new Float32Array(MM);
+  for(let c=0;c<MM;c++){
+    if(!op[c]){ kost[c]=Infinity; continue; }
+    const hl=helling[c];
+    kost[c]=1+5*hl*hl+1.4*klem(leesVeld(fBos,0,R,(c%PW)+.5-M,Math.floor(c/PW)+.5-M),0,1)+(hc[c]>.3?2:0)+(riv[c]>80?6:0)+(wegLand[rg[c]]?0:2.5);
+  }
+  const opWeg=new Uint8Array(MM);
+  /* A* over het grove rooster, van cel a naar cel b (of naar de eerste cel
+     waar al een weg ligt, als b<0), hooguit tot maxR eenheden ver */
+  const gk=new Float32Array(MM).fill(Infinity), van=new Int32Array(MM).fill(-1), dicht2=new Uint8Array(MM);
+  const aangeraakt=[];
+  const hoop=[], hoopK=[];
+  const duw=(c,f)=>{ hoop.push(c); hoopK.push(f); let i=hoop.length-1; while(i>0){ const o=(i-1)>>1; if(hoopK[o]<=hoopK[i])break; [hoop[o],hoop[i]]=[hoop[i],hoop[o]]; [hoopK[o],hoopK[i]]=[hoopK[i],hoopK[o]]; i=o; } };
+  const pak=()=>{ const top=hoop[0], lc=hoop.pop(), lk=hoopK.pop(); if(hoop.length){ hoop[0]=lc; hoopK[0]=lk; let i=0; for(;;){ const l=2*i+1, r=l+1; let m=i; if(l<hoop.length&&hoopK[l]<hoopK[m])m=l; if(r<hoop.length&&hoopK[r]<hoopK[m])m=r; if(m===i)break; [hoop[m],hoop[i]]=[hoop[i],hoop[m]]; [hoopK[m],hoopK[i]]=[hoopK[i],hoopK[m]]; i=m; } } return top; };
+  const BUREN=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,Math.SQRT2],[-1,1,Math.SQRT2],[1,-1,Math.SQRT2],[-1,-1,Math.SQRT2]];
+  function zoek(a,b,maxR){
+    for(const c of aangeraakt){ gk[c]=Infinity; van[c]=-1; dicht2[c]=0; }
+    aangeraakt.length=0; hoop.length=0; hoopK.length=0;
+    const ai=a%PW, aj=(a/PW)|0, bi=b>=0?b%PW:0, bj=b>=0?(b/PW)|0:0;
+    const heur=c=>b<0?0:Math.hypot((c%PW)-bi,((c/PW)|0)-bj)*.45;
+    gk[a]=0; aangeraakt.push(a); duw(a,heur(a));
+    let n=0;
+    while(hoop.length){
+      const c=pak(); if(dicht2[c])continue; dicht2[c]=1;
+      if(c===b||(b<0&&opWeg[c]&&c!==a))return c;
+      if(++n>400000)return -1;
+      const ci=c%PW, cj=(c/PW)|0;
+      for(const [di,dj,l] of BUREN){
+        const ni=ci+di, nj=cj+dj; if(ni<0||nj<0||ni>=PW||nj>=PH)continue;
+        if(Math.abs(ni-ai)>maxR||Math.abs(nj-aj)>maxR)continue;
+        const q=nj*PW+ni; if(kost[q]===Infinity&&q!==b)continue;
+        /* een diagonale stap mag niet langs de zee om de hoek */
+        if(di&&dj&&(kost[cj*PW+ni]===Infinity||kost[nj*PW+ci]===Infinity))continue;
+        const k=(kost[c]+kost[q])*.5*l*(opWeg[q]?.42:1);
+        const ng=gk[c]+k;
+        if(ng<gk[q]){ if(gk[q]===Infinity)aangeraakt.push(q); gk[q]=ng; van[q]=c; duw(q,ng+heur(q)); }
+      }
+    }
+    return -1;
+  }
+  const pad=eind=>{ const uit=[]; for(let c=eind;c>=0;c=van[c])uit.push(c); return uit.reverse(); };
+  /* een pad van cellen naar een vloeiende lijn in kaarteenheden */
+  const lijn=(cellen,beginXY,eindXY)=>{
+    let p=cellen.map(c=>[(c%PW)+.5-M,((c/PW)|0)+.5-M]);
+    if(beginXY)p[0]=beginXY; if(eindXY)p[p.length-1]=eindXY;
+    /* trappetjes van het rooster eruit: punten op een rechte lijn weg, dan
+       twee keer afronden (Chaikin) */
+    for(let k=0;k<3;k++){
+      if(p.length<3)break;
+      const q=[p[0]];
+      for(let i=0;i<p.length-1;i++){ const [x0,y0]=p[i],[x1,y1]=p[i+1]; q.push([x0*.75+x1*.25,y0*.75+y1*.25],[x0*.25+x1*.75,y0*.25+y1*.75]); }
+      q.push(p[p.length-1]); p=q;
+    }
+    return p;
+  };
+  const wegen=[];
+  const legWeg=(cellen,breed,beginXY,eindXY)=>{
+    if(cellen.length<2)return;
+    for(const c of cellen)opWeg[c]=1;
+    wegen.push({pts:lijn(cellen,beginXY,eindXY),breed});
+  };
+
+  /* ---- de grote wegen: de relatieve buurgraaf over plaatsen en dorpen ---- */
+  const knopen=[];
+  for(const p of plaatsen)if(p.groot){ const c=grof(p.x,p.y); if(c>=0&&op[c])knopen.push({x:p.x,y:p.y,c,weg:p.weg}); }
+  for(const p of plekken)if(p.soort===2&&p.weg){ const c=grof(p.x,p.y); knopen.push({x:p.x,y:p.y,c,weg:1,plek:p}); }
+  const randen=[];
+  for(let a=0;a<knopen.length;a++)for(let b=a+1;b<knopen.length;b++){
+    const A=knopen[a], B=knopen[b];
+    if(!A.weg&&!B.weg)continue;
+    const d=Math.hypot(A.x-B.x,A.y-B.y); if(d>34)continue;
+    let houd=true;
+    for(let c=0;c<knopen.length&&houd;c++){
+      if(c===a||c===b)continue;
+      const C=knopen[c];
+      if(Math.max(Math.hypot(A.x-C.x,A.y-C.y),Math.hypot(B.x-C.x,B.y-C.y))<d)houd=false;
+    }
+    if(houd)randen.push([d,a,b]);
+  }
+  randen.sort((p,q)=>p[0]-q[0]);
+  for(const [d,a,b] of randen){
+    const A=knopen[a], B=knopen[b];
+    const e=zoek(A.c,B.c,Math.ceil(d*.7+8));
+    if(e<0)continue;
+    const cellen=pad(e);
+    /* een omweg van meer dan het dubbele is geen weg tussen deze twee */
+    let L=0; for(let i=1;i<cellen.length;i++){ const c0=cellen[i-1],c1=cellen[i]; L+=Math.hypot((c1%PW)-(c0%PW),((c1/PW)|0)-((c0/PW)|0)); }
+    if(L>d*2.2+3)continue;
+    legWeg(cellen,5*.006,[A.x,A.y],[B.x,B.y]);
+  }
+  /* ---- karresporen: van elk gehucht en elke boerderij naar de dichtstbijzijnde weg ---- */
+  for(const p of plekken){
+    if(!p.weg&&p.soort<2)continue;
+    const c=grof(p.x,p.y);
+    if(opWeg[c]){ p.a=richtingBij(wegen,p.x,p.y,p.a); continue; }
+    const e=zoek(c,-1,p.soort===0?5:8);
+    if(e<0)continue;
+    const cellen=pad(e);
+    if(p.soort===0&&cellen.length>7)continue;
+    legWeg(cellen,(p.soort===0?2.6:3.4)*.006,[p.x,p.y],null);
+    const pts=wegen[wegen.length-1].pts;
+    /* de straat van het gehucht ligt in het verlengde van de weg erheen */
+    const q=pts[Math.min(pts.length-1,6)];
+    p.a=Math.atan2(q[1]-p.y,q[0]-p.x);
+  }
+  for(const p of plekken)if(p.soort===2){ const r=richtingBij(wegen,p.x,p.y,null); if(r!=null)p.a=r; }
+
+  /* ---- de bruggen: waar een weg een rivier oversteekt ---- */
+  const bruggen=[];
+  for(const w of wegen){
+    let vorig=false;
+    for(let i=1;i<w.pts.length;i++){
+      const [x0,y0]=w.pts[i-1],[x1,y1]=w.pts[i], l=Math.hypot(x1-x0,y1-y0), n=Math.max(1,Math.ceil(l/.08));
+      for(let k=0;k<n;k++){
+        const x=x0+(x1-x0)*k/n, y=y0+(y1-y0)*k/n, fx=Math.round((x+M)*RES), fy=Math.round((y+M)*RES);
+        const r=fx>=0&&fy>=0&&fx<RW&&fy<RH?rivier[fy*RW+fx]:0;
+        const nu=r>90;
+        if(nu&&!vorig&&!bruggen.some(b=>Math.hypot(b[0]-x,b[1]-y)<.8))bruggen.push([x,y,Math.atan2(y1-y0,x1-x0),w.breed]);
+        vorig=nu;
+      }
+    }
+  }
+  /* ---- de straat van elk gehucht en dorp: een rechte lijn langs zijn richting ---- */
+  for(const p of plekken){
+    if(p.soort===0)continue;
+    const L=p.soort===2?.42:.26, c=Math.cos(p.a), s=Math.sin(p.a);
+    wegen.push({pts:[[p.x-c*L,p.y-s*L],[p.x+c*L,p.y+s*L]],breed:4*.006,soort:1});
+  }
+  const veld=wegVeld(R,wegen);
+  const uitP=new Float32Array(plekken.length*6);
+  plekken.forEach((p,i)=>{ uitP.set([p.x,p.y,p.soort,p.zaad,p.a,p.r],i*6); });
+  return {plekken:uitP,wegen:JSON.stringify(wegen.map(w=>({b:w.breed,s:w.soort||0,p:w.pts.map(([x,y])=>[+x.toFixed(3),+y.toFixed(3)])}))),bruggen:new Float32Array(bruggen.flat()),veld};
+}
+/* de richting van de weg die het dichtst bij (x,y) langs komt */
+function richtingBij(wegen,x,y,anders){
+  let best=1e9, r=anders;
+  for(const w of wegen)for(let i=1;i<w.pts.length;i++){
+    const [x0,y0]=w.pts[i-1],[x1,y1]=w.pts[i];
+    const d=Math.hypot((x0+x1)/2-x,(y0+y1)/2-y);
+    if(d<best){ best=d; r=Math.atan2(y1-y0,x1-x0); }
+  }
+  return best<1.5?r:anders;
+}
+/* Het afstandsveld van de wegen, voor het bos: per rasterpunt de afstand
+   tot de rand van de dichtstbijzijnde weg (plus WEGRAND), als byte, tot
+   WEGVER eenheden. Daarmee gaat het bladerdak open waar een weg door het bos
+   loopt. (De weg zelf tekent de shader uit de lijnstukken, zie wegLijnen().) */
+export const WEGRAND=.03;
+export function wegVeld(R,wegen){
+  const {RW,RH,RES,M}=R;
+  const veld=new Uint8Array(RW*RH).fill(255);
+  for(const w of wegen){
+    const half=w.breed/2;
+    for(let i=1;i<w.pts.length;i++){
+      const [x0,y0]=w.pts[i-1],[x1,y1]=w.pts[i];
+      const dx=x1-x0, dy=y1-y0, ll=dx*dx+dy*dy||1e-9;
+      const xa=Math.max(0,Math.floor((Math.min(x0,x1)-WEGVER+M)*RES)), xb=Math.min(RW-1,Math.ceil((Math.max(x0,x1)+WEGVER+M)*RES));
+      const ya=Math.max(0,Math.floor((Math.min(y0,y1)-WEGVER+M)*RES)), yb=Math.min(RH-1,Math.ceil((Math.max(y0,y1)+WEGVER+M)*RES));
+      for(let y=ya;y<=yb;y++){
+        const wy=y/RES-M;
+        for(let x=xa;x<=xb;x++){
+          const wx=x/RES-M;
+          const t=klem(((wx-x0)*dx+(wy-y0)*dy)/ll,0,1), ex=x0+dx*t-wx, ey=y0+dy*t-wy;
+          const d=Math.sqrt(ex*ex+ey*ey)-half+WEGRAND;
+          if(d>=WEGVER)continue;
+          const q=Math.max(0,Math.round(d/WEGVER*255)), p=y*RW+x;
+          if(q<veld[p])veld[p]=q;
+        }
+      }
+    }
+  }
+  return veld;
+}
+/* De wegen voor de shader: alle lijnstukken (uitgedund waar de weg recht
+   loopt), en per cel van een eenheid welke lijnstukken er langs komen. De
+   shader rekent dan per beeldpunt de echte afstand tot die paar lijnstukken
+   uit — scherp op elke afstand, ook waar een weg veel smaller is dan een
+   rasterpunt. Uit: seg (per lijnstuk twee keer vier getallen: x0,y0,x1,y1
+   en halve breedte, soort), lijst (de nummers van de lijnstukken per cel,
+   achter elkaar) en cel (per cel: begin in de lijst ×32 + aantal). */
+export const SEGBREED=2048, LIJSTBREED=4096;
+export function wegLijnen(R,wegen){
+  const {PW,PH,M}=R;
+  /* uitdunnen (Douglas-Peucker): wat binnen een halve meter op de lijn ligt, mag weg */
+  const dun=(p,tol)=>{
+    if(p.length<3)return p;
+    const houd=new Uint8Array(p.length); houd[0]=houd[p.length-1]=1;
+    const stap=(a,b)=>{
+      let best=-1, bi=-1; const [x0,y0]=p[a],[x1,y1]=p[b], dx=x1-x0, dy=y1-y0, l=Math.hypot(dx,dy)||1e-9;
+      for(let i=a+1;i<b;i++){ const d=Math.abs((p[i][0]-x0)*dy-(p[i][1]-y0)*dx)/l; if(d>best){best=d;bi=i;} }
+      if(best>tol){ houd[bi]=1; stap(a,bi); stap(bi,b); }
+    };
+    stap(0,p.length-1);
+    return p.filter((_,i)=>houd[i]);
+  };
+  const segs=[];
+  for(const w of wegen){
+    const p=dun(w.pts,.003), half=w.breed/2, soort=w.soort||0;
+    for(let i=1;i<p.length;i++)segs.push(p[i-1][0],p[i-1][1],p[i][0],p[i][1],half,soort);
+  }
+  const n=segs.length/6;
+  /* per cel de lijnstukken die er (met hun breedte en wat rand) in vallen */
+  const perCel=new Map();
+  for(let k=0;k<n;k++){
+    const o=k*6, x0=segs[o],y0=segs[o+1],x1=segs[o+2],y1=segs[o+3], r=segs[o+4]+.04;
+    for(let j=Math.floor(Math.min(y0,y1)-r+M);j<=Math.floor(Math.max(y0,y1)+r+M);j++)
+      for(let i=Math.floor(Math.min(x0,x1)-r+M);i<=Math.floor(Math.max(x0,x1)+r+M);i++){
+        if(i<0||j<0||i>=PW||j>=PH)continue;
+        /* komt het lijnstuk in de buurt van de cel? (vanaf het midden, ruim gemeten) */
+        const cx=i+.5-M, cy=j+.5-M;
+        const dx=x1-x0, dy=y1-y0, ll=dx*dx+dy*dy||1e-9, t=klem(((cx-x0)*dx+(cy-y0)*dy)/ll,0,1);
+        if(Math.hypot(x0+dx*t-cx,y0+dy*t-cy)>r+.7072)continue;
+        const c=j*PW+i; let l=perCel.get(c); if(!l)perCel.set(c,l=[]); if(l.length<31)l.push(k);
+      }
+  }
+  let tot=0; for(const l of perCel.values())tot+=l.length;
+  const lijst=new Float32Array(Math.max(LIJSTBREED,Math.ceil(tot/LIJSTBREED)*LIJSTBREED));
+  const cel=new Float32Array(PW*PH);
+  let o=0;
+  for(const [c,l] of perCel){ cel[c]=o*32+l.length; for(const k of l)lijst[o++]=k; }
+  const rijen=Math.max(1,Math.ceil(n/SEGBREED));
+  const seg=new Float32Array(SEGBREED*2*rijen*4);
+  for(let k=0;k<n;k++){
+    const a=k*6, t=((Math.floor(k/SEGBREED)*SEGBREED*2)+(k%SEGBREED)*2)*4;
+    seg[t]=segs[a]; seg[t+1]=segs[a+1]; seg[t+2]=segs[a+2]; seg[t+3]=segs[a+3];
+    seg[t+4]=segs[a+4]; seg[t+5]=segs[a+5];
+  }
+  return {seg,segRijen:rijen,lijst,lijstRijen:lijst.length/LIJSTBREED,cel,n};
+}
+export const TAKEN={voorbereiding,afstand,hoogte,afwerking,bos,kleur,nederzettingen};
 
 /* ---- als worker ----
    Een bericht is een taak met zijn gegevens; het antwoord gaat terug met de
