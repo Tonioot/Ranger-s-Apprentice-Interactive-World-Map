@@ -63,12 +63,29 @@ ankerpunten, dus bij benadering: `approx`).
 - Rivieren: Tarbus, Zalmrivier, Derrylon, Kraaienpotenrivier, Sliponderrivier,
   Wildrivier en Craiskill.
 
-*Model:* elk leenkasteel een vierkante burcht in eigen steenkleur met een
-dorp ernaast, soms op een heuvel. De steden en dorpen zijn uitgezet naar hun
+*Model:* elk leenkasteel heeft een dorp ernaast en staat soms op een heuvel.
+Het kasteel zelf verschilt per leen, zodat ze niet op elkaar lijken:
+- plattegrond: vierkant, lang, een onregelmatige vijfhoek, of een ronde
+  ringburcht;
+- torens: rond of vierkant, met een spits of plat met kantelen;
+- donjon: vierkant, rond, of een grote zaal met een slanke toren;
+- soms een voorburcht voor de poort;
+- elk een eigen steenkleur, en soms een eigen dakkleur. De steden en dorpen zijn uitgezet naar hun
 rang. De abdij heeft een kerk met toren, een kloosterhof en een ommuurde
 moestuin. De Kliffen zijn een richel, en rond Kolendal ligt heuvelland.
 **Open:** de rivieren zijn, net als de andere, nog brede natte banden en geen
 echt stromend water.
+
+**Morgaraths Hoogvlakte en Burcht** — een kale, regenachtige hoogvlakte
+hoog boven het zuiden van het koninkrijk. Van de Driestappas loopt een rij
+loodrechte kliffen naar het westen, die overgaan in De Spleet. Op het
+plateau had Morgarath zijn hoofdkwartier: een burcht van waaruit hij de
+Wargals aanstuurde. *Model:* een grillig plateau van ~5 km, met een rand
+die meestal steil is en hier en daar een puinhelling, en een golvend
+bovenvlak. Erop het kamp van de Wargals en de burcht: een onregelmatige
+vijfhoek van donkere breuksteen, met platte torens, een hoge smalle donjon
+en een uitkijktoren met zwarte banier. **Open:** de ligging van de burcht
+op het plateau is een schatting.
 
 ## Gallica
 

@@ -1202,6 +1202,7 @@ function kasteel(B,b,stijl,o={}){
   const hoeken=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]];
   const basis=b.voet(0,0,hw,hd);
   const muurO={kantelen:kant,y:basis-.02,top:basis+mh,mat:sm};
+  let hdPoort=null;   /* waar de weg begint, als de poort niet op de zuidmuur zit */
   /* een voet tot onder de grond, zodat het kasteel nergens zweeft */
   const voet=(rad)=>{ if(rad)b.stuk("vast",B.S.cilDicht,0,basis-.4,0,rad,.4,rad,0,steen,{mat:sm}); else b.stuk("vast",B.S.blok,0,basis-.4,0,hw*2+dik,.4,hd*2+dik,0,steen,{mat:sm}); };
   /* het binnenplein: aangestampte aarde */
@@ -1316,23 +1317,65 @@ function kasteel(B,b,stijl,o={}){
       b.straal=30*f;
       return;
     }
-    default: {          /* Araluen: ringmuur, ronde hoektorens met leien spitsen, een vierkante donjon, de grote zaal */
-      voet(); plein(hw*2,hd*2);
-      b.ring(hoeken,mh,dik,steen,{...muurO,gat:[2,12*f]});
-      for(const [u,v] of hoeken)b.toren(u,v,tr,mh+6*f,steen,{dak:o.torenDak||"kegel",dakKleur:dak,dakMat:dm,dakH:tr*2.3,y:basis-.02,mat:sm,ramen:4.5*f});
+    default: {          /* Araluen: ringmuur met torens, een donjon, de grote zaal */
+      /* Zodat niet elk leen hetzelfde kasteel heeft: een keuze uit
+         plattegronden (o.plan), torens (o.torenVorm, o.torenDak), de
+         donjon (o.donjon) en een voorburcht voor de poort (o.voorburcht).
+         Zonder keuze: vierkant, ronde torens met spitsen, vierkante donjon.
+         De poort zit altijd midden in de zijde tussen punt 2 en 3 (het
+         zuiden van het model), zodat de weg er recht uit loopt. */
+      const plan=o.plan||"vierkant", tv=o.torenVorm||"rond", td=o.torenDak||"kegel", dj=o.donjon||"vierkant";
+      let pts;
+      if(plan==="lang")pts=[[-hw*1.3,-hd*.62],[hw*1.3,-hd*.62],[hw*1.3,hd*.62],[-hw*1.3,hd*.62]];
+      else if(plan==="veelhoek")pts=[[-hw*.85,-hd*.95],[hw*.95,-hd*.6],[hw*.75,hd],[-hw*.8,hd],[-hw*1.05,hd*.05]];
+      else if(plan==="rond"){ const n=10, rr=Math.max(hw,hd)*.95; pts=[]; for(let i=0;i<n;i++){ const a=Math.PI/2+(i-2.5)*Math.PI*2/n; pts.push([Math.cos(a)*rr,Math.sin(a)*rr]); } }
+      else pts=hoeken;
+      const gu=(pts[2][0]+pts[3][0])/2, gv=(pts[2][1]+pts[3][1])/2;
+      voet(plan==="rond"?Math.max(hw,hd)+dik:0); plein(hw*(plan==="lang"?2.5:2),hd*(plan==="lang"?1.3:2));
+      b.ring(pts,mh,dik,steen,{...muurO,gat:[2,12*f]});
+      const kleinT=plan==="rond"?tr*.75:tr;
+      for(const [u,v] of pts)b.toren(u,v,kleinT,mh+6*f,steen,{vierkant:tv==="vierkant",dak:td,dakKleur:dak,dakMat:dm,dakH:kleinT*(tv==="vierkant"?2:2.3),y:basis-.02,mat:sm,ramen:4.5*f,kantelen:td==="plat"?kant:undefined});
       /* torens halverwege de lange muren */
-      if(hw>30*f)for(const [u,v] of [[0,-hd],[-hw,0],[hw,0]])b.toren(u,v,tr*.8,mh+3*f,steen,{dak:"plat",y:basis-.02,mat:sm});
-      const top=donjon(-hw*.3,-hd*.28,20*f,17*f,(o.donjonH||24)*f,{dakOok:4});
-      zaal(hw*.5,-hd*.1,hd*1.05,11*f,9*f,Math.PI/2,steen,dak,dm,sm);
-      b.toren(-hw*.3+7*f,-hd*.28+6*f,3*f,(o.donjonH||24)*f+9*f,steen,{dak:"kegel",dakKleur:dak,dakMat:dm,dakH:7*f,vlag:o.vlag||st.vlag,y:basis,mat:sm,plint:false,ramen:5*f});
-      schuur(-hw*.55,hd*.6,18*f,5.5*f,4*f,Math.PI,"#6A5444");
-      b.poort(0,hd,Math.PI/2,14*f,mh+3*f,steen,dak,{mat:sm});
+      if(plan==="vierkant"&&hw>30*f)for(const [u,v] of [[0,-hd],[-hw,0],[hw,0]])b.toren(u,v,tr*.8,mh+3*f,steen,{vierkant:tv==="vierkant",dak:"plat",y:basis-.02,mat:sm});
+      if(plan==="lang")for(const u of [-hw*.45,hw*.45])b.toren(u,-hd*.62,tr*.8,mh+3*f,steen,{vierkant:tv==="vierkant",dak:"plat",y:basis-.02,mat:sm});
+      const dH=(o.donjonH||24)*f;
+      let top, du=-hw*.3, dv=-hd*.28;
+      if(plan==="lang"){ du=-hw*.75; dv=-hd*.05; }
+      if(plan==="rond"){ du=0; dv=-hd*.15; }
+      if(dj==="rond"){
+        /* een ronde donjon: een zware toren met een borstwering */
+        top=b.toren(du,dv,9.5*f,dH+4*f,steen,{dak:td==="kegel"?"kegel":"plat",dakKleur:dak,dakMat:dm,dakH:9*f,y:basis-.01,mat:sm,ramen:5*f,kantelen:kant,vlag:o.vlag||st.vlag});
+      }else if(dj==="zaal"){
+        /* geen donjon maar een grote zaal, met een slanke toren ernaast */
+        top=zaal(du+4*f,dv,26*f,13*f,12*f,0,steen,dak,dm,sm);
+        b.toren(du-11*f,dv+5*f,3.4*f,dH+6*f,steen,{vierkant:tv==="vierkant",dak:"kegel",dakKleur:dak,dakMat:dm,dakH:8*f,vlag:o.vlag||st.vlag,y:basis,mat:sm,plint:false,ramen:5*f});
+      }else{
+        top=donjon(du,dv,20*f,17*f,dH,{dakOok:4});
+        b.toren(du+7*f,dv+6*f,3*f,dH+9*f,steen,{dak:"kegel",dakKleur:dak,dakMat:dm,dakH:7*f,vlag:o.vlag||st.vlag,y:basis,mat:sm,plint:false,ramen:5*f});
+      }
+      if(dj!=="zaal"){
+        if(plan==="lang")zaal(hw*.35,-hd*.05,40*f,11*f,9*f,0,steen,dak,dm,sm);
+        else if(plan!=="rond")zaal(hw*.5,-hd*.1,hd*1.05,11*f,9*f,Math.PI/2,steen,dak,dm,sm);
+      }
+      schuur(plan==="lang"?hw*.9:-hw*.55,plan==="lang"?hd*.3:hd*.6,18*f,5.5*f,4*f,Math.PI,"#6A5444");
+      b.poort(gu,gv,Math.PI/2,14*f,mh+3*f,steen,dak,{mat:sm});
+      /* een voorburcht: een lagere tweede ring voor de poort, met een
+         eigen poortje */
+      if(o.voorburcht){
+        const bu=hw*.6, bv=gv+28*f, vp=[[bu,gv],[bu,bv],[-bu,bv],[-bu,gv]];
+        b.ring(vp,mh*.65,dik*.8,steen,{...muurO,top:basis+mh*.65,open:[3],gat:[1,10*f]});
+        for(const [u,v] of [vp[1],vp[2]])b.toren(u,v,tr*.7,mh*.65+4*f,steen,{vierkant:tv==="vierkant",dak:"plat",y:basis-.02,mat:sm,kantelen:kant});
+        b.poort(0,bv,Math.PI/2,10*f,mh*.65+2*f,steen,null,{mat:sm,kantelen:kant});
+        schuur(-bu*.45,gv+12*f,16*f,5*f,3.5*f,0,"#6A5444");
+      }
       b.top=Math.max(b.top,top);
+      hdPoort=gv+(o.voorburcht?28*f:0);
     }
   }
   /* de weg van de poort naar buiten */
-  b.weg([[0,hd+4*f],[0,hd+40*f],[o.wegNaar?o.wegNaar[0]:(b.r(7)-.5)*hw,o.wegNaar?o.wegNaar[1]:hd+90*f]],4.5*M,0);
-  b.lamp(0,basis+mh+2*f,hd+3*f); b.lamp(-hw*.3,basis+18*f,-hd*.28);
+  const hp=hdPoort??hd;
+  b.weg([[0,hp+4*f],[0,hp+40*f],[o.wegNaar?o.wegNaar[0]:(b.r(7)-.5)*hw,o.wegNaar?o.wegNaar[1]:hp+90*f]],4.5*M,0);
+  b.lamp(0,basis+mh+2*f,hp+3*f); b.lamp(-hw*.3,basis+18*f,-hd*.28);
   b.straal=Math.max(hw,hd)*1.35;
 }
 
@@ -1469,10 +1512,12 @@ function slagveld(B,b,stijl,o={}){
    wordt (vlak: [binnen, buiten, kracht]), hoe groot de open plek in het bos
    eromheen is (open), en of er een klif, kloof of meer ligt. */
 /* Een leen van Araluen: het kasteel van de baron, en het dorp van het leen
-   ernaast (o.dorp: waar, in modelmaat). Op een heuvel als o.heuvel. */
+   ernaast (o.dorp: waar, in modelmaat). Op een heuvel als o.heuvel. De
+   vorm van het kasteel (plan, torens, donjon, voorburcht, dak) verschilt
+   per leen; zie kasteel(). */
 function leen(o){
   return {info:{vlak:[.45,1,1],open:1.1,...(o.heuvel?{heuvel:o.heuvel}:{})},bouw(B,b,p){
-    kasteel(B,b,"araluen",{breed:o.breed,steen:o.steen});
+    kasteel(B,b,"araluen",{breed:o.breed,steen:o.steen,plan:o.plan,torenVorm:o.torenVorm,torenDak:o.torenDak,donjon:o.donjon,voorburcht:o.voorburcht,dak:o.dak});
     if(o.dorp){ const d=B.rond(...b.naast(o.dorp[0],o.dorp[1]),0,(o.breed*7)|0); stad(B,d,"araluen",{soort:2,zaad:o.breed*13}); }
   }};
 }
@@ -1593,9 +1638,9 @@ export const BOUWERS={
       b.blok(u,v,bx,bz,.3*M,"#55603E",{y:g-.25*M,var:0,mat:"plag"});
   }},
   /* Noordam (Norgate) — het leen aan de noordgrens */
-  noordam:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:74,steen:"#A49F93"}); B.dorp(B.rond(...b.naast(+.62,+.36),.3,8),"araluen",{straal:.26,aantal:14,geenPlein:false,zaad:2}); }},
+  noordam:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:74,steen:"#A49F93",torenVorm:"vierkant",donjon:"zaal"}); B.dorp(B.rond(...b.naast(+.62,+.36),.3,8),"araluen",{straal:.26,aantal:14,geenPlein:false,zaad:2}); }},
   /* Karwij (Caraway) — een leen met een eigen Krijgsschool */
-  karwij:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:76,steen:"#B8B1A2"}); B.dorp(B.rond(...b.naast(-.64,+.3),-.3,9),"araluen",{straal:.26,aantal:13,zaad:3}); }},
+  karwij:{info:{vlak:[.45,1,1],open:1.0},bouw(B,b){ kasteel(B,b,"araluen",{breed:76,steen:"#B8B1A2",plan:"veelhoek",voorburcht:true,torenDak:"plat"}); B.dorp(B.rond(...b.naast(-.64,+.3),-.3,9),"araluen",{straal:.26,aantal:13,zaad:3}); }},
   /* Gorlan — Morgaraths kasteel, sinds zijn nederlaag een ruïne die de boeren
      mijden; en het toernooiveld waar het allemaal begon */
   gorlan:{info:{vlak:[.45,1,.8],open:1.2},bouw(B,b){
@@ -1772,16 +1817,16 @@ export const BOUWERS={
   /* ---- de lenen, dorpen en de abdij van de kaart in de boeken ----
      Een leenkasteel met het dorp van het leen ernaast; de dorpen in hun
      eigen maat (gehucht, dorp of stadje). */
-  hoogklif:leen({breed:70,steen:"#8E8B83",heuvel:{r:.7,hoogte:.01},dorp:[-.7,.3]}),
-  keramon:leen({breed:66,steen:"#9A948A",heuvel:{r:.6,hoogte:.007},dorp:[.6,.35]}),
-  wetborg:leen({breed:64,steen:"#A49E92",dorp:[.6,-.3]}),
-  dacton:leen({breed:62,steen:"#8F8C84",dorp:[.6,.3]}),
-  whitby:leen({breed:72,steen:"#A8A193",dorp:[-.55,.4]}),
-  kolwei:leen({breed:68,steen:"#9E978B",dorp:[.6,.35]}),
-  kolendal:leen({breed:66,steen:"#8E887E",heuvel:{r:.7,hoogte:.008},dorp:[-.6,.35]}),
+  hoogklif:leen({plan:"veelhoek",torenDak:"plat",breed:70,steen:"#8E8B83",heuvel:{r:.7,hoogte:.01},dorp:[-.7,.3]}),
+  keramon:leen({plan:"lang",torenVorm:"vierkant",donjon:"rond",dak:"#7A3A2E",breed:66,steen:"#9A948A",heuvel:{r:.6,hoogte:.007},dorp:[.6,.35]}),
+  wetborg:leen({voorburcht:true,breed:64,steen:"#A49E92",dorp:[.6,-.3]}),
+  dacton:leen({plan:"rond",donjon:"rond",torenDak:"plat",breed:62,steen:"#8F8C84",dorp:[.6,.3]}),
+  whitby:leen({plan:"lang",torenDak:"plat",donjon:"zaal",breed:72,steen:"#A8A193",dorp:[-.55,.4]}),
+  kolwei:leen({torenVorm:"vierkant",torenDak:"plat",donjon:"rond",breed:68,steen:"#9E978B",dorp:[.6,.35]}),
+  kolendal:leen({plan:"veelhoek",donjon:"zaal",dak:"#6E4A3A",breed:66,steen:"#8E887E",heuvel:{r:.7,hoogte:.008},dorp:[-.6,.35]}),
   aspienne:leen({breed:70,steen:"#B3AA98",dorp:[.6,-.35]}),
-  treileth:leen({breed:76,steen:"#9C978D",dorp:[-.6,.35]}),
-  martenzij:leen({breed:64,steen:"#958E80",dorp:[.6,.3]}),
+  treileth:leen({plan:"lang",voorburcht:true,breed:76,steen:"#9C978D",dorp:[-.6,.35]}),
+  martenzij:leen({plan:"rond",donjon:"zaal",torenVorm:"vierkant",dak:"#7A3A2E",breed:64,steen:"#958E80",dorp:[.6,.3]}),
   woolsey:dorpje(2,501), claradon:dorpje(2,502), silvoorde:dorpje(2,503), pendelstad:dorpje(3,504),
   scanlon:dorpje(2,505), wilgendal:dorpje(2,506), ambelton:dorpje(1,507), dantwerpen:dorpje(2,508),
   esselden:dorpje(1,509), hambley:dorpje(2,510), klaterkreek:dorpje(1,511),
