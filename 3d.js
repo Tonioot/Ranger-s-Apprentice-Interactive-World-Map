@@ -72,6 +72,13 @@ const THEMA={
    Naar de bouwstijl van het land, en naar wat er groeit: op akkerland wonen
    de meeste mensen, in het naaldbos en de woestijn bijna niemand. */
 const DICHT_STIJL={araluen:1,hibernia:.8,picta:.3,skandia:.35,teutlandt:.9,gallica:1,iberion:.7,toscana:.95,helleno:.6,arrida:.16,indus:.55,"nihon-ja":.8,steppen:.1};
+/* hoeveel kleine bosjes er tussen de akkers liggen (0–1 per land) */
+const BOSJES={araluen:1,gallica:1,teutlandt:.8,hibernia:.7,iberion:.4,toscana:.5};
+/* landen die in 3D grauw steen zijn, hoe sterk: de kale bergen van Morgarath */
+const GRAUW={"mountains-of-rain-and-night":.8};
+/* hoeveel sneeuw er op het hoogland van een land ligt (0–1): Picta en het
+   noorden vaak, Teutlandt nauwelijks */
+const SNEEUWLAND={picta:1,skandia:1,sonderland:1,skorghijl:1,alpina:.8,aslava:.5,celtica:.4,"mountains-of-rain-and-night":.35,"nihon-ja":.2,teutlandt:.2,ursali:.3};
 const GROEI_DICHT={akker:1.3,grasland:1,steppe:.5,heide:.4,loofbos:.6,naaldbos:.35,jungle:.3,woestijn:.12,moeras:.15,toendra:.15,kaal:.25};
 
 /* ---- nevel en lucht, als shadercode ----
@@ -487,11 +494,23 @@ export async function maak3D(ctx){
     for(const p of ctx.PLAATSEN){
       const pos=POS[p.id]; if(!pos)continue;
       const m=modelVoor(p);
-      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null});
+      plekken.push({id:p.id,x:pos[0],y:pos[1],vlak:m.vlak||null,open:m.open||0,kloof:m.kloof||null,meer:m.meer||null,klif:m.klif||null,plateau:m.plateau||null});
     }
+    /* op een hoogvlakte loopt in 3D geen rivier (de platte kaart tekent er
+       wel een, als lijntje op het reliëf) */
+    for(const pl of plekken){
+      if(!pl.plateau)continue;
+      const r=pl.plateau.r*1.1, px=pl.x+(pl.plateau.dx||0), py=pl.y+(pl.plateau.dy||0);
+      for(let y=Math.max(0,Math.floor((py+MARGE-r)*RES));y<=Math.min(RH-1,Math.ceil((py+MARGE+r)*RES));y++)
+        for(let x=Math.max(0,Math.floor((px+MARGE-r)*RES));x<=Math.min(RW-1,Math.ceil((px+MARGE+r)*RES));x++)
+          if(Math.hypot(x/RES-MARGE-px,y/RES-MARGE-py)<r)rivier[y*RW+x]=0;
+    }
+    /* bosjes tussen de akkers, per land hoe sterk */
+    const bosjes=new Uint8Array(256);
+    ids.forEach((id,i)=>{ const b=BOSJES[stijlVan(id)]; if(b&&ctx.GEBIEDEN[id])bosjes[i+1]=b; });
 
     /* --- het rekenwerk --- */
-    const v=await ploeg.doe("voorbereiding",{R,land,reg,pReg,pdReg,info:werkInfo,SOORTEN,vlekken,plekken},[land.buffer,reg.buffer,pReg.buffer,pdReg.buffer]);
+    const v=await ploeg.doe("voorbereiding",{R,land,reg,pReg,pdReg,info:werkInfo,SOORTEN,vlekken,plekken,bosjes},[land.buffer,reg.buffer,pReg.buffer,pdReg.buffer]);
     land=v.land; reg=v.reg;
     /* de drie afstandsvelden tegelijk */
     const [ak,az,ap]=await Promise.all(["kust","zee","pool"].map(soort=>{
@@ -599,6 +618,7 @@ export async function maak3D(ctx){
       const ka=kleurVan(a), kb=kleurVan(b), o=tonen[g.tint]||tonen.a;
       const k=[ka[0]+(kb[0]-ka[0])*mf,ka[1]+(kb[1]-ka[1])*mf,ka[2]+(kb[2]-ka[2])*mf];
       fR[p]=k[0]+(o[0]-k[0])*TOON; fG[p]=k[1]+(o[1]-k[1])*TOON; fB[p]=k[2]+(o[2]-k[2])*TOON;
+
       const ga=T.GROEI[a], gb=T.GROEI[b];
       fKorrel[p]=ga.korrel+(gb.korrel-ga.korrel)*mf; fVlek[p]=ga.vlek+(gb.vlek-ga.vlek)*mf;
     }
@@ -616,6 +636,14 @@ export async function maak3D(ctx){
           fKorrel[p]+=(gr.korrel-fKorrel[p])*w; fVlek[p]+=(gr.vlek-fVlek[p])*w;
         }
     }
+    /* de grauwe landen: na de plekken met hun eigen begroeiing, zodat ook
+       Morgaraths heide grauw is */
+    { const rt=rgb(wcss("--rots")||"#9C9782"), l=(rt[0]+rt[1]+rt[2])/3*.78;
+      for(let p=0;p<M2;p++){ const gr=GRAUW[D.ids[pReg[p]-1]]; if(!gr)continue;
+        fR[p]+=(l*.97-fR[p])*gr; fG[p]+=(l*.98-fG[p])*gr; fB[p]+=(l*.97-fB[p])*gr; } }
+    const fSneeuw=new Float32Array(M2);
+    for(let p=0;p<M2;p++)if(pReg[p])fSneeuw[p]=SNEEUWLAND[D.ids[pReg[p]-1]]||0;
+    T.veeg(fSneeuw,PW,PH,8);
     const kl={ROTS:rgb(wcss("--rots")||"#9C9782"),SNEEUW:rgb(wcss("--sneeuw")||"#F1EFE4"),GRENS:rgb(wcss("--coast")||"#5A6356"),
       ZAND:rgb(th.zand),RIV:rgb(th.rivier),BO:rgb(th.bodemOndiep),BD:rgb(th.bodemDiep)};
     const uit=new Uint8Array(N*4);
@@ -626,7 +654,7 @@ export async function maak3D(ctx){
         h:snij(D.h,RW,hr0,hr1),land:snij(D.land,RW,y0,y1),kust:snij(D.kust,RW,y0,y1),grens:snij(D.grens,RW,y0,y1),
         rivier:snij(D.rivier,RW,y0,y1),bos:snij(D.bos,RW,y0,y1),
         fR:snij(fR,PW,g0,g1),fG:snij(fG,PW,g0,g1),fB:snij(fB,PW,g0,g1),fKorrel:snij(fKorrel,PW,g0,g1),
-        fVlek:snij(fVlek,PW,g0,g1),fKoud:snij(D.fKoud,PW,g0,g1)};
+        fVlek:snij(fVlek,PW,g0,g1),fKoud:snij(D.fKoud,PW,g0,g1),fSneeuw:snij(fSneeuw,PW,g0,g1)};
       const r=await ploeg.doe("kleur",G,mee(G));
       uit.set(r.kleur,y0*RW*4);
     }));
@@ -1544,7 +1572,7 @@ export async function maak3D(ctx){
       const p=fy*RW+fx; if(!land[p]||rivier[p]>40||bos[p]>120)continue;
       const gx=(Yvan(h[p+1])-Yvan(h[p-1]))*RES*.5, gz=(Yvan(h[p+RW])-Yvan(h[p-RW]))*RES*.5, hl=Math.hypot(gx,gz);
       /* hoe groot de kans op een steen hier is */
-      const kans=klem((hl-.6)/1.4,0,1)*.7+klem((h[p]-.32)/.3,0,1)*.35+(D.kust[p]<8&&hl>.5?.4:0);
+      const kans=klem((hl-.6)/1.4,0,1)*.7+klem((h[p]-.32)/.3,0,1)*.35+(D.kust[p]<8&&hl>.5?.4:0)+(GRAUW[D.ids[D.reg[p]-1]]||0)*.3;
       const hk=T.hash2(Math.round(px*61),Math.round(py*67)); if(hk>kans)continue;
       const maat=(.004+.016*Math.pow(T.hash2(Math.round(px*71),Math.round(py*73)),2.2))*(1+hl*.3);
       const t=.85+.3*T.hash2(Math.round(px*79),Math.round(py*83));

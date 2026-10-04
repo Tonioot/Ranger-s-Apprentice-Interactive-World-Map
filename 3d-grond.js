@@ -213,6 +213,16 @@ function voorbereiding(G,T){
      heuveltjes: hier dus een kortere overgang voor de hoogte. */
   T.veeg(fAmp,PW,PH,7); T.veeg(fRug,PW,PH,30); T.veeg(fKoud,PW,PH,30);
   T.veeg(fBos,PW,PH,6); T.veeg(fLoof,PW,PH,6);
+  /* Kleine bossen tussen de akkers (Araluen, Gallica…): de kaart tekent
+     alleen de grote wouden, maar het boerenland heeft overal bosjes van een
+     paar honderd meter tot een paar kilometer, meest loofhout. */
+  if(G.bosjes)for(let j=0;j<PH;j++)for(let i=0;i<PW;i++){
+    const p=j*PW+i, sterk=G.bosjes[pReg[p]]; if(!sterk)continue;
+    const x=i-M, y=j-M;
+    const n=T.fbm(x*.55+71,y*.55-13,3,.2)*.7+T.ruis(x*1.3-5,y*1.3+17)*.3;
+    const w=glad(klem((n-(.68-.05*sterk))/.05,0,1))*sterk;
+    if(w>fBos[p]){ fBos[p]=w; fLoof[p]=Math.max(fLoof[p],.8); }
+  }
   /* plaatsen met een eigen landschap (het Grimsdell Woud enzovoort) */
   for(const v of vlekken){
     const ba=BOS[v.soort]||[0,.5];
@@ -397,6 +407,43 @@ function afwerking(G,T){
         const plat=.8+.2*glad(klem(dk/2.2,0,1))+.12*(T.fbm(wx*.6+3,wy*.6-8,3,.3)-.5);
         const doel=hVan(LAND0+hoogte*plat)*wand;
         if(doel>h[q])h[q]+=(doel-h[q])*w;
+      }
+  }
+  /* Een hoogvlakte (Morgaraths Hoogvlakte): binnen de straal wordt het land
+     een vlak plateau op één hoogte, met nog maar een zweem van wat er lag;
+     de rand breekt steil af (de Noordelijke kliffen), en daarachter liggen
+     de bergen gewoon door. De rand golft, zodat het geen cirkel wordt. */
+  for(const pl of plekken){
+    if(!pl.plateau)continue;
+    const {r,hoogte}=pl.plateau, cx=pl.x+(pl.plateau.dx||0), cy=pl.y+(pl.plateau.dy||0), R2=r*1.15;
+    for(let y=Math.max(0,Math.floor((cy+M-R2)*RES));y<=Math.min(RH-1,Math.ceil((cy+M+R2)*RES));y++)
+      for(let x=Math.max(0,Math.floor((cx+M-R2)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+R2)*RES));x++){
+        const q=y*RW+x; if(!land[q])continue;
+        const wx=x/RES-M, wy=y/RES-M;
+        const rand=r*(.85+.25*T.fbm(wx*.12+5,wy*.12-9,3,.3));
+        const d=Math.hypot(wx-cx,wy-cy);
+        const w=1-glad(klem((d-rand)/(r*.08),0,1)); if(w<=0)continue;
+        const vlak=hoogte*(1+.08*(T.fbm(wx*.35-3,wy*.35+8,3,.2)-.5));
+        /* het plateau komt niet hoger dan de bergen eromheen het toelaten:
+           waar het land al hoger lag, blijft er een rotsige rand staan */
+        h[q]=h[q]>vlak*1.25?h[q]*(1-w*.5)+vlak*w*.5:h[q]+(vlak-h[q])*w;
+      }
+    /* en eromheen een gebergte: kale kammen (ruis met omgeklapte dalen), die
+       naar de kust toe aflopen in de kliffen */
+    const bg=pl.plateau.bergen; if(!bg)continue;
+    for(let y=Math.max(0,Math.floor((cy+M-bg.r)*RES));y<=Math.min(RH-1,Math.ceil((cy+M+bg.r)*RES));y++)
+      for(let x=Math.max(0,Math.floor((cx+M-bg.r)*RES));x<=Math.min(RW-1,Math.ceil((cx+M+bg.r)*RES));x++){
+        const q=y*RW+x; if(!land[q])continue;
+        const wx=x/RES-M, wy=y/RES-M, d=Math.hypot(wx-cx,wy-cy);
+        const rand=r*(.85+.25*T.fbm(wx*.12+5,wy*.12-9,3,.3));
+        /* niet aan de noordkant: daar breekt het plateau naar Araluen af */
+        const wz=glad(klem((wy-cy+1.5)/3.5,0,1));
+        const wr=glad(klem((d-rand-.6)/2.5,0,1))*(1-glad(klem((d-bg.r*.8)/(bg.r*.2),0,1)))*wz;
+        if(wr<=0)continue;
+        const wk=glad(klem((kust[q]/18)/3.5,0,1));
+        const f=T.fbm(wx*.16+31,wy*.16-17,4,.5), kam=1-Math.abs(2*f-1);
+        const m=bg.hoogte*(.35+.65*kam*kam)*wr*wk;
+        if(m>h[q])h[q]=m;
       }
   }
   /* de kloven: steile wanden, een bodem net boven zee */
@@ -677,8 +724,16 @@ function kleur(G,T){
       meng(ROTS,glad(klem((helling-.8)/1.3,0,1))*.8);
       const dK=(wx<doos[0]-40||wx>doos[2]+40||wy<doos[1]-40||wy>doos[3]+40)?999:T.afstandTotKeten(wx,wy);
       const kk=glad(klem(1-dK/30,0,1));
-      const koud=Math.max(leesVeld(fKoud,go,R,wx,wy),kk), sg=.90-.48*koud;
+      const koud=Math.max(leesVeld(fKoud,go,R,wx,wy),kk), sg=.90-.6*koud;
       if(hh>sg)meng(SNEEUW,Math.min(1,(hh-sg)/.30)*(1-glad(klem((helling-1.6)/1.6,0,1))*.7));
+      /* in een koud land ligt ook op het hoogland sneeuw: in kommen en op
+         de noordhellingen, plekkerig, en meer naarmate het hoger is */
+      const sneeuwLand=G.fSneeuw?leesVeld(G.fSneeuw,go,R,wx,wy):0;
+      if(sneeuwLand>.05&&hh>.015){
+        const vlek=T.fbm(wx*.5+19,wy*.5-41,3,.25), luw=klem(-holte[hp]*.8+.5,0,1);
+        const t=glad(klem((hh-.012)/.06,0,1))*Math.min(1,sneeuwLand*1.3)*glad(klem((vlek*.7+luw*.5-(.7-.26*sneeuwLand))/.1,0,1));
+        meng(SNEEUW,t*(1-glad(klem((helling-1.4)/1.2,0,1))));
+      }
       let m=1+(T.fbm(wx*.42,wy*.42,4,0)-.5)*leesVeld(fKorrel,go,R,wx,wy)*1.25
              +(T.ruis(wx*.085+311,wy*.085-127)-.5)*leesVeld(fVlek,go,R,wx,wy);
       /* Bos is van boven een donker dek van kruinen; dat dek staat precies
