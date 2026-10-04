@@ -1961,9 +1961,33 @@ export async function maak3D(ctx){
   const plekBoven={};            /* plaats-id → hoogte van de top (voor het naambordje) */
   const plekMidden={};           /* plaats-id → waar het model echt staat (een haven ligt aan het water) */
   const middenVan=id=>plekMidden[id]||D.POS[id];
+  /* Hoeveel rivier er op een plek is (0..255), voor de modellen: niet de
+     brede natte strook uit het raster (een rivier als de Dan is daar bijna
+     600 m breed, en een stad eraan bleef dan leeg), maar de afstand tot de
+     middenlijn: 255 op het water, aflopend tot 0 op 20 m van de oever. */
+  let rivierLijnenC=null, rivierVak=null;
+  const RIVOEVER=20/650;
+  function rivierIndex(){
+    if(rivierVak)return;
+    rivierLijnenC=rivierLijnen(); rivierVak=new Map();
+    for(const {pts,breed} of rivierLijnenC)for(let i=1;i<pts.length;i++){
+      const [x0,y0]=pts[i-1],[x1,y1]=pts[i], r=breed/2+RIVOEVER;
+      for(let gy=Math.floor(Math.min(y0,y1)-r);gy<=Math.floor(Math.max(y0,y1)+r);gy++)
+        for(let gx=Math.floor(Math.min(x0,x1)-r);gx<=Math.floor(Math.max(x0,x1)+r);gx++){
+          const k=gx+","+gy; if(!rivierVak.has(k))rivierVak.set(k,[]); rivierVak.get(k).push([x0,y0,x1,y1,breed/2]);
+        }
+    }
+  }
   const rivierOp=(wx,wy)=>{
-    const x=Math.floor((wx+MARGE)*RES), y=Math.floor((wy+MARGE)*RES);
-    return x>=0&&y>=0&&x<RW&&y<RH?D.rivier[y*RW+x]:0;
+    rivierIndex();
+    let best=0;
+    for(const [x0,y0,x1,y1,h] of rivierVak.get(Math.floor(wx)+","+Math.floor(wy))||[]){
+      const dx=x1-x0, dy=y1-y0, l2=dx*dx+dy*dy||1e-9, t=klem(((wx-x0)*dx+(wy-y0)*dy)/l2,0,1);
+      const d=Math.hypot(wx-x0-dx*t,wy-y0-dy*t);
+      const v=d<=h?255:255*(1-(d-h)/RIVOEVER);
+      if(v>best)best=v;
+    }
+    return best;
   };
   function maakGebouwen(){
     const m=bouwModellen({PLAATSEN:ctx.PLAATSEN,POS:D.POS,X,Z,yOp,hNorm,opLand,hash2:T.hash2,rivierOp,kloven:D.kloven});
@@ -2245,7 +2269,7 @@ export async function maak3D(ctx){
     return uit;
   }
   function maakRivieren(){
-    const lijnen=rivierLijnen();
+    rivierIndex(); const lijnen=rivierLijnenC;
     /* het water: per punt twee hoekpunten, links en rechts van de middenlijn */
     const pos=[], idx=[];
     for(const {pts,breed} of lijnen){
@@ -2327,7 +2351,7 @@ export async function maak3D(ctx){
   }
   function ruimRivieren(){
     for(const o of [rivierWater,bruggenMesh])if(o){ wereld.remove(o); o.geometry.dispose(); o.material.dispose(); }
-    rivierWater=bruggenMesh=null;
+    rivierWater=bruggenMesh=null; rivierLijnenC=rivierVak=null;
   }
 
   /* ================================ namen ================================ */
