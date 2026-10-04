@@ -31,7 +31,7 @@ import {mergeGeometries} from "three/addons/utils/BufferGeometryUtils.js";
 import {Line2} from "three/addons/lines/Line2.js";
 import {LineMaterial} from "three/addons/lines/LineMaterial.js";
 import {LineGeometry} from "three/addons/lines/LineGeometry.js";
-import {bouwModellen,modelInfo} from "./3d-modellen.js";
+import {bouwModellen,modelInfo,GEBOUW_GLSL_V,GEBOUW_GLSL_V_MAIN,GEBOUW_GLSL_F,GEBOUW_GLSL_KLEUR,GEBOUW_GLSL_GLOED} from "./3d-modellen.js";
 import {TAKEN,rekenregels,rooster,groveRijen,leesVeld,kustVelden,MARGE,SCHAAL,ZEEDIEPTE,ZEE0,Yvan,dakHoogte} from "./3d-grond.js";
 
 const FOV=42;
@@ -225,7 +225,7 @@ export async function maak3D(ctx){
     uNevelKleur:{value:new THREE.Color()}, uNevelDicht:{value:.003}, uNevelVal:{value:.03},
     uZenit:{value:new THREE.Color()}, uTijd:{value:0},
     uWolkKaart:{value:null}, uWind:{value:new THREE.Vector2()}, uWolkVak:{value:new THREE.Vector4(-W,-H,2*W,2*H)},
-    uWolkSterkte:{value:0}, uGebouwLicht:{value:.12}
+    uWolkSterkte:{value:0}, uGebouwLicht:{value:.12}, uNacht:{value:0}
   };
   const metNevel=sh=>Object.assign(sh.uniforms,GEDEELD);
 
@@ -1307,7 +1307,7 @@ export async function maak3D(ctx){
    paar vormen met de kleur in de hoekpunten. Zo kost een hele wereld vol
    kastelen, steden en schepen maar een handvol tekenopdrachten. */
   const modelVoor=p=>modelInfo(p);
-  let gebouwen=null, lichtjes=null, losseBomen=[];
+  let gebouwen=null, lichtjes=null, losseBomen=[], wegenVanPlaatsen=[];
   const plekBoven={};            /* plaats-id → hoogte van de top (voor het naambordje) */
   const rivierOp=(wx,wy)=>{
     const x=Math.floor((wx+MARGE)*RES), y=Math.floor((wy+MARGE)*RES);
@@ -1318,28 +1318,36 @@ export async function maak3D(ctx){
     Object.assign(plekBoven,m.boven);
     gebouwPlekken.push(...m.plekken);
     losseBomen=m.bomen;
+    wegenVanPlaatsen=m.wegen;
     const g=new THREE.Group();
     /* Een gebouw is klein en heeft geen eigen hemel om zich heen: de
        schaduwkant zou zwart worden. Een vleugje eigen licht (uGebouwLicht,
-       per thema) houdt muren en daken leesbaar. */
-    const mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,metalness:0});
-    mat.onBeforeCompile=sh=>{
+       per thema) houdt muren en daken leesbaar. Het materiaal van elk vlak —
+       steen, vakwerk, riet, pannen, de ramen en 's nachts het licht erachter
+       — tekent de shader uit 3d-modellen.js. */
+    const gebouwShader=sh=>{
       metNevel(sh);
+      sh.vertexShader=sh.vertexShader
+        .replace("#include <common>","#include <common>\n"+GEBOUW_GLSL_V)
+        .replace("#include <project_vertex>","#include <project_vertex>\n"+GEBOUW_GLSL_V_MAIN);
       sh.fragmentShader=sh.fragmentShader
-        .replace("#include <common>","#include <common>\nuniform float uGebouwLicht;")
-        .replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuseColor.rgb*uGebouwLicht;");
+        .replace("#include <common>","#include <common>\nuniform float uGebouwLicht;\n"+GEBOUW_GLSL_F)
+        .replace("#include <color_fragment>","#include <color_fragment>\n"+GEBOUW_GLSL_KLEUR)
+        .replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuseColor.rgb*uGebouwLicht;"+GEBOUW_GLSL_GLOED);
     };
+    const mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,metalness:0});
+    mat.onBeforeCompile=gebouwShader;
     if(m.vast){ const x=new THREE.Mesh(m.vast,mat); x.castShadow=x.receiveShadow=true; g.add(x); }
     if(m.doek){
       const md=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,side:THREE.DoubleSide});
-      md.onBeforeCompile=metNevel;
+      md.onBeforeCompile=gebouwShader;
       const x=new THREE.Mesh(m.doek,md); x.castShadow=true; x.receiveShadow=true; g.add(x);
     }
     /* de schepen deinen: elk om zijn eigen middelpunt, met zijn eigen fase */
     if(m.schepen){
       const ms=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,side:THREE.DoubleSide});
       ms.onBeforeCompile=sh=>{
-        metNevel(sh);
+        gebouwShader(sh);
         sh.vertexShader=sh.vertexShader
           .replace("#include <common>","#include <common>\nattribute vec4 aDobber; uniform float uTijd;")
           .replace("#include <begin_vertex>",`#include <begin_vertex>
@@ -1580,6 +1588,7 @@ export async function maak3D(ctx){
     }
     if(lichtjes)lichtjes.visible=!!th.lichtjes;
     GEDEELD.uGebouwLicht.value=isDonker()?.04:.13;
+    GEDEELD.uNacht.value=isDonker()?1:0;
     rotsKleur.value.set(css("--rots")||"#9C9782");
     if(D)tekenRoutes();
   }
