@@ -527,7 +527,7 @@ export async function maak3D(ctx){
       const r=await ploeg.doe("hoogte",G,mee(G));
       h.set(r.h,y0*RW); kust.set(r.kust,y0*RW);
     }));
-    const a=await ploeg.doe("afwerking",{R,h,land,rivier,reg,kust,plekken,kloven:v.kloven},[h.buffer,land.buffer,rivier.buffer,reg.buffer,kust.buffer]);
+    const a=await ploeg.doe("afwerking",{R,h,land,rivier,reg,kust,plekken,kloven:v.kloven,kustAfst:ak.kustAfst,zeeAfst:az.zeeAfst},[h.buffer,land.buffer,rivier.buffer,reg.buffer,kust.buffer,ak.kustAfst.buffer,az.zeeAfst.buffer]);
     /* --- de naamloze boerderijen, gehuchten en dorpen, en de wegen ---
        Hoe dicht een land bewoond is: naar zijn bouwstijl (de akkers van
        Araluen en Gallica vol, de steppe en de woestijn bijna leeg) en naar
@@ -1126,7 +1126,7 @@ export async function maak3D(ctx){
         if(k.x>0.0&&k.y>0.0&&k.x<1.0&&k.y<1.0)bodem=texture2D(uDiepte,k).r;
         /* waar het plaatje land zegt, geen water — ook als het net daar net
            onder de waterlijn duikt; zo volgt de kust het plaatje, niet het net */
-        float opLand=smoothstep(-.03,.05,bodem);
+        float opLand=smoothstep(-.004,.006,bodem);
         if(opLand>=1.0)discard;
         float diepte=max(-bodem,0.0);
         vec3 V=cameraPosition-vW; float afst=length(V); V/=afst;

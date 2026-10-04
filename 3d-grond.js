@@ -33,7 +33,11 @@ export const SCHAAL=30, ZEEDIEPTE=7;
 export const LAND0=.05, ZEE0=.05;        /* land net boven, zeebodem net onder de waterlijn */
 /* Van reliëf naar hoogte. Niet recht evenredig: laag land blijft laag, en
    pas wat echt hoog is schiet omhoog. */
-export const Yvan=h=>h>=0?LAND0+h*(.5+.5*h)*SCHAAL:-ZEE0+h*ZEEDIEPTE;
+/* Vlak bij de waterlijn (|h| < KUSTH) loopt de hoogte geleidelijk door nul
+   in plaats van met een trede: zo ligt de kustlijn waar h nul is, en die
+   volgt gladdeKust() hieronder, niet de trapjes van het raster. */
+export const KUSTH=.004;
+export const Yvan=h=>h>=0?LAND0*Math.min(1,h/KUSTH)+h*(.5+.5*h)*SCHAAL:-ZEE0*Math.min(1,-h/KUSTH)+h*ZEEDIEPTE;
 /* Hoe hoog het bladerdak boven de grond uitkomt, in kaarteenheden. Even
    overdreven als de rest: een boom zo groot als een dorpshuis. */
 export const KRUIN=.05;
@@ -518,6 +522,7 @@ function afwerking(G,T){
       }
     meren.push({x:cx,y:cy,r,niveau:Yvan(L)});
   }
+  if(G.kustAfst)gladdeKust(R,h,land,G.kustAfst,G.zeeAfst);
   const grens=new Uint8Array(N);
   for(let y=1;y<RH-1;y++)for(let x=1;x<RW-1;x++){
     const p=y*RW+x; if(!land[p])continue; const r0=reg[p];
@@ -525,6 +530,42 @@ function afwerking(G,T){
   }
   /* wat hier binnenkwam gaat ook weer terug: in een worker is het overgedragen */
   return {h,grens,land,rivier,reg,kust,meren};
+}
+
+/* ---- een gladde kustlijn ----
+   Het landmasker heeft een raster van zo'n tweehonderd meter. Van dichtbij
+   wordt elke kust dan een trap van rechte stukken: de waterlijn ligt waar
+   de hoogte tussen twee rasterpunten door nul gaat, en tussen een punt land
+   en een punt zee ligt die altijd op dezelfde plek. Hier daarom vlak bij de
+   kust een hoogte die meeloopt met de afstand tot de waterlijn, eerst
+   uitgesmeerd: de nullijn daarvan is een vloeiende kust die de trappen
+   afsnijdt. Waar het land meteen hoog is (een klif) blijft alles staan. */
+function gladdeKust(R,h,land,kustAfst,zeeAfst){
+  const {RW,RH,RES,N}=R, B=4;
+  /* de afstand tot de waterlijn in rasterpunten, op het land positief */
+  const s=new Float32Array(N);
+  for(let p=0;p<N;p++)s[p]=land[p]?Math.min(B,kustAfst[p]*RES-.5):-Math.min(B,zeeAfst[p]*RES-.5);
+  /* uitsmeren met een klokvorm (sigma 1,3 punt), eerst langs de rijen, dan
+     langs de kolommen */
+  const K=[], r=3; let som=0;
+  for(let i=-r;i<=r;i++){ const w=Math.exp(-i*i/(2*1.3*1.3)); K.push(w); som+=w; }
+  for(let i=0;i<K.length;i++)K[i]/=som;
+  const t=new Float32Array(N);
+  for(let y=0;y<RH;y++){ const o=y*RW; for(let x=0;x<RW;x++){
+    if(Math.abs(s[o+x])>=B){ t[o+x]=s[o+x]; continue; }
+    let v=0; for(let i=-r;i<=r;i++)v+=K[i+r]*s[o+klem(x+i,0,RW-1)]; t[o+x]=v; } }
+  for(let x=0;x<RW;x++)for(let y=0;y<RH;y++){
+    const p=y*RW+x; if(Math.abs(t[p])>=B)continue;
+    let v=0; for(let i=-r;i<=r;i++)v+=K[i+r]*t[klem(y+i,0,RH-1)*RW+x]; s[p]=v;
+  }
+  for(let p=0;p<N;p++){
+    const d=s[p]; if(Math.abs(d)>=2.4)continue;
+    /* op het land loopt het zacht op, in zee wat steiler af */
+    const doel=d>0?d*.003:d*.02;
+    let w=1-glad(klem((Math.abs(d)-.6)/1.6,0,1));
+    if(h[p]>0)w*=1-glad(klem((h[p]-.015)/.02,0,1));
+    h[p]+=(doel-h[p])*w;
+  }
 }
 
 /* ---- erosie ----
