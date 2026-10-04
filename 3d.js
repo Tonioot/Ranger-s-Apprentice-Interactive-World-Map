@@ -51,7 +51,7 @@ const THEMA={
     belichting:1.0, sterren:0, lichtjes:0,
     wolkLicht:"#FFFFFF", wolkDonker:"#A9B4C2", wolkDekking:.9, wolkSchaduw:.42,
     rivier:"#5C8F9C", zand:"#DCCDA2", bodemOndiep:"#C9BE98", bodemDiep:"#4E747E",
-    akkers:["#D8C47A","#9FB060","#9A8460","#BCC888","#C6A85E"],
+    akkers:["#C9B77E","#8F9E5E","#8C7A60","#A9B07C","#B9A06A"],
     weg:"#D3C49E", dorp:"#8E7866", heg:"#55663E"
   },
   donker:{
@@ -557,7 +557,7 @@ export async function maak3D(ctx){
       const hr0=Math.max(0,y0-2), hr1=Math.min(RH,y1+2), [g0,g1]=groveRijen(R,hr0,hr1);
       const G={R,y0,y1,hr0,hr1,go:g0*PW,plekken:bosPlekken.filter(p=>p.open&&p.y+4>hr0/RES-MARGE&&p.y-4<hr1/RES-MARGE),meren:a.meren,
         h:snij(a.h,RW,hr0,hr1),land:snij(a.land,RW,hr0,hr1),rivier:snij(a.rivier,RW,hr0,hr1),kust:snij(a.kust,RW,hr0,hr1),
-        fBos:snij(v.fBos,PW,g0,g1)};
+        fBos:snij(v.fBos,PW,g0,g1),fBosje:snij(v.fBosje,PW,g0,g1)};
       const r=await ploeg.doe("bos",G,mee(G));
       bos.set(r.bos,y0*RW); normalen.set(r.normalen,y0*RW*4);
     }));
@@ -623,6 +623,12 @@ export async function maak3D(ctx){
       fKorrel[p]=ga.korrel+(gb.korrel-ga.korrel)*mf; fVlek[p]=ga.vlek+(gb.vlek-ga.vlek)*mf;
     }
     for(const f of [fR,fG,fB,fKorrel,fVlek])T.veeg(f,PW,PH,22);
+    /* de kleur van loof- en naaldbos, voor het bladerdak in de shader: daar
+       volgt hij de fijne vorm van het bos (ook van een bosje tussen de
+       akkers, dat de kaart zelf niet tekent) in plaats van grove vakjes */
+    { const lb=kleurVan("loofbos"), nb=kleurVan("naaldbos");
+      bosKleur.value[0].setRGB(lb[0]/255,lb[1]/255,lb[2]/255,THREE.SRGBColorSpace);
+      bosKleur.value[1].setRGB(nb[0]/255,nb[1]/255,nb[2]/255,THREE.SRGBColorSpace); }
     for(const v of D.vlekken){
       const meta=ctx.GEBIEDEN[v.gebied], o=tonen[(meta&&meta.tint)||"a"]||tonen.a, kl=kleurVan(v.soort);
       const k=[kl[0]+(o[0]-kl[0])*TOON,kl[1]+(o[1]-kl[1])*TOON,kl[2]+(o[2]-kl[2])*TOON];
@@ -776,8 +782,16 @@ export async function maak3D(ctx){
      afstand iets verspringt. */
   /* op een telefoon minder stappen voor de parallax van de kruinen */
   const KRUINSTAP=klein?3:7;
+  /* de maat van een boomkruin in het bos (een cel van zo’n achttien meter) */
+  const KRUINCEL=".028";
   const KRUIN_GLSL=`
   uniform sampler2D uLoof;
+  /* het bladerdak (de vierde waarde van de normalentextuur) en hoe je van
+     wereldplaats naar textuurplaats komt */
+  uniform sampler2D uBosTex;
+  uniform vec4 uBosUv;
+  /* staat de laatst bekeken kruin in het bos (0–1) */
+  float gKruinEr=1.0;
   vec2 kHash(vec2 c){
     uvec2 q=uvec2(ivec2(c)+ivec2(65536));
     q=q*uvec2(1597334673U,3812015801U);
@@ -795,16 +809,25 @@ export async function maak3D(ctx){
       if(d<best){ best=d; bv=r; bid=c+g; }
     }
     vec2 h2=kHash(bid+vec2(17.0,-31.0));
+    /* Of deze boom er staat, hangt af van het bladerdak op zijn eigen
+       midden, met per boom een eigen drempel. Het bladerdak ligt in een
+       grof raster; zo bestaat de bosrand toch uit hele bomen, met hier en
+       daar een losse boom ervoor en een gat erin, in plaats van een waas. */
+    vec2 mid=(bid+.2+.6*kHash(bid))*${KRUINCEL};
+    float dek=textureLod(uBosTex,(mid+uBosUv.xy)*uBosUv.zw,0.0).a;
+    float drempel=.32+.3*kHash(bid+vec2(-7.0,23.0)).x;
+    float er=smoothstep(drempel-.03,drempel+.03,dek);
+    gKruinEr=er;
     /* een kruin is geen cirkel: een paar lobben rond de rand */
     float hoek=atan(bv.y,bv.x);
     float lob=1.0+.13*sin(hoek*5.0+h2.y*6.28)*mix(.4,1.0,loof)+.06*sin(hoek*9.0+h2.x*6.28);
     float afst=sqrt(best), d=afst/(mix(.58,.82,h2.x)*mix(.86,1.12,loof)*lob);
     float binnen=1.0-smoothstep(.8,1.0,d);
     float koepel=sqrt(max(1.0-d*d,0.0)), kegel=max(1.0-d,0.0);
-    float hoog=mix(kegel,koepel,loof)*binnen*mix(.75,1.0,h2.x);
+    float hoog=mix(kegel,koepel,loof)*binnen*mix(.75,1.0,h2.x)*er;
     float steil=mix(1.2,min(d/max(koepel,.25),2.4)*.7,loof);
-    helling=-bv/max(afst,1e-4)*steil*binnen*.55;
-    float licht=mix(.34,1.0,hoog)/mix(.60,.70,loof);
+    helling=-bv/max(afst,1e-4)*steil*binnen*.55*er;
+    float licht=mix(.40,1.0,hoog)/mix(.80,.88,loof);
     vec3 tint=mix(vec3(.93,1.0,1.05),vec3(1.06+.09*h2.y,1.03,.88),loof);
     kleur=vec3(licht*(.82+.36*h2.y))*mix(vec3(1.0),tint,.8);
     return hoog;
@@ -815,7 +838,10 @@ export async function maak3D(ctx){
      in plaats van plaatjes op de grond. */
   float kruinRaak(vec2 p0,vec3 V,float loof,float sterk,out vec2 helling,out vec3 kleur){
     vec2 stap=-V.xz/max(V.y,.22)*(.055/.11)*sterk;
-    float diep=0.0, diepV=0.0, zakV=1.0-kruin(p0,loof,helling,kleur);
+    /* elke beeldpunt begint zijn stappen een eigen stukje verder: zo
+       worden de trapjes aan de zijkant van een kruin een fijne korrel */
+    float schuif=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))));
+    float diep=-${(1.05/KRUINSTAP).toFixed(3)}*schuif, diepV=0.0, zakV=1.0-kruin(p0,loof,helling,kleur);
     if(zakV>0.0){
       for(int i=0;i<${KRUINSTAP};i++){
         diep+=${(1.05/KRUINSTAP).toFixed(3)};
@@ -836,6 +862,7 @@ export async function maak3D(ctx){
   const wegU={uWegSeg:{value:null},uWegLijst:{value:null},uWegCel:{value:null}};
   let wegL=null, akkerData=null;
   const akkU={value:[0,1,2,3,4].map(()=>new THREE.Color())}, hegKleur={value:new THREE.Color()};
+  const bosKleur={value:[new THREE.Color(),new THREE.Color()]};
   function maakLandMat(kleurTex,normTex,loofTex){
     const m=new THREE.MeshStandardMaterial({map:kleurTex,normalMap:normTex,
       normalMapType:THREE.ObjectSpaceNormalMap,roughness:.93,metalness:0});
@@ -845,13 +872,15 @@ export async function maak3D(ctx){
       sh.uniforms.uLoof={value:loofTex};
       sh.uniforms.uRots=rotsKleur;
       Object.assign(sh.uniforms,wegU);
-      sh.uniforms.uAkk=akkU; sh.uniforms.uHeg=hegKleur;
+      sh.uniforms.uAkk=akkU; sh.uniforms.uHeg=hegKleur; sh.uniforms.uBosKl=bosKleur;
+      sh.uniforms.uBosTex={value:normTex};
+      sh.uniforms.uBosUv={value:new THREE.Vector4(W/2+MARGE,H/2+MARGE,1/(W+2*MARGE),1/(H+2*MARGE))};
       sh.uniforms.uWegKleur=wegKleur;
       sh.vertexShader=sh.vertexShader
         .replace("#include <common>","#include <common>\nvarying vec3 vWolkW;")
         .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*vec4(transformed,1.0)).xyz;");
       sh.fragmentShader=sh.fragmentShader
-        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\nuniform vec3 uRots;\nuniform vec3 uAkk[5];\nuniform vec3 uHeg;\nuniform sampler2D uWegSeg;\nuniform sampler2D uWegLijst;\nuniform sampler2D uWegCel;\nuniform vec3 uWegKleur;\n"+WOLK_GLSL+KRUIN_GLSL
+        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\nvarying vec3 vWolkW;\nuniform sampler2D uDetail;\nuniform vec3 uRots;\nuniform vec3 uAkk[5];\nuniform vec3 uHeg;\nuniform vec3 uBosKl[2];\nuniform sampler2D uWegSeg;\nuniform sampler2D uWegLijst;\nuniform sampler2D uWegCel;\nuniform vec3 uWegKleur;\n"+WOLK_GLSL+KRUIN_GLSL
           +"float randSchaduw(vec4 c,float s){ vec3 p=c.xyz/c.w; float r=min(min(p.x,1.0-p.x),min(p.y,1.0-p.y)); return mix(1.0,s,smoothstep(0.0,.18,r)); }")
         /* Van dichtbij is het kleurplaatje te grof: dan een fijne korrel van
            gras, aarde en steen eroverheen, die in de verte weer wegvalt. */
@@ -875,25 +904,37 @@ export async function maak3D(ctx){
             diffuseColor.rgb=mix(diffuseColor.rgb,rots,wand);
           }
           float loof=texture2D(uLoof,vMapUv).r;
+          /* de bosrand scherp: het bladerdak ligt in een raster van een paar
+             honderd meter, en lineair uitgesmeerd wordt elke bosrand
+             een waas; een drempel erop geeft een scherpe, ronde rand */
+          float bosS=smoothstep(.38,.55,bosM);
           /* vaste celmaat: een maat die met het loof meeloopt zou het hele
              patroon laten verschuiven waar het bos van soort wisselt */
-          vec2 kp=vWolkW.xz/.035;
-          float bosZicht=bosM*(1.0-smoothstep(.3,.65,length(fwidth(kp))));
+          vec2 kp=vWolkW.xz/${KRUINCEL};
+          /* alleen waar het echt bos is: een vleugje bos aan de rand mag geen
+             halve kruinen op de akker tekenen */
+          float bosZicht=smoothstep(.12,.3,bosM)*(1.0-smoothstep(.3,.65,length(fwidth(kp))));
           vec2 kruinHelling=vec2(0.0);
           /* bladclusters binnen een kruin: dezelfde korrel, fijner */
-          float blad=texture2D(uDetail,vWolkW.xz*2.4).r;
+          float blad=texture2D(uDetail,vWolkW.xz*7.5).r;
+          vec3 kk=vec3(1.0);
+          float hk=0.0;
+          gKruinEr=bosS;
+          if(bosZicht>.002){
+            hk=kruinRaak(kp,normalize(cameraPosition-vWolkW),loof,bosZicht,kruinHelling,kk);
+            kk*=mix(1.0,.8+.4*blad,hk);
+          }
+          /* van dichtbij bepalen de bomen zelf waar het bos ophoudt, van
+             ver het bladerdak */
+          float bosDek=mix(bosS,gKruinEr,bosZicht);
           /* waar de kruinen te klein worden om te tekenen: groepjes bomen,
              open plekken en schaduw ertussen, zodat bos ook van ver bos is */
           if(bosM>.01){
+            diffuseColor.rgb=mix(diffuseColor.rgb,mix(uBosKl[1],uBosKl[0],loof)*.8,bosDek*.85);
             float pol=texture2D(uDetail,vWolkW.xz*1.3).r*.6+texture2D(uDetail,vWolkW.xz*.37).r*.4;
-            diffuseColor.rgb*=mix(1.0,.66+.5*pol,bosM*(1.0-bosZicht));
+            diffuseColor.rgb*=mix(1.0,.66+.5*pol,bosDek*(1.0-bosZicht));
           }
-          if(bosZicht>.002){
-            vec3 kk;
-            float hk=kruinRaak(kp,normalize(cameraPosition-vWolkW),loof,bosZicht,kruinHelling,kk);
-            kk*=mix(1.0,.8+.4*blad,hk);
-            diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht);
-          }
+          if(bosZicht>.002)diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht*gKruinEr);
           /* De lappendeken van akkers. Twee lagen: kavels (grote cellen van
              een paar eenheden, elk met een eigen richting en een eigen
              overheersend gewas) die tot ver weg te zien zijn, en daarin
@@ -903,7 +944,7 @@ export async function maak3D(ctx){
              blijft liggen. Elk detail gaat, als het kleiner wordt dan een
              paar beeldpunten, over in het gemiddelde van wat het bedekt; zo
              verspringt er bij geen enkele afstand iets. */
-          float akker=texture2D(uLoof,vMapUv).g*(1.0-bosM);
+          float akker=texture2D(uLoof,vMapUv).g*(1.0-bosDek);
           float akPx=length(fwidth(vWolkW.xz));
           if(akker>.01){
             /* de kavelranden golven wat: echte percelen volgen sloten en
@@ -932,24 +973,36 @@ export async function maak3D(ctx){
             float fy=fract(q.y/w), fx=fract((q.x+sch)/L);
             float rand=min(min(fy,1.0-fy)*w,min(fx,1.0-fx)*L);
             float zAkker=1.0-smoothstep(.013,.035,akPx);
+            float aa0=akPx*.7;
             vec3 gewas=mix(mix(kavelKleur,(uAkk[0]+uAkk[1]+uAkk[2]+uAkk[3]+uAkk[4])*.2,.4+.45*smoothstep(.04,.26,akPx)),akkerKleur,zAkker);
-            /* ploegvoren in een deel van de akkers */
-            float voor=step(.6,hh.y)*(.5+.5*sin(q.y/w*6.2832*7.0))*(1.0-smoothstep(.002,.007,akPx));
-            gewas*=1.0-.06*voor;
+            /* Het gewas zelf: geen egale kleur maar een akker zoals hij er van
+               boven uitziet — plekkerig op verschillende maten (natte en
+               droge plekken, waar het gewas dunner staat), rijen in de
+               richting van de akker, en bij geploegd land voren. */
+            vec2 qa=vec2(q.x+sch,q.y);
+            float vlekG=texture2D(uDetail,qa*.9+bid*.37).r*.55+texture2D(uDetail,qa*3.7+bid).r*.45;
+            gewas*=mix(1.0,.86+.28*vlekG,1.0-smoothstep(.02,.08,akPx));
+            float rijen=.5+.5*sin(q.y*1400.0+hh.x*30.0);
+            float soortA=hh.y;
+            float zRij=1.0-smoothstep(.0006,.0018,akPx);
+            gewas*=1.0-(soortA>.6?.1:.04)*rijen*zRij;
+            /* een strookje gras langs de rand van elke akker */
+            float marge=(1.0-smoothstep(.0025,.0025+aa0,rand))*(1.0-smoothstep(.004,.012,akPx));
+            gewas=mix(gewas,uAkk[1]*1.05,marge*.6);
             /* heggen: langs elke kavelrand, en tussen een deel van de akkers */
             float aa=akPx*.7;
             float kRand=(sqrt(b2)-sqrt(b1))*1.0*.5;
             float hegK=1.0-smoothstep(.0016,.0016+aa,kRand);
-            float hegA=(1.0-smoothstep(.0012,.0012+aa,rand))*step(.45,kHash(vec2(rij*3.0+kol,bid.y)).y);
+            float hegA=(1.0-smoothstep(.0012,.0012+aa,rand))*step(.7,kHash(vec2(rij*3.0+kol,bid.y)).y);
             float zHeg=1.0-smoothstep(.005,.016,akPx);
             float heg=max(hegK,hegA*zHeg);
             /* van ver: de heggen als een zweem donkerder langs de kavelranden */
             heg=mix((1.0-smoothstep(.0,.016+akPx,kRand))*.12*(1.0-smoothstep(.03,.13,akPx)),heg,zHeg);
             float pad=(1.0-smoothstep(.002,.002+aa,abs(kRand-.004)))*zHeg*.6;
-            vec3 akkerRes=mix(gewas,uHeg,heg);
+            vec3 akkerRes=mix(gewas,uHeg*(.85+.3*texture2D(uDetail,vWolkW.xz*9.0).r),heg*.9);
             akkerRes=mix(akkerRes,uWegKleur,pad*(1.0-heg));
             float zKavel=1.0-smoothstep(.16,.45,akPx);
-            diffuseColor.rgb=mix(diffuseColor.rgb,akkerRes*(.92+.16*korrel),akker*.62*zKavel);
+            diffuseColor.rgb=mix(diffuseColor.rgb,akkerRes*(.94+.12*korrel),akker*.7*zKavel);
           }
           /* De wegen. Per cel van een eenheid staat in uWegCel welke
              lijnstukken er langs komen (wegLijnen() in 3d-grond.js); hier de
@@ -1545,6 +1598,72 @@ export async function maak3D(ctx){
     if(detailVakken.size>600){ const eerste=detailVakken.keys().next().value; detailVakken.delete(eerste); }
     return v;
   }
+  /* ---- bomen in 3D, dichtbij ----
+     Dichtbij is een boom geen plaatje maar een boom: een stam en een kruin
+     van een paar onregelmatige bladmassa's (loof), of een stam met drie
+     kegels (naald), met licht en schaduw, en in de shader groepjes blad.
+     Duizenden tegelijk in één opdracht per soort. Verder dan BOOM3D blijven
+     het de plaatjes van hierboven — daar zijn ze maar een paar beeldpunten. */
+  const BOOM3D=klein?8:14, BOOM3DMAX=klein?8000:30000;
+  let bomen3D=null;
+  function boomVorm(naald){
+    const delen=[], merk=(g,deel)=>{ g=g.index?g.toNonIndexed():g; const n=g.getAttribute("position").count; g.setAttribute("aDeel",new THREE.Float32BufferAttribute(new Float32Array(n).fill(deel),1)); if(g.getAttribute("uv"))g.deleteAttribute("uv"); delen.push(g); };
+    merk(new THREE.CylinderGeometry(.035,.06,naald?.35:.5,6,1,true).translate(0,naald?.175:.25,0),0);
+    const hobbel=(g,k)=>{ const p=g.getAttribute("position"); for(let i=0;i<p.count;i++){ const x=p.getX(i),y=p.getY(i),z=p.getZ(i); const f=1+(T.hash2(Math.round(x*97+k*13),Math.round((y+z)*89))-.5)*.28; p.setXYZ(i,x*f,y*f,z*f); } return g; };
+    if(naald){
+      [[.36,.42,.2],[.28,.38,.45],[.18,.36,.68]].forEach(([r,h,y],i)=>merk(new THREE.ConeGeometry(r,h,9,1,false).translate(0,y+h/2,0),1));
+    }else{
+      merk(hobbel(new THREE.IcosahedronGeometry(.3,1),1).translate(0,.72,0),1);
+      merk(hobbel(new THREE.IcosahedronGeometry(.22,1),2).translate(.16,.56,.06),1);
+      merk(hobbel(new THREE.IcosahedronGeometry(.2,1),3).translate(-.12,.6,-.12),1);
+    }
+    const g=mergeGeometries(delen); g.computeVertexNormals();
+    return g;
+  }
+  function maakBomen3D(){
+    if(!BOOM3D)return;
+    const m=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:0});
+    m.onBeforeCompile=sh=>{
+      metNevel(sh);
+      sh.vertexShader=sh.vertexShader
+        .replace("#include <common>","#include <common>\nattribute float aDeel; varying float vDeel; varying vec3 vObj; varying float vZaad; varying vec3 vWolkW;")
+        .replace("#include <begin_vertex>","#include <begin_vertex>\nvDeel=aDeel; vObj=position; vZaad=float(gl_InstanceID);")
+        .replace("#include <worldpos_vertex>","#include <worldpos_vertex>\nvWolkW=(modelMatrix*instanceMatrix*vec4(transformed,1.0)).xyz;");
+      sh.fragmentShader=sh.fragmentShader
+        .replace("#include <common>","#include <common>\nuniform sampler2D uDetail; uniform float uGebouwLicht; varying float vDeel; varying vec3 vObj; varying float vZaad; varying vec3 vWolkW;")
+        .replace("#include <fog_pars_fragment>","#include <fog_pars_fragment>\n"+WOLK_GLSL)
+        .replace("#include <color_fragment>",`#include <color_fragment>
+          if(vDeel<.5){ diffuseColor.rgb=vec3(.16,.12,.085); }
+          else{
+            /* groepjes blad: lichter waar de zon op een groepje valt, donker ertussen */
+            float b1=texture2D(uDetail,vObj.xy*1.7+vObj.z*.9+vZaad*.137).r, b2=texture2D(uDetail,vObj.zy*3.1+vZaad*.071).r;
+            diffuseColor.rgb*=.62+.62*(b1*.6+b2*.4);
+          }`)
+        .replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuseColor.rgb*uGebouwLicht*1.4;")
+        .replace("#include <lights_fragment_end>","#include <lights_fragment_end>\nfloat ws=wolkSchaduw(vWolkW); reflectedLight.directDiffuse*=ws; reflectedLight.directSpecular*=ws;");
+      sh.uniforms.uDetail={value:detailTex};
+    };
+    const maak=naald=>{ const x=new THREE.InstancedMesh(boomVorm(naald),m,BOOM3DMAX); x.count=0; x.castShadow=x.receiveShadow=true; x.frustumCulled=false;
+      x.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(BOOM3DMAX*3),3); wereld.add(x); return x; };
+    bomen3D={loof:maak(false),naald:maak(true),n:{loof:0,naald:0}};
+  }
+  const boomM=new THREE.Matrix4(), boomQ=new THREE.Quaternion(), boomP=new THREE.Vector3(), boomS=new THREE.Vector3(), boomAs=new THREE.Vector3(0,1,0);
+  /* zet een boom als 3D-boom neer; geeft false als het geen 3D-boom wordt */
+  function boom3D(v,i,cam){
+    if(!bomen3D)return false;
+    const soort=Math.floor(v[i+4]); if(soort>3)return false;
+    const dx=v[i]-cam.x, dz=v[i+2]-cam.z, dy=v[i+1]-cam.y;
+    if(dx*dx+dz*dz+dy*dy>BOOM3D*BOOM3D)return false;
+    const naald=soort<2, bak=naald?bomen3D.naald:bomen3D.loof, k=naald?"naald":"loof";
+    const n=bomen3D.n[k]; if(n>=BOOM3DMAX)return false;
+    const h=v[i+3]*1.15, br=v[i+3]*(naald?.7:.95);
+    boomM.compose(boomP.set(v[i],v[i+1],v[i+2]),boomQ.setFromAxisAngle(boomAs,v[i+5]*6.283),boomS.set(br,h,br));
+    bak.setMatrixAt(n,boomM);
+    const f=1.25+.4*v[i+5];
+    bak.instanceColor.setXYZ(n,v[i+6]*f,v[i+7]*f,v[i+8]*f);
+    bomen3D.n[k]=n+1;
+    return true;
+  }
   /* ---- stenen ----
      Rotsblokken op steile hellingen, hoog in de bergen en aan de voet van een
      klif: een onregelmatige steen, duizenden keren getekend in één opdracht,
@@ -1590,6 +1709,7 @@ export async function maak3D(ctx){
     const boven=c.y-grondY(mx,my);
     randBomen.visible=boven<RANDVER;
     if(stenen)stenen.visible=boven<DETAILVER;
+    if(bomen3D){ bomen3D.loof.visible=bomen3D.naald.visible=boven<BOOM3D; }
     if(!randBomen.visible)return;
     if(!dwing&&Math.hypot(mx-randStand.x,my-randStand.y)<Math.min(8,2+boven*.1)&&Math.abs(boven-randStand.b)<Math.max(3,boven*.25))return;
     randStand.x=mx; randStand.y=my; randStand.b=boven;
@@ -1605,16 +1725,22 @@ export async function maak3D(ctx){
     vakken2.sort((a,b)=>a[0]-b[0]);
     const g=randBomen.geometry, A=g.getAttribute("aBoom").array, S=g.getAttribute("aSoort").array, K=g.getAttribute("aKleur").array;
     let n=0;
+    if(bomen3D){ bomen3D.n.loof=0; bomen3D.n.naald=0; }
+    const camW=c.clone(); camW.y/=wereld.scale.y||1;
     for(const [d,cx,cy] of vakken2){
       const lagen=[randBomenIn(cx,cy)];
       if(Math.hypot(d,boven)<DETAILVER)lagen.push(detailIn(cx,cy));
-      for(const v of lagen)for(let i=0;i<v.length&&n<RANDMAX;i+=9,n++){
+      const dicht=Math.hypot(d,boven)<BOOM3D;
+      for(const v of lagen)for(let i=0;i<v.length&&n<RANDMAX;i+=9){
+        if(dicht&&boom3D(v,i,camW))continue;
         A[n*4]=v[i]; A[n*4+1]=v[i+1]; A[n*4+2]=v[i+2]; A[n*4+3]=v[i+3];
         S[n*2]=v[i+4]; S[n*2+1]=v[i+5];
         K[n*3]=v[i+6]; K[n*3+1]=v[i+7]; K[n*3+2]=v[i+8];
+        n++;
       }
       if(n>=RANDMAX)break;
     }
+    if(bomen3D)for(const k of ["loof","naald"]){ const x=bomen3D[k]; x.count=bomen3D.n[k]; x.instanceMatrix.needsUpdate=true; x.instanceColor.needsUpdate=true; }
     g.instanceCount=n;
     for(const k of ["aBoom","aSoort","aKleur"]){ const at=g.getAttribute(k); at.needsUpdate=true; at.clearUpdateRanges?.(); at.addUpdateRange?.(0,n*at.itemSize); }
     /* de stenen in de vakken dichtbij */
@@ -2101,6 +2227,7 @@ export async function maak3D(ctx){
     verdeelGehuchten();
     if(!randBomen)maakRandBomen();
     if(!stenen)maakStenen();
+    if(!bomen3D)maakBomen3D();
     randVakken.clear(); detailVakken.clear(); steenVakken.clear(); randStand.x=1e9;
     maakNamen();
     zetThema();

@@ -215,13 +215,20 @@ function voorbereiding(G,T){
   T.veeg(fBos,PW,PH,6); T.veeg(fLoof,PW,PH,6);
   /* Kleine bossen tussen de akkers (Araluen, Gallica…): de kaart tekent
      alleen de grote wouden, maar het boerenland heeft overal bosjes van een
-     paar honderd meter tot een paar kilometer, meest loofhout. */
-  if(G.bosjes)for(let j=0;j<PH;j++)for(let i=0;i<PW;i++){
-    const p=j*PW+i, sterk=G.bosjes[pReg[p]]; if(!sterk)continue;
-    const x=i-M, y=j-M;
-    const n=T.fbm(x*.55+71,y*.55-13,3,.2)*.7+T.ruis(x*1.3-5,y*1.3+17)*.3;
-    const w=glad(klem((n-(.68-.05*sterk))/.05,0,1))*sterk;
-    if(w>fBos[p]){ fBos[p]=w; fLoof[p]=Math.max(fLoof[p],.8); }
+     paar honderd meter tot een paar kilometer, meest loofhout. Hier staat
+     per grof vakje alleen hoe bosrijk het land is; de vorm van de bosjes
+     zelf rekent bos() op het fijne raster uit (op dit grove raster zouden
+     het blokken worden). Wel gaat het loof en de grove bosmaat mee, voor de
+     wegen en de boomrand. */
+  const fBosje=new Float32Array(MM);
+  if(G.bosjes){
+    for(let p=0;p<MM;p++)fBosje[p]=G.bosjes[pReg[p]]||0;
+    T.veeg(fBosje,PW,PH,3);
+    for(let j=0;j<PH;j++)for(let i=0;i<PW;i++){
+      const p=j*PW+i, sterk=fBosje[p]; if(sterk<.02)continue;
+      const w=bosjeOp(T,i-M+.5,j-M+.5,sterk);
+      if(w>0){ fLoof[p]=Math.max(fLoof[p],fLoof[p]+(.8-fLoof[p])*Math.min(1,w*2)); if(w*.6>fBos[p])fBos[p]=w*.6; }
+    }
   }
   /* plaatsen met een eigen landschap (het Grimsdell Woud enzovoort) */
   for(const v of vlekken){
@@ -235,7 +242,7 @@ function voorbereiding(G,T){
       }
   }
 
-  return {land,reg,pReg,pdReg,fAmp,fRug,fKoud,fBos,fLoof,mixA,mixB,mixF,kloven};
+  return {land,reg,pReg,pdReg,fAmp,fRug,fKoud,fBos,fLoof,fBosje,mixA,mixB,mixF,kloven};
 }
 
 /* ======================= taak 1b: de afstanden =======================
@@ -608,9 +615,15 @@ function erodeer(R,h,land){
    shader tekent er de kruinen in. Waar het ophoudt: langs de kust (strand),
    langs rivieren, op steile rotswanden, boven de boomgrens, en rond kastelen
    en dorpen, die in hun eigen open plek met akkers liggen. */
+/* een bosje tussen de akkers: 0 (veld) tot sterk (bos), met een rafelige rand */
+function bosjeOp(T,x,y,sterk){
+  const n=T.fbm(x*.55+71,y*.55-13,3,.2)*.62+T.ruis(x*1.3-5,y*1.3+17)*.26+T.ruis(x*4.1+9,y*4.1-31)*.12;
+  return glad(klem((n-(.68-.05*sterk))/.018,0,1))*sterk;
+}
+
 function bos(G,T){
   const R=G.R, {RW,RH,RES,M}=R, {y0,y1,hr0,hr1}=G, ho=hr0*RW;
-  const {h,land,rivier,kust,fBos,plekken}=G, meren=G.meren||[];
+  const {h,land,rivier,kust,fBos,fBosje,plekken}=G, meren=G.meren||[];
   const rijen=hr1-hr0, b=new Uint8Array(rijen*RW);
   /* de open plekken in vakjes van 4 eenheden, zodat elk punt alleen naar
      de plekken in zijn buurt hoeft te kijken */
@@ -630,7 +643,9 @@ function bos(G,T){
     for(let x=1;x<RW-1;x++){
       const p=y*RW+x, q=p-ho; if(!land[q]||rivier[q]>30)continue;
       const wx=x/RES-M;
-      const bw=leesVeld(fBos,G.go,R,wx,wy); if(bw<.05)continue;
+      let bw=leesVeld(fBos,G.go,R,wx,wy);
+      if(fBosje){ const s=leesVeld(fBosje,G.go,R,wx,wy); if(s>.02)bw=Math.max(bw,bosjeOp(T,wx,wy,s)); }
+      if(bw<.05)continue;
       if(meren.some(m=>Math.hypot(wx-m.x,wy-m.y)<m.r))continue;
       const hh=h[q];
       const gx=(Yvan(h[q+1])-Yvan(h[q-1]))*RES*.5, gz=(Yvan(h[q+RW])-Yvan(h[q-RW]))*RES*.5;
