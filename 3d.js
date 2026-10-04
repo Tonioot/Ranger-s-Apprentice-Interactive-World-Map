@@ -1804,7 +1804,16 @@ export async function maak3D(ctx){
     };
     const maak=naald=>{ const x=new THREE.InstancedMesh(boomVorm(naald),m,BOOM3DMAX); x.count=0; x.castShadow=x.receiveShadow=true; x.frustumCulled=false;
       x.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(BOOM3DMAX*3),3); wereld.add(x); return x; };
-    bomen3D={loof:maak(false),naald:maak(true),n:{loof:0,naald:0}};
+    /* Voetschaduw: onder een boom is de grond donkerder, ook waar de zon
+       erbij kan, want de kruin houdt het licht van de hemel tegen. Een platte
+       schijf per boom, in het midden donker en naar de rand toe vervagend
+       (de vierde kleurwaarde van elk hoekpunt is zijn doorzichtigheid). */
+    const vg=new THREE.CircleGeometry(1,14).rotateX(-Math.PI/2), vp=vg.getAttribute("position"), vk=new Float32Array(vp.count*4);
+    for(let i=0;i<vp.count;i++){ const r=Math.hypot(vp.getX(i),vp.getZ(i)); vk[i*4+3]=.42*(1-r)*(1-r); }
+    vg.setAttribute("color",new THREE.Float32BufferAttribute(vk,4));
+    const voet=new THREE.InstancedMesh(vg,new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,depthWrite:false,fog:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),BOOM3DMAX*2);
+    voet.count=0; voet.frustumCulled=false; voet.renderOrder=1; wereld.add(voet);
+    bomen3D={loof:maak(false),naald:maak(true),voet,n:{loof:0,naald:0,voet:0}};
   }
   const boomM=new THREE.Matrix4(), boomQ=new THREE.Quaternion(), boomP=new THREE.Vector3(), boomS=new THREE.Vector3(), boomAs=new THREE.Vector3(0,1,0);
   /* zet een boom als 3D-boom neer; geeft false als het geen 3D-boom wordt */
@@ -1821,6 +1830,10 @@ export async function maak3D(ctx){
     const f=1.25+.4*v[i+5];
     bak.instanceColor.setXYZ(n,v[i+6]*f,v[i+7]*f,v[i+8]*f);
     bomen3D.n[k]=n+1;
+    /* de voetschaduw: iets breder dan de kruin, net boven de grond */
+    const vn=bomen3D.n.voet, vb=br*(naald?.42:.52);
+    boomM.compose(boomP.set(v[i],v[i+1]+.008,v[i+2]),boomQ.identity(),boomS.set(vb,1,vb));
+    bomen3D.voet.setMatrixAt(vn,boomM); bomen3D.n.voet=vn+1;
     return true;
   }
   /* ---- stenen ----
@@ -1868,7 +1881,7 @@ export async function maak3D(ctx){
     const boven=c.y-grondY(mx,my);
     randBomen.visible=boven<RANDVER;
     if(stenen)stenen.visible=boven<DETAILVER;
-    if(bomen3D){ bomen3D.loof.visible=bomen3D.naald.visible=boven<BOOM3D; }
+    if(bomen3D){ bomen3D.loof.visible=bomen3D.naald.visible=bomen3D.voet.visible=boven<BOOM3D; }
     if(!randBomen.visible)return;
     if(!dwing&&Math.hypot(mx-randStand.x,my-randStand.y)<Math.min(8,2+boven*.1)&&Math.abs(boven-randStand.b)<Math.max(3,boven*.25))return;
     randStand.x=mx; randStand.y=my; randStand.b=boven;
@@ -1884,7 +1897,7 @@ export async function maak3D(ctx){
     vakken2.sort((a,b)=>a[0]-b[0]);
     const g=randBomen.geometry, A=g.getAttribute("aBoom").array, S=g.getAttribute("aSoort").array, K=g.getAttribute("aKleur").array;
     let n=0;
-    if(bomen3D){ bomen3D.n.loof=0; bomen3D.n.naald=0; }
+    if(bomen3D){ bomen3D.n.loof=0; bomen3D.n.naald=0; bomen3D.n.voet=0; }
     const camW=c.clone(); camW.y/=wereld.scale.y||1;
     for(const [d,cx,cy] of vakken2){
       const lagen=[randBomenIn(cx,cy)];
@@ -1899,7 +1912,10 @@ export async function maak3D(ctx){
       }
       if(n>=RANDMAX)break;
     }
-    if(bomen3D)for(const k of ["loof","naald"]){ const x=bomen3D[k]; x.count=bomen3D.n[k]; x.instanceMatrix.needsUpdate=true; x.instanceColor.needsUpdate=true; }
+    if(bomen3D){
+      for(const k of ["loof","naald"]){ const x=bomen3D[k]; x.count=bomen3D.n[k]; x.instanceMatrix.needsUpdate=true; x.instanceColor.needsUpdate=true; }
+      bomen3D.voet.count=bomen3D.n.voet; bomen3D.voet.instanceMatrix.needsUpdate=true;
+    }
     g.instanceCount=n;
     for(const k of ["aBoom","aSoort","aKleur"]){ const at=g.getAttribute(k); at.needsUpdate=true; at.clearUpdateRanges?.(); at.addUpdateRange?.(0,n*at.itemSize); }
     /* de stenen in de vakken dichtbij */
