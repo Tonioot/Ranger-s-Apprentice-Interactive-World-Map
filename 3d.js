@@ -782,6 +782,7 @@ export async function maak3D(ctx){
   /* de kleur van rots, uit hetzelfde CSS-variabele als de kaart (per thema) */
   const rotsKleur={value:new THREE.Color()}, wegKleur={value:new THREE.Color()};
   const wegU={uWegSeg:{value:null},uWegLijst:{value:null},uWegCel:{value:null}};
+  let wegL=null, akkerData=null;
   const akkU={value:[0,1,2,3,4].map(()=>new THREE.Color())}, hegKleur={value:new THREE.Color()};
   function maakLandMat(kleurTex,normTex,loofTex){
     const m=new THREE.MeshStandardMaterial({map:kleurTex,normalMap:normTex,
@@ -818,7 +819,7 @@ export async function maak3D(ctx){
           if(wand>.002){
             float laag=texture2D(uDetail,vec2((vWolkW.x+vWolkW.z)*.05,vWolkW.y*.9)).r;
             float voor=texture2D(uDetail,vec2((vWolkW.x-vWolkW.z)*1.3,vWolkW.y*.12)).r;
-            vec3 rots=uRots*(.72+.4*laag)*(.86+.24*voor);
+            vec3 rots=uRots*(.72+.4*laag)*(.93+.12*voor);
             diffuseColor.rgb=mix(diffuseColor.rgb,rots,wand);
           }
           float loof=texture2D(uLoof,vMapUv).r;
@@ -1220,7 +1221,7 @@ export async function maak3D(ctx){
   const RANDVER=klein?120:175;        /* verder weg is een boom kleiner dan een beeldpunt */
   const RANDMAX=klein?60000:160000;
   let randBomen=null;
-  const randStand={x:1e9,y:1e9};
+  const randStand={x:1e9,y:1e9,b:0};
   const randU={uPixSchaal:{value:800},uRand:{value:new THREE.Vector2(2.4,5)},uAtlas:{value:null}};
   function maakRandAtlas(){
     /* vier soorten: twee naaldbomen, twee loofbomen. Grijs, met licht van
@@ -1390,14 +1391,149 @@ export async function maak3D(ctx){
     if(randVakken.size>2500){ const eerste=randVakken.keys().next().value; randVakken.delete(eerste); }
     return v;
   }
+  /* ---- het fijne werk: bomen langs heggen en wegen, en losse veldbomen ----
+     Alleen in de vakken dichtbij (DETAILVER): verder weg is zo'n boom kleiner
+     dan een beeldpunt. De heggen liggen waar de shader ze tekent: hier staat
+     hetzelfde kavelpatroon nog eens, met dezelfde husselfunctie (kHash) en
+     dezelfde golving uit het korrelplaatje. */
+  const DETAILVER=klein?45:70, detailVakken=new Map();
+  const kHashJS=(cx,cy)=>{
+    const qx=Math.imul((cx+65536)>>>0,1597334673)>>>0, qy=Math.imul((cy+65536)>>>0,3812015801)>>>0;
+    const n=Math.imul((qx^qy)>>>0,1597334673)>>>0;
+    return [n/4294967295,(Math.imul(n,48271)>>>0)/4294967295];
+  };
+  const korrelOp=(u,v)=>{   /* het korrelplaatje bilineair, herhalend */
+    const d=detailTex.image.data, S=256, x=u*S-.5, y=v*S-.5, x0=Math.floor(x), y0=Math.floor(y), tx=x-x0, ty=y-y0;
+    const p=(i,j)=>d[((((j%S)+S)%S)*S+(((i%S)+S)%S))*4]/255;
+    return p(x0,y0)*(1-tx)*(1-ty)+p(x0+1,y0)*tx*(1-ty)+p(x0,y0+1)*(1-tx)*ty+p(x0+1,y0+1)*tx*ty;
+  };
+  /* hoe ver een wereldpunt (X,Z) van de rand van zijn kavel ligt */
+  function kavelRand(px,pz){
+    const wx=(korrelOp(px*.021,pz*.021)-.5)*.9, wz=(korrelOp(px*.021+.37,pz*.021+.61)-.5)*.9;
+    const bx=(px+wx)/3.2, bz=(pz+wz)/3.2, cx=Math.floor(bx), cz=Math.floor(bz), fx=bx-cx, fz=bz-cz;
+    let b1=9,b2=9;
+    for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){
+      const o=kHashJS(cx+i+3,cz+j+11), rx=i+.1+.8*o[0]-fx, rz=j+.1+.8*o[1]-fz, d=rx*rx+rz*rz;
+      if(d<b1){ b2=b1; b1=d; } else if(d<b2)b2=d;
+    }
+    return (Math.sqrt(b2)-Math.sqrt(b1))*3.2*.5;
+  }
+  const akkerOp=(wx,wy)=>{ if(!akkerData)return 0; const i=Math.floor(wx+MARGE), j=Math.floor(wy+MARGE); return i<0||j<0||i>=R.PW||j>=R.PH?0:akkerData[(j*R.PW+i)*2+1]/255; };
+  function detailIn(cx,cy){
+    const sl=cx+","+cy; let v=detailVakken.get(sl); if(v)return v;
+    const uit=[], {land,bos,rivier,h}=D;
+    /* het groen van een boom in het veld: van zichzelf, niet van de akker eronder */
+    const kleurBij=(wx,wy)=>{ const f=.82+.36*T.hash2(Math.round(wx*71),Math.round(wy*67)), g=T.hash2(Math.round(wx*13),Math.round(wy*19)); return [.12*f*(1+.25*g),.2*f,.075*f]; };
+    const stijlBij=(wx,wy)=>{ const p=Math.floor((wy+MARGE)*RES)*RW+Math.floor((wx+MARGE)*RES); return gebiedStijl(D.reg[p]); };
+    const vrij=(wx,wy)=>{ const p=Math.floor((wy+MARGE)*RES)*RW+Math.floor((wx+MARGE)*RES); return p>=0&&p<N&&land[p]&&!rivier[p]&&bos[p]<20&&h[p]<.3; };
+    /* langs de kavelranden */
+    const S=.11;
+    for(let wy=cy*RANDVAK+S/2;wy<(cy+1)*RANDVAK;wy+=S)for(let wx=cx*RANDVAK+S/2;wx<(cx+1)*RANDVAK;wx+=S){
+      const ak=akkerOp(wx,wy); if(ak<.3)continue;
+      /* niet elke heg heeft bomen: in stukken van een eenheid of zo wel of niet */
+      if(T.hash2(Math.floor(wx/1.2)*5+1,Math.floor(wy/1.2)*3+7)>.75*ak)continue;
+      const hk=T.hash2(Math.round(wx*97),Math.round(wy*89));
+      if(hk>.85)continue;
+      const kr=kavelRand(X(wx),Z(wy)); if(kr>.02)continue;
+      if(!vrij(wx,wy))continue;
+      const st=stijlBij(wx,wy); if(st==="arrida"||st==="steppen")continue;
+      const k=kleurBij(wx,wy);
+      uit.push(X(wx),yOp(wx,wy)-.01,Z(wy),.09+.05*T.hash2(Math.round(wx*31),Math.round(wy*37)),st==="toscana"||st==="helleno"?7:2+(hk<.05*ak?1:0),hk*5%1,k[0],k[1],k[2]);
+    }
+    /* langs de wegen: stukken laan, in Toscana cipressen */
+    if(wegL){
+      const {seg,lijst,cel}=wegL, gezien=new Set();
+      for(let j=cy*RANDVAK;j<(cy+1)*RANDVAK;j++)for(let i=cx*RANDVAK;i<(cx+1)*RANDVAK;i++){
+        const ci=(j+MARGE)*R.PW+i+MARGE, c=cel[ci]; if(!(c>0))continue;
+        const o=Math.floor(c/32), n=c-o*32;
+        for(let t=0;t<n;t++){
+          const k=lijst[o+t]; if(gezien.has(k))continue; gezien.add(k);
+          const a=((Math.floor(k/SEGBREED)*SEGBREED*2)+(k%SEGBREED)*2)*4;
+          const x0=seg[a],y0=seg[a+1],x1=seg[a+2],y1=seg[a+3],half=seg[a+4],soort=seg[a+5];
+          if(soort>0)continue;
+          const mxs=(x0+x1)/2, mys=(y0+y1)/2;
+          if(mxs<cx*RANDVAK||mxs>=(cx+1)*RANDVAK||mys<cy*RANDVAK||mys>=(cy+1)*RANDVAK)continue;
+          const L=Math.hypot(x1-x0,y1-y0); if(L<1e-4)continue;
+          const nx=-(y1-y0)/L, ny=(x1-x0)/L;
+          for(let d=0;d<L;d+=.09){
+            const px=x0+(x1-x0)*d/L, py=y0+(y1-y0)*d/L;
+            /* een laan loopt in stukken van een paar honderd meter, aan één
+               of aan beide kanten, en niet elke boom staat er nog */
+            const stuk=T.hash2(Math.floor(px/1.3)*7+3,Math.floor(py/1.3)*11+5);
+            if(stuk>.2)continue;
+            if(T.hash2(Math.round(px*211),Math.round(py*223))<.22)continue;
+            const st=stijlBij(px,py); if(st==="arrida"||st==="steppen")continue;
+            for(const z of stuk<.08?[-1,1]:[stuk<.14?-1:1]){
+              const tx=px+nx*z*(half+3.5*.006), ty=py+ny*z*(half+3.5*.006);
+              if(!vrij(tx,ty))continue;
+              const kk=kleurBij(tx,ty);
+              uit.push(X(tx),yOp(tx,ty)-.01,Z(ty),.1+.03*T.hash2(Math.round(tx*53),Math.round(ty*59)),st==="toscana"||st==="helleno"?7:2,T.hash2(Math.round(tx*7),Math.round(ty*3)),kk[0],kk[1],kk[2]);
+            }
+          }
+        }
+      }
+    }
+    /* een losse boom midden in een wei */
+    for(let i=0;i<14;i++){
+      const wx=(cx+T.hash2(cx*13+i,cy*7))*RANDVAK, wy=(cy+T.hash2(cx*5,cy*17+i))*RANDVAK;
+      if(akkerOp(wx,wy)<.25||!vrij(wx,wy))continue;
+      const st=stijlBij(wx,wy); if(st==="arrida"||st==="steppen")continue;
+      const k=kleurBij(wx,wy);
+      uit.push(X(wx),yOp(wx,wy)-.01,Z(wy),.12+.05*T.hash2(i,cx+cy),2,T.hash2(i+3,cx-cy),k[0],k[1],k[2]);
+    }
+    v=new Float32Array(uit);
+    detailVakken.set(sl,v);
+    if(detailVakken.size>600){ const eerste=detailVakken.keys().next().value; detailVakken.delete(eerste); }
+    return v;
+  }
+  /* ---- stenen ----
+     Rotsblokken op steile hellingen, hoog in de bergen en aan de voet van een
+     klif: een onregelmatige steen, duizenden keren getekend in één opdracht,
+     elk met een eigen maat, draaiing en tint. Net als het fijne werk alleen
+     in de vakken dichtbij. */
+  const STEENMAX=klein?20000:50000, steenVakken=new Map();
+  let stenen=null;
+  function maakStenen(){
+    const g=new THREE.IcosahedronGeometry(1,1), pa=g.getAttribute("position");
+    for(let i=0;i<pa.count;i++){ const f=.78+.44*T.hash2(i*7+1,i*13+5); pa.setXYZ(i,pa.getX(i)*f,pa.getY(i)*f*.7,pa.getZ(i)*f); }
+    g.computeVertexNormals();
+    const m=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95,metalness:0,flatShading:true});
+    m.onBeforeCompile=sh=>{ metNevel(sh); sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nuniform float uGebouwLicht;").replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuseColor.rgb*uGebouwLicht;"); };
+    stenen=new THREE.InstancedMesh(g,m,STEENMAX);
+    stenen.count=0; stenen.castShadow=stenen.receiveShadow=true; stenen.frustumCulled=false;
+    stenen.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(STEENMAX*3),3);
+    wereld.add(stenen);
+  }
+  function stenenIn(cx,cy){
+    const sl=cx+","+cy; let v=steenVakken.get(sl); if(v)return v;
+    const uit=[], {land,h,bos,rivier}=D, S=.3;
+    for(let wy=cy*RANDVAK+S/2;wy<(cy+1)*RANDVAK;wy+=S)for(let wx=cx*RANDVAK+S/2;wx<(cx+1)*RANDVAK;wx+=S){
+      const px=wx+(T.hash2(Math.round(wx*41),Math.round(wy*43))-.5)*S, py=wy+(T.hash2(Math.round(wx*47),Math.round(wy*53))-.5)*S;
+      const fx=Math.floor((px+MARGE)*RES), fy=Math.floor((py+MARGE)*RES); if(fx<1||fy<1||fx>=RW-1||fy>=RH-1)continue;
+      const p=fy*RW+fx; if(!land[p]||rivier[p]>40||bos[p]>120)continue;
+      const gx=(Yvan(h[p+1])-Yvan(h[p-1]))*RES*.5, gz=(Yvan(h[p+RW])-Yvan(h[p-RW]))*RES*.5, hl=Math.hypot(gx,gz);
+      /* hoe groot de kans op een steen hier is */
+      const kans=klem((hl-.6)/1.4,0,1)*.7+klem((h[p]-.32)/.3,0,1)*.35+(D.kust[p]<8&&hl>.5?.4:0);
+      const hk=T.hash2(Math.round(px*61),Math.round(py*67)); if(hk>kans)continue;
+      const maat=(.008+.03*Math.pow(T.hash2(Math.round(px*71),Math.round(py*73)),2.2))*(1+hl*.3);
+      const t=.85+.3*T.hash2(Math.round(px*79),Math.round(py*83));
+      uit.push(X(px),yOp(px,py)-maat*.35,Z(py),maat,hk*97%6.283,t);
+    }
+    v=new Float32Array(uit);
+    steenVakken.set(sl,v);
+    if(steenVakken.size>600){ const eerste=steenVakken.keys().next().value; steenVakken.delete(eerste); }
+    return v;
+  }
+  const steenM=new THREE.Matrix4(), steenQ=new THREE.Quaternion(), steenAs=new THREE.Vector3(0,1,0), steenP=new THREE.Vector3(), steenS=new THREE.Vector3(), steenK=new THREE.Color();
   function werkRandBomenBij(dwing){
     if(!randBomen)return;
     const c=camera.position, [mx,my]=naarKaart(c);
     const boven=c.y-grondY(mx,my);
     randBomen.visible=boven<RANDVER;
+    if(stenen)stenen.visible=boven<DETAILVER;
     if(!randBomen.visible)return;
-    if(!dwing&&Math.hypot(mx-randStand.x,my-randStand.y)<8)return;
-    randStand.x=mx; randStand.y=my;
+    if(!dwing&&Math.hypot(mx-randStand.x,my-randStand.y)<Math.min(8,2+boven*.1)&&Math.abs(boven-randStand.b)<Math.max(3,boven*.25))return;
+    randStand.x=mx; randStand.y=my; randStand.b=boven;
     const r=Math.sqrt(Math.max(0,RANDVER*RANDVER-boven*boven))+RANDVAK;
     const vakken2=[];
     for(let cy=Math.floor((my-r)/RANDVAK);cy<=Math.floor((my+r)/RANDVAK);cy++)
@@ -1410,9 +1546,10 @@ export async function maak3D(ctx){
     vakken2.sort((a,b)=>a[0]-b[0]);
     const g=randBomen.geometry, A=g.getAttribute("aBoom").array, S=g.getAttribute("aSoort").array, K=g.getAttribute("aKleur").array;
     let n=0;
-    for(const [,cx,cy] of vakken2){
-      const v=randBomenIn(cx,cy);
-      for(let i=0;i<v.length&&n<RANDMAX;i+=9,n++){
+    for(const [d,cx,cy] of vakken2){
+      const lagen=[randBomenIn(cx,cy)];
+      if(Math.hypot(d,boven)<DETAILVER)lagen.push(detailIn(cx,cy));
+      for(const v of lagen)for(let i=0;i<v.length&&n<RANDMAX;i+=9,n++){
         A[n*4]=v[i]; A[n*4+1]=v[i+1]; A[n*4+2]=v[i+2]; A[n*4+3]=v[i+3];
         S[n*2]=v[i+4]; S[n*2+1]=v[i+5];
         K[n*3]=v[i+6]; K[n*3+1]=v[i+7]; K[n*3+2]=v[i+8];
@@ -1421,6 +1558,22 @@ export async function maak3D(ctx){
     }
     g.instanceCount=n;
     for(const k of ["aBoom","aSoort","aKleur"]){ const at=g.getAttribute(k); at.needsUpdate=true; at.clearUpdateRanges?.(); at.addUpdateRange?.(0,n*at.itemSize); }
+    /* de stenen in de vakken dichtbij */
+    if(stenen){
+      steenK.set(css("--rots")||"#9C9782");
+      let ns=0;
+      for(const [d,cx,cy] of vakken2){
+        if(Math.hypot(d,boven)>=DETAILVER)continue;
+        const v=stenenIn(cx,cy);
+        for(let i=0;i<v.length&&ns<STEENMAX;i+=6,ns++){
+          steenM.compose(steenP.set(v[i],v[i+1],v[i+2]),steenQ.setFromAxisAngle(steenAs,v[i+4]),steenS.set(v[i+3],v[i+3],v[i+3]));
+          stenen.setMatrixAt(ns,steenM);
+          stenen.instanceColor.setXYZ(ns,steenK.r*v[i+5],steenK.g*v[i+5],steenK.b*v[i+5]);
+        }
+        if(ns>=STEENMAX)break;
+      }
+      stenen.count=ns; stenen.instanceMatrix.needsUpdate=true; stenen.instanceColor.needsUpdate=true;
+    }
   }
   const gebouwPlekken=[];        /* [x,y,straal]: de plek van elk gebouwd ding */
 
@@ -1551,7 +1704,7 @@ export async function maak3D(ctx){
      van lijnstukken, en waar die lijst begint. */
   function maakWegen(){
     const alle=D.wegen.map(w=>({pts:w.p,breed:w.b,soort:w.s})).concat(wegenVanPlaatsen);
-    const L=wegLijnen(R,alle);
+    const L=wegL=wegLijnen(R,alle);
     const tex=(data,b,h,fmt)=>{ const t=new THREE.DataTexture(data,b,h,fmt,THREE.FloatType); t.minFilter=t.magFilter=THREE.NearestFilter; t.generateMipmaps=false; t.needsUpdate=true; return t; };
     wegU.uWegSeg.value=tex(L.seg,SEGBREED*2,L.segRijen,THREE.RGBAFormat);
     wegU.uWegLijst.value=tex(L.lijst,LIJSTBREED,L.lijstRijen,THREE.RedFormat);
@@ -1812,6 +1965,7 @@ export async function maak3D(ctx){
       }
       T.veeg(ak,R.PW,R.PH,2);
       for(let i=0;i<MM;i++){ l[i*2]=klem(D.fLoof[i],0,1)*255; l[i*2+1]=klem(ak[i],0,1)*255; }
+      akkerData=l;
       loofTex=new THREE.DataTexture(l,R.PW,R.PH,THREE.RGFormat);
       loofTex.minFilter=loofTex.magFilter=THREE.LinearFilter; loofTex.needsUpdate=true; }
     landMat=maakLandMat(landKleurTex,landNormTex,loofTex);
@@ -1825,7 +1979,8 @@ export async function maak3D(ctx){
     maakWegen();
     verdeelGehuchten();
     if(!randBomen)maakRandBomen();
-    randVakken.clear(); randStand.x=1e9;
+    if(!stenen)maakStenen();
+    randVakken.clear(); detailVakken.clear(); steenVakken.clear(); randStand.x=1e9;
     maakNamen();
     zetThema();
     gebouwd=true;
@@ -2138,7 +2293,7 @@ export async function maak3D(ctx){
       try{
         const k=await opnieuwBijFout(bouwKleur);
         landKleurTex.image.data.set(k); landKleurTex.needsUpdate=true;
-        randVakken.clear(); werkRandBomenBij(true);
+        randVakken.clear(); detailVakken.clear(); werkRandBomenBij(true);
         zetThema();
       }finally{ ctx.laad.weg(); }
     },
