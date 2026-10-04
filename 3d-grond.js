@@ -514,12 +514,13 @@ function afwerking(G,T){
       const e=af[y*bw+x]/RES; if(!(e>0)||e>1e8)continue;
       const gx=x+bx0, gy=y+by0, q=gy*RW+gx, wx=gx/RES-M, wy=gy/RES-M;
       /* het hoogland: de hoogvlakte, of bergkammen daarbuiten */
-      const vlak=hoogte*(1+.16*(T.fbm(wx*.22-3,wy*.22+8,3,.3)-.5)+.07*(T.fbm(wx*.9+7,wy*.9-1,2,.2)-.5));
+      const vlak=hoogte*(1+.3*(T.fbm(wx*.22-3,wy*.22+8,3,.3)-.5)+.1*(T.fbm(wx*.9+7,wy*.9-1,2,.2)-.5));
       const rand=r*(.62+.7*T.fbm(wx*.13+5,wy*.13-9,3,.4)+.25*(T.fbm(wx*.6-2,wy*.6+4,2,.3)-.5));
       const d=Math.hypot(wx-cx,wy-cy);
-      /* bergen pas een eind achter de klifrand, en alleen aan de zuidkant:
-         naar het noorden loopt de hoogvlakte door tot de Noordelijke kliffen */
-      const berg=glad(klem((d-rand)/2.2,0,1))*glad(klem((wy-cy+.5)/3,0,1))*glad(klem((e-.7)/1.4,0,1));
+      /* het hele gebied is bergland; alleen op de hoogvlakte (een vlek met
+         een grillige rand rond het midden) is het vlakker. Vlak achter de
+         klifrand lopen de kammen nog wat op, zodat de klif het eerst opvalt */
+      const berg=glad(klem((d-rand)/3.2,0,1))*(.15+.85*glad(klem((e-.5)/2.2,0,1)));
       const f=T.fbm(wx*.16+31,wy*.16-17,4,.5), kam=1-Math.abs(2*f-1);
       /* de hoogte van het kaartreliëf telt hier niet mee: dat noemt het hele
          gebied 'bergen' en zou alles even hoog maken (een krater met wanden
