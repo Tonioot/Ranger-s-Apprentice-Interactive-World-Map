@@ -4717,6 +4717,1485 @@
      }
     ]
    ]
+  },
+  {
+   "id": "hoogklif",
+   "naam": {
+    "nl": "Hoogklif",
+    "en": "Highcliff"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een leen aan de noordwestkust van Araluen, met zijn kasteel op de hoge kliffen waaraan het zijn naam dankt.",
+    "en": "A fief on Araluen's northwest coast, its castle on the high cliffs that give it its name."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Noordwestkust, ten zuiden van Noordam",
+      "en": "Northwest coast, south of Norgate"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 78.7,
+   "y": 380.12
+  },
+  {
+   "id": "keramon",
+   "naam": {
+    "nl": "Keramon",
+    "en": "Keramon"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een leen in het noorden van Araluen, met zijn kasteel aan de rand van De Kliffen, niet ver van de Kraaienpotenrivier.",
+    "en": "A fief in the north of Araluen, its castle at the edge of The Cliffs, not far from the Crowfoot River."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Noord-Araluen, bij De Kliffen",
+      "en": "North Araluen, by The Cliffs"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 85.24,
+   "y": 381.04
+  },
+  {
+   "id": "de-kliffen",
+   "naam": {
+    "nl": "De Kliffen",
+    "en": "The Cliffs"
+   },
+   "soort": "natuur",
+   "gebied": "araluen",
+   "z": 4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een rij steile rotswanden midden in het noorden van Araluen, tussen Noordam en Keramon.",
+    "en": "A line of steep rock faces in the middle of northern Araluen, between Norgate and Keramon."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Tussen Noordam en Keramon",
+      "en": "Between Norgate and Keramon"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 86.68,
+   "y": 377.61
+  },
+  {
+   "id": "woolsey",
+   "naam": {
+    "nl": "Woolsey",
+    "en": "Woolsey"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een dorp aan de Kraaienpotenrivier, ten zuiden van Keramon.",
+    "en": "A village on the Crowfoot River, south of Keramon."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Aan de Kraaienpotenrivier",
+      "en": "On the Crowfoot River"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 87.69,
+   "y": 383.26
+  },
+  {
+   "id": "wetborg",
+   "naam": {
+    "nl": "Wetborg",
+    "en": "Wetborg"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een leen met een kasteel ten noorden van Redmont.",
+    "en": "A fief with a castle north of Redmont."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Ten noorden van Redmont",
+      "en": "North of Redmont"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 79.72,
+   "y": 388.77
+  },
+  {
+   "id": "dacton",
+   "naam": {
+    "nl": "Dacton",
+    "en": "Dacton"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een leen aan de westkust van Araluen, ten noorden van Selsey.",
+    "en": "A fief on Araluen's west coast, north of Selsey."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Westkust",
+      "en": "West coast"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 68.82,
+   "y": 388.49
+  },
+  {
+   "id": "whitby",
+   "naam": {
+    "nl": "Whitby",
+    "en": "Whitby"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "VJ1"
+   ],
+   "tekst": {
+    "nl": "Een leen in het westen van Araluen, buurman van Redmont. Whitby schaarde zich in de burgeroorlog achter de rechtmatige koning.",
+    "en": "A fief in western Araluen, Redmont's neighbour. Whitby sided with the rightful king in the civil war."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Westen, bij Redmont",
+      "en": "West, near Redmont"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 73.76,
+   "y": 389.33
+  },
+  {
+   "id": "claradon",
+   "naam": {
+    "nl": "Claradon",
+    "en": "Claradon"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een dorp aan de Tarbusrivier, stroomafwaarts van Wensley, richting de westkust.",
+    "en": "A village on the Tarbus, downstream of Wensley towards the west coast."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Aan de Tarbus, Leen Redmont",
+      "en": "On the Tarbus, Redmont Fief"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 74.78,
+   "y": 395.45
+  },
+  {
+   "id": "silvoorde",
+   "naam": {
+    "nl": "Silvoorde",
+    "en": "Silvoorde"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een dorp bij de samenvloeiing van de Tarbus en de Zalmrivier, vlak bij Wensley.",
+    "en": "A village where the Tarbus and the Salmon River meet, close to Wensley."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Leen Redmont",
+      "en": "Redmont Fief"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 78.46,
+   "y": 397.4
+  },
+  {
+   "id": "pendelstad",
+   "naam": {
+    "nl": "Pendelstad",
+    "en": "Pendelstad"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een stadje aan de Derrylon, ten oosten van Wensley.",
+    "en": "A small town on the Derrylon, east of Wensley."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Aan de Derrylon",
+      "en": "On the Derrylon"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 83.13,
+   "y": 397.37
+  },
+  {
+   "id": "kolwei",
+   "naam": {
+    "nl": "Kolwei",
+    "en": "Culway"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "VJ1"
+   ],
+   "tekst": {
+    "nl": "Een leen ten zuiden van Redmont. In de oorspronkelijke boeken heet het Culway; het steunde in de burgeroorlog de rechtmatige koning.",
+    "en": "A fief south of Redmont that supported the rightful king in the civil war."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Ten zuiden van Redmont",
+      "en": "South of Redmont"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 77.79,
+   "y": 401.41
+  },
+  {
+   "id": "kolendal",
+   "naam": {
+    "nl": "Kolendal",
+    "en": "Coledale"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een leen in het heuvelland ten zuiden van Gorlan. In de oorspronkelijke boeken heet het Coledale.",
+    "en": "A fief in the hill country south of Gorlan."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Heuvels ten zuiden van Gorlan",
+      "en": "Hills south of Gorlan"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 95.61,
+   "y": 398.01
+  },
+  {
+   "id": "scanlon",
+   "naam": {
+    "nl": "Scanlon",
+    "en": "Scanlon"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een dorp in het oosten van Araluen, tussen Gorlan en de kust.",
+    "en": "A village in eastern Araluen, between Gorlan and the coast."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Oost-Araluen",
+      "en": "East Araluen"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 103.73,
+   "y": 392.54
+  },
+  {
+   "id": "abdij-wolden",
+   "naam": {
+    "nl": "Abdij Wolden",
+    "en": "Wolden Abbey"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een abdij ten westen van Aspienne, op de weg van Kasteel Araluen naar de oostkust.",
+    "en": "An abbey west of Aspienne, on the road from Castle Araluen to the east coast."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Ten westen van Aspienne",
+      "en": "West of Aspienne"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 101.2,
+   "y": 384.38
+  },
+  {
+   "id": "aspienne",
+   "naam": {
+    "nl": "Aspienne",
+    "en": "Aspienne"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "VJ1"
+   ],
+   "tekst": {
+    "nl": "Een leen in het oosten van Araluen, ten zuiden van Treileth. Aspienne kwam in de burgeroorlog de rechtmatige koning te hulp.",
+    "en": "A fief in eastern Araluen, south of Trelleth. Aspienne came to the rightful king's aid in the civil war."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Oost-Araluen",
+      "en": "East Araluen"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 103.96,
+   "y": 386.12
+  },
+  {
+   "id": "treileth",
+   "naam": {
+    "nl": "Treileth",
+    "en": "Trelleth"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ12"
+   ],
+   "tekst": {
+    "nl": "Een leen aan de oostkust. Hier jagen Will en Maddie op de kinderrovers die zich voordoen als de 'Stealer in the Night', in de dorpen rond het kasteel.",
+    "en": "A fief on the east coast. Here Will and Maddie hunt the child-stealers posing as the 'Stealer in the Night' in the villages around the castle."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Oostkust",
+      "en": "East coast"
+     }
+    ],
+    [
+     {
+      "nl": "Dorpen",
+      "en": "Villages"
+     },
+     {
+      "nl": "Wilgendal, Ambelton, Dantwerpen, Esselden",
+      "en": "Willow Vale, Ambleton, Danver's Crossing, Esseldon"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 108.27,
+   "y": 384.43
+  },
+  {
+   "id": "wilgendal",
+   "naam": {
+    "nl": "Wilgendal",
+    "en": "Willow Vale"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ12"
+   ],
+   "tekst": {
+    "nl": "Een van de dorpen van Leen Treileth aan de oostkust, waar kinderen verdwenen in De koninklijke leerling.",
+    "en": "One of the villages of Trelleth Fief on the east coast, where children disappeared in The Royal Ranger."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Leen Treileth",
+      "en": "Trelleth Fief"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 110.14,
+   "y": 381.13
+  },
+  {
+   "id": "ambelton",
+   "naam": {
+    "nl": "Ambelton",
+    "en": "Ambleton"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ12"
+   ],
+   "tekst": {
+    "nl": "Een van de dorpen van Leen Treileth aan de oostkust, waar kinderen verdwenen in De koninklijke leerling.",
+    "en": "One of the villages of Trelleth Fief on the east coast, where children disappeared in The Royal Ranger."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Leen Treileth",
+      "en": "Trelleth Fief"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 110.93,
+   "y": 381.86
+  },
+  {
+   "id": "dantwerpen",
+   "naam": {
+    "nl": "Dantwerpen",
+    "en": "Danver's Crossing"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ12"
+   ],
+   "tekst": {
+    "nl": "Een van de dorpen van Leen Treileth aan de oostkust, waar kinderen verdwenen in De koninklijke leerling.",
+    "en": "One of the villages of Trelleth Fief on the east coast, where children disappeared in The Royal Ranger."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Leen Treileth",
+      "en": "Trelleth Fief"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 109.9,
+   "y": 383.4
+  },
+  {
+   "id": "esselden",
+   "naam": {
+    "nl": "Esselden",
+    "en": "Esseldon"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ12"
+   ],
+   "tekst": {
+    "nl": "Een van de dorpen van Leen Treileth aan de oostkust, waar kinderen verdwenen in De koninklijke leerling.",
+    "en": "One of the villages of Trelleth Fief on the east coast, where children disappeared in The Royal Ranger."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Leen Treileth",
+      "en": "Trelleth Fief"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 111.68,
+   "y": 384.09
+  },
+  {
+   "id": "martenzij",
+   "naam": {
+    "nl": "Martenzij",
+    "en": "Martinsyde"
+   },
+   "soort": "kasteel",
+   "gebied": "araluen",
+   "z": 3.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een leen aan de zuidrand van het Westwoud, in het zuidwesten van Araluen.",
+    "en": "A fief on the southern edge of the Western Woods, in southwest Araluen."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Zuidrand van het Westwoud",
+      "en": "Southern edge of the Western Woods"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 79.25,
+   "y": 410.62
+  },
+  {
+   "id": "hambley",
+   "naam": {
+    "nl": "Hambley",
+    "en": "Hambley"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.6,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "tekst": {
+    "nl": "Een dorp aan de zuidwestkust van Araluen, bij de grens met Celtica.",
+    "en": "A village on Araluen's southwest coast, near the Celtican border."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Zuidwestkust",
+      "en": "Southwest coast"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 75.65,
+   "y": 418.0
+  },
+  {
+   "id": "pordelath",
+   "naam": {
+    "nl": "Pordelath",
+    "en": "Pordelath"
+   },
+   "soort": "stad",
+   "gebied": "celtica",
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ2"
+   ],
+   "tekst": {
+    "nl": "Een mijnstadje in Celtica, vlak over de grens met Araluen.",
+    "en": "A mining town in Celtica, just across the border from Araluen."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Noord-Celtica",
+      "en": "North Celtica"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 83.7,
+   "y": 420.1
+  },
+  {
+   "id": "gwyntoleth",
+   "naam": {
+    "nl": "Gwyntoleth",
+    "en": "Gwyntoleth"
+   },
+   "soort": "stad",
+   "gebied": "celtica",
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ2"
+   ],
+   "tekst": {
+    "nl": "Een stadje in Celtica bij De Spleet. Will, Arnaut en Gilan vinden het in De brandende brug verlaten: de Celtici zijn weggevoerd om voor Morgarath de brug te bouwen.",
+    "en": "A town in Celtica near the Fissure. In The Burning Bridge Will, Horace and Gilan find it deserted: the Celts have been taken to build Morgarath's bridge."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Celtica, bij De Spleet",
+      "en": "Celtica, near the Fissure"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 82.45,
+   "y": 426.14
+  },
+  {
+   "id": "verdronken-woud",
+   "naam": {
+    "nl": "Verdronken Woud",
+    "en": "Drowned Wood"
+   },
+   "soort": "natuur",
+   "gebied": "araluen",
+   "z": 4.2,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ6"
+   ],
+   "tekst": {
+    "nl": "Een moerassig, half onder water gelopen woud naast het Grimsdell Woud, ten zuiden van Macindaw.",
+    "en": "A swampy, half-flooded wood beside Grimsdell Wood, south of Macindaw."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Bij het Grimsdell Woud",
+      "en": "By Grimsdell Wood"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 87.7,
+   "y": 372.34,
+   "begroeiing": "moeras",
+   "straal": 5
+  },
+  {
+   "id": "klaterkreek",
+   "naam": {
+    "nl": "Klaterkreek",
+    "en": "Klaterkreek"
+   },
+   "soort": "stad",
+   "gebied": "araluen",
+   "z": 4.8,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ6"
+   ],
+   "tekst": {
+    "nl": "Een gehucht aan een beek aan de rand van het Grimsdell Woud, onder Macindaw.",
+    "en": "A hamlet on a brook at the edge of Grimsdell Wood, below Macindaw."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Bij Macindaw",
+      "en": "Near Macindaw"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 88.05,
+   "y": 368.38
+  },
+  {
+   "id": "eenraafs-pas",
+   "naam": {
+    "nl": "Eenraafs pas",
+    "en": "One Raven Pass"
+   },
+   "soort": "natuur",
+   "gebied": "picta",
+   "z": 4.2,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ5",
+    "GJ6"
+   ],
+   "tekst": {
+    "nl": "Een bergpas van Picta naar Araluen, ten westen van de Macindaw pas.",
+    "en": "A mountain pass from Picta into Araluen, west of Macindaw Pass."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Grens Picta–Araluen",
+      "en": "Picta–Araluen border"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 82.6,
+   "y": 364.2,
+   "geenSnap": 1
+  },
+  {
+   "id": "macindaw-pas",
+   "naam": {
+    "nl": "Macindaw pas",
+    "en": "Macindaw Pass"
+   },
+   "soort": "natuur",
+   "gebied": "picta",
+   "z": 4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ5",
+    "GJ6"
+   ],
+   "tekst": {
+    "nl": "De pas waarlangs de Scotti uit Picta Araluen binnen kunnen trekken, en die Kasteel Macindaw moet bewaken.",
+    "en": "The pass by which the Scotti can come down from Picta into Araluen, and which Castle Macindaw guards."
+   },
+   "feiten": [
+    [
+     {
+      "nl": "Ligging",
+      "en": "Location"
+     },
+     {
+      "nl": "Boven Macindaw",
+      "en": "Above Macindaw"
+     }
+    ],
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "approx": 1,
+   "x": 90.2,
+   "y": 362.6,
+   "geenSnap": 1
+  },
+  {
+   "id": "rivier-tarbus",
+   "naam": {
+    "nl": "Tarbus",
+    "en": "Tarbus"
+   },
+   "soort": "rivier",
+   "gebied": "araluen",
+   "x": 77.12,
+   "y": 396.67,
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ1"
+   ],
+   "feiten": [
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "tekst": {
+    "nl": "De rivier langs Kasteel Redmont en Wensley. Met de brug eroverheen kan de Tarbus Redmont als een gracht afsluiten.",
+    "en": "The river past Castle Redmont and Wensley. With its bridge raised, the Tarbus closes Redmont off like a moat."
+   }
+  },
+  {
+   "id": "rivier-zalmrivier",
+   "naam": {
+    "nl": "Zalmrivier",
+    "en": "Salmon River"
+   },
+   "soort": "rivier",
+   "gebied": "araluen",
+   "x": 77.07,
+   "y": 398.52,
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "VJ1"
+   ],
+   "feiten": [
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "tekst": {
+    "nl": "Een smalle, snelstromende rivier ten zuiden van Redmont die bij Silvoorde de Tarbus ontmoet.",
+    "en": "A narrow, fast-flowing river south of Redmont that meets the Tarbus near Silvoorde."
+   }
+  },
+  {
+   "id": "rivier-derrylon",
+   "naam": {
+    "nl": "Derrylon",
+    "en": "Derrylon"
+   },
+   "soort": "rivier",
+   "gebied": "araluen",
+   "x": 84.66,
+   "y": 392.66,
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "feiten": [
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "tekst": {
+    "nl": "Een rivier die van het heuvelland ten zuiden van Gorlan naar Pendelstad en de Zalmrivier stroomt.",
+    "en": "A river flowing from the hills south of Gorlan down to Pendelstad and the Salmon River."
+   }
+  },
+  {
+   "id": "rivier-kraaienpotenrivier",
+   "naam": {
+    "nl": "Kraaienpotenrivier",
+    "en": "Crowsfoot River"
+   },
+   "soort": "rivier",
+   "gebied": "araluen",
+   "x": 92.66,
+   "y": 379.56,
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "feiten": [
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "tekst": {
+    "nl": "Een rivier die van Woolsey naar het noordoosten stroomt en bij Kasteel Araluen in de Sliponderrivier uitkomt.",
+    "en": "A river running northeast from Woolsey into the Sliponder River near Castle Araluen."
+   }
+  },
+  {
+   "id": "rivier-sliponderrivier",
+   "naam": {
+    "nl": "Sliponderrivier",
+    "en": "Sliponder River"
+   },
+   "soort": "rivier",
+   "gebied": "araluen",
+   "x": 103.06,
+   "y": 378.71,
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "feiten": [
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "tekst": {
+    "nl": "De grote rivier ten noorden van Kasteel Araluen, die naar de oostkust stroomt.",
+    "en": "The large river north of Castle Araluen, flowing to the east coast."
+   }
+  },
+  {
+   "id": "rivier-wildrivier",
+   "naam": {
+    "nl": "Wildrivier",
+    "en": "Wild River"
+   },
+   "soort": "rivier",
+   "gebied": "araluen",
+   "x": 96.73,
+   "y": 369.39,
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [
+    "GJ5",
+    "GJ6"
+   ],
+   "feiten": [
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "tekst": {
+    "nl": "De rivier langs het Grimsdell Woud en Macindaw, die naar de noordoostkust stroomt.",
+    "en": "The river past Grimsdell Wood and Macindaw, flowing to the northeast coast."
+   }
+  },
+  {
+   "id": "rivier-craiskill",
+   "naam": {
+    "nl": "Craiskill",
+    "en": "Craiskill"
+   },
+   "soort": "rivier",
+   "gebied": "picta",
+   "x": 75,
+   "y": 358.6,
+   "z": 4.4,
+   "serie": [
+    "GJ"
+   ],
+   "boeken": [],
+   "feiten": [
+    [
+     {
+      "nl": "Bron",
+      "en": "Source"
+     },
+     {
+      "nl": "De kaart in de boeken",
+      "en": "The map in the books"
+     }
+    ]
+   ],
+   "tekst": {
+    "nl": "Een rivier in het westen van Picta, die bij de Kaap van Linkeith in zee uitkomt.",
+    "en": "A river in western Picta that reaches the sea near the Cape of Linkeith."
+   }
   }
  ],
  "routegroepen": {
@@ -11629,6 +13108,261 @@
     [
      250.3,
      337.26
+    ]
+   ]
+  },
+  {
+   "id": "rivier-tarbus",
+   "naam": {
+    "nl": "Tarbus",
+    "en": "Tarbus"
+   },
+   "punten": [
+    [
+     70.8,
+     398.2
+    ],
+    [
+     73.81,
+     397.84
+    ],
+    [
+     75.42,
+     397.25
+    ],
+    [
+     77.12,
+     396.67
+    ],
+    [
+     78.5,
+     396.07
+    ],
+    [
+     79.75,
+     395.49
+    ]
+   ]
+  },
+  {
+   "id": "rivier-zalmrivier",
+   "naam": {
+    "nl": "Zalmrivier",
+    "en": "Salmon River"
+   },
+   "punten": [
+    [
+     70.6,
+     398.8
+    ],
+    [
+     72.77,
+     398.57
+    ],
+    [
+     74.77,
+     398.39
+    ],
+    [
+     77.07,
+     398.52
+    ],
+    [
+     79.14,
+     398.07
+    ],
+    [
+     81.02,
+     396.76
+    ],
+    [
+     83.06,
+     396.17
+    ]
+   ]
+  },
+  {
+   "id": "rivier-derrylon",
+   "naam": {
+    "nl": "Derrylon",
+    "en": "Derrylon"
+   },
+   "punten": [
+    [
+     82.51,
+     396.22
+    ],
+    [
+     83.58,
+     394.71
+    ],
+    [
+     84.66,
+     392.66
+    ],
+    [
+     85.84,
+     390.63
+    ],
+    [
+     85.98,
+     388.59
+    ]
+   ]
+  },
+  {
+   "id": "rivier-kraaienpotenrivier",
+   "naam": {
+    "nl": "Kraaienpotenrivier",
+    "en": "Crowsfoot River"
+   },
+   "punten": [
+    [
+     89.37,
+     385.13
+    ],
+    [
+     90.39,
+     383.26
+    ],
+    [
+     91.46,
+     381.17
+    ],
+    [
+     92.66,
+     379.56
+    ],
+    [
+     93.47,
+     377.51
+    ],
+    [
+     93.97,
+     376.17
+    ]
+   ]
+  },
+  {
+   "id": "rivier-sliponderrivier",
+   "naam": {
+    "nl": "Sliponderrivier",
+    "en": "Sliponder River"
+   },
+   "punten": [
+    [
+     93.97,
+     376.17
+    ],
+    [
+     95.77,
+     376.38
+    ],
+    [
+     97.62,
+     376.67
+    ],
+    [
+     99.44,
+     377.64
+    ],
+    [
+     101.24,
+     378.76
+    ],
+    [
+     103.06,
+     378.71
+    ],
+    [
+     105.1,
+     377.79
+    ],
+    [
+     106.92,
+     374.96
+    ],
+    [
+     109.5,
+     373.2
+    ],
+    [
+     112.2,
+     371.6
+    ]
+   ]
+  },
+  {
+   "id": "rivier-wildrivier",
+   "naam": {
+    "nl": "Wildrivier",
+    "en": "Wild River"
+   },
+   "punten": [
+    [
+     89.53,
+     372.95
+    ],
+    [
+     91.25,
+     371.03
+    ],
+    [
+     93.27,
+     370.33
+    ],
+    [
+     95.01,
+     369.9
+    ],
+    [
+     96.73,
+     369.39
+    ],
+    [
+     98.38,
+     368.48
+    ],
+    [
+     99.96,
+     367.07
+    ],
+    [
+     101.56,
+     365.47
+    ],
+    [
+     103.6,
+     364.2
+    ]
+   ]
+  },
+  {
+   "id": "rivier-craiskill",
+   "naam": {
+    "nl": "Craiskill",
+    "en": "Craiskill"
+   },
+   "punten": [
+    [
+     69.5,
+     363.5
+    ],
+    [
+     72,
+     361
+    ],
+    [
+     75,
+     358.6
+    ],
+    [
+     78.5,
+     356.2
+    ],
+    [
+     81,
+     353.5
     ]
    ]
   }
