@@ -1114,7 +1114,7 @@ export async function maak3D(ctx){
             float bosSneeuw=texture2D(uLoof,vMapUv).a;
             diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.72,.75,.78),bosDek*bosSneeuw*.55);
             float pol=texture2D(uDetail,vWolkW.xz*1.3).r*.6+texture2D(uDetail,vWolkW.xz*.37).r*.4;
-            diffuseColor.rgb*=mix(1.0,.66+.4*pol,bosDek*(1.0-bosZicht));
+            diffuseColor.rgb*=mix(1.0,.55+.55*pol,bosDek*(1.0-bosZicht));
           }
           if(bosZicht>.002)diffuseColor.rgb*=mix(vec3(1.0),kk,bosZicht*gKruinEr);
           /* De zandwoestijn: duinen in lange ruggen dwars op de wind, met een
@@ -1182,7 +1182,10 @@ export async function maak3D(ctx){
                richting van de akker, en bij geploegd land voren. */
             vec2 qa=vec2(q.x+sch,q.y);
             float vlekG=texture2D(uDetail,qa*.9+bid*.37).r*.55+texture2D(uDetail,qa*3.7+bid).r*.45;
-            gewas*=mix(1.0,.86+.28*vlekG,1.0-smoothstep(.02,.08,akPx));
+            gewas*=mix(1.0,.78+.42*vlekG,1.0-smoothstep(.02,.08,akPx));
+            /* van dichtbij: pollen gras en kale plekjes van een paar meter */
+            float pol=texture2D(uDetail,qa*13.0+bid*.71).r*.6+texture2D(uDetail,qa*41.0).r*.4;
+            gewas*=mix(1.0,.84+.3*pol,1.0-smoothstep(.0015,.006,akPx));
             float rijen=.5+.5*sin(q.y*1400.0+hh.x*30.0);
             float soortA=hh.y;
             float zRij=1.0-smoothstep(.0006,.0018,akPx);
@@ -1791,6 +1794,26 @@ export async function maak3D(ctx){
     }
     return (Math.sqrt(b2)-Math.sqrt(b1))*1.0*.5;
   }
+  /* hoe ver een wereldpunt van de dichtstbijzijnde heg ligt: een kavelrand,
+     of een heg tussen twee akkers binnen de kavel (zoals de shader die
+     tekent: dezelfde rijen en kolommen, dezelfde husselfunctie) */
+  function hegAfstand(px,pz){
+    const wx=(korrelOp(px*.065,pz*.065)-.5)*.3, wz=(korrelOp(px*.065+.37,pz*.065+.61)-.5)*.3;
+    const bx=px+wx, bz=pz+wz, cx=Math.floor(bx), cz=Math.floor(bz), fx=bx-cx, fz=bz-cz;
+    let b1=9,b2=9,ix=0,iz=0,ox=0,oz=0;
+    for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){
+      const o=kHashJS(cx+i+3,cz+j+11), rx=i+.1+.8*o[0]-fx, rz=j+.1+.8*o[1]-fz, d=rx*rx+rz*rz;
+      if(d<b1){ b2=b1; b1=d; ix=cx+i; iz=cz+j; ox=.1+.8*o[0]; oz=.1+.8*o[1]; } else if(d<b2)b2=d;
+    }
+    const kr=(Math.sqrt(b2)-Math.sqrt(b1))*.5;
+    const h3=kHashJS(ix+7,iz-19), th=h3[0]*Math.PI, cs=Math.cos(th), sn=Math.sin(th);
+    const qx0=bx-(ix+ox), qz0=bz-(iz+oz), qx=cs*qx0+sn*qz0, qy=-sn*qx0+cs*qz0;
+    const w=.065+(.12-.065)*h3[1], fr=h3[1]*7.13, L=.16+(.38-.16)*(fr-Math.floor(fr));
+    const rij=Math.floor(qy/w), sch=kHashJS(rij,ix+iz*17)[0]*L, kol=Math.floor((qx+sch)/L);
+    if(kHashJS(rij*3+kol,iz)[1]<.55)return kr;
+    const ffy=qy/w-rij, ffx=(qx+sch)/L-kol;
+    return Math.min(kr,Math.min(Math.min(ffy,1-ffy)*w,Math.min(ffx,1-ffx)*L));
+  }
   const akkerOp=(wx,wy)=>{ if(!akkerData)return 0; const i=Math.floor(wx+MARGE), j=Math.floor(wy+MARGE); return i<0||j<0||i>=R.PW||j>=R.PH?0:akkerData[(j*R.PW+i)*4+1]/255; };
   function detailIn(cx,cy){
     const sl=cx+","+cy; let v=detailVakken.get(sl); if(v)return v;
@@ -1931,6 +1954,59 @@ export async function maak3D(ctx){
     const voet=new THREE.InstancedMesh(vg,new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,depthWrite:false,fog:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),BOOM3DMAX*2);
     voet.count=0; voet.frustumCulled=false; voet.renderOrder=1; wereld.add(voet);
     bomen3D={loof:maak(false),naald:maak(true),voet,n:{loof:0,naald:0,voet:0}};
+    if(STRUIKVER){
+      const x=new THREE.InstancedMesh(struikVorm(),m,STRUIKMAX); x.count=0; x.castShadow=x.receiveShadow=true; x.frustumCulled=false;
+      x.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(STRUIKMAX*3),3); wereld.add(x);
+      bomen3D.struik=x;
+    }
+  }
+  /* ---- heggen in 3D, vlakbij ----
+     Van dichtbij is een heg geen streep op de grond maar een rij struiken
+     van een meter of drie hoog, met hier en daar een gat. Ze staan op de
+     kavelranden die de shader als heg tekent (kavelRand), in cellen van een
+     eenheid, en alleen binnen STRUIKVER van de camera: verder weg is een
+     struik maar een beeldpunt en doet de getekende heg het werk. */
+  const STRUIKVER=klein?0:3.5, STRUIKMAX=30000, struikVakken=new Map();
+  /* een struik: drie platgedrukte bollen blad door elkaar, zonder stam */
+  function struikVorm(){
+    const delen=[];
+    for(let i=0;i<3;i++){
+      const g=new THREE.IcosahedronGeometry(.42+.1*i,0).scale(1,.75,1).translate((i-1)*.32,.32+.06*(i%2),(i%2?.12:-.1));
+      const p=g.getAttribute("position");
+      for(let k=0;k<p.count;k++){ const f=1+(T.hash2(Math.round(p.getX(k)*97+i*31),Math.round((p.getY(k)+p.getZ(k))*89))-.5)*.3; p.setXYZ(k,p.getX(k)*f,p.getY(k)*f,p.getZ(k)*f); }
+      g.setAttribute("aDeel",new THREE.Float32BufferAttribute(new Float32Array(p.count).fill(1),1));
+      if(g.getAttribute("uv"))g.deleteAttribute("uv");
+      delen.push(g);
+    }
+    const g=mergeGeometries(delen); g.computeVertexNormals();
+    /* het licht valt over de struik als geheel, niet per facet */
+    const P=g.getAttribute("position"), Nn=g.getAttribute("normal"), v=new THREE.Vector3(), n=new THREE.Vector3();
+    for(let i=0;i<P.count;i++){ v.fromBufferAttribute(P,i).sub(new THREE.Vector3(0,.15,0)).normalize(); n.fromBufferAttribute(Nn,i).lerp(v,.75).normalize(); Nn.setXYZ(i,n.x,n.y,n.z); }
+    return g;
+  }
+  function struikenIn(cx,cy){
+    const sl=cx+","+cy; let v=struikVakken.get(sl); if(v)return v;
+    const uit=[], {land,bos,h}=D, S=.011, bezet=new Set();
+    for(let wy=cy+S/2;wy<cy+1;wy+=S)for(let wx=cx+S/2;wx<cx+1;wx+=S){
+      if(akkerOp(wx,wy)<.05)continue;
+      const px=wx+(T.hash2(Math.round(wx*311),Math.round(wy*313))-.5)*S*.7, py=wy+(T.hash2(Math.round(wx*317),Math.round(wy*331))-.5)*S*.7;
+      if(hegAfstand(X(px),Z(py))>.0055)continue;
+      /* niet twee struiken op dezelfde plek: één per vakje van zes meter */
+      const vk=Math.floor(px/.009)+","+Math.floor(py/.009); if(bezet.has(vk))continue; bezet.add(vk);
+      /* gaten in de heg: een hek, een doorgang, een dode struik */
+      const hk=T.hash2(Math.round(px*157),Math.round(py*163)); if(hk<.1)continue;
+      const p=Math.floor((py+MARGE)*RES)*RW+Math.floor((px+MARGE)*RES);
+      /* het rivierraster is grof (honderden meters breed): hier de echte
+         rivierlijn, zodat heggen tot aan de oever lopen */
+      if(p<0||p>=N||!land[p]||bos[p]>=20||h[p]>=.3||rivierOp(px,py)>0||opPlaats(px,py))continue;
+      const st=gebiedStijl(D.reg[p]); if(st==="arrida"||st==="steppen")continue;
+      const f=.8+.4*T.hash2(Math.round(px*71),Math.round(py*67)), g=T.hash2(Math.round(px*13),Math.round(py*19));
+      uit.push(X(px),yOp(px,py)-.001,Z(py),.006+.004*hk,hk*41%6.283,.13*f*(1+.3*g),.22*f,.075*f);
+    }
+    v=new Float32Array(uit);
+    struikVakken.set(sl,v);
+    if(struikVakken.size>400){ const eerste=struikVakken.keys().next().value; struikVakken.delete(eerste); }
+    return v;
   }
   const boomM=new THREE.Matrix4(), boomQ=new THREE.Quaternion(), boomP=new THREE.Vector3(), boomS=new THREE.Vector3(), boomAs=new THREE.Vector3(0,1,0);
   /* zet een boom als 3D-boom neer; geeft false als het geen 3D-boom wordt */
@@ -1998,7 +2074,7 @@ export async function maak3D(ctx){
     const boven=c.y-grondY(mx,my);
     randBomen.visible=boven<RANDVER;
     if(stenen)stenen.visible=boven<DETAILVER;
-    if(bomen3D){ bomen3D.loof.visible=bomen3D.naald.visible=bomen3D.voet.visible=boven<BOOM3D; }
+    if(bomen3D){ bomen3D.loof.visible=bomen3D.naald.visible=bomen3D.voet.visible=boven<BOOM3D; if(bomen3D.struik)bomen3D.struik.visible=boven<STRUIKVER; }
     if(!randBomen.visible)return;
     if(!dwing&&Math.hypot(mx-randStand.x,my-randStand.y)<Math.min(8,2+boven*.1)&&Math.abs(boven-randStand.b)<Math.max(3,boven*.25))return;
     randStand.x=mx; randStand.y=my; randStand.b=boven;
@@ -2055,6 +2131,27 @@ export async function maak3D(ctx){
         if(ns>=STEENMAX)break;
       }
       stenen.count=ns; stenen.instanceMatrix.needsUpdate=true; stenen.instanceColor.needsUpdate=true;
+    }
+    /* de struiken van de heggen, in cellen van een eenheid rond de camera */
+    if(bomen3D&&bomen3D.struik&&boven<STRUIKVER){
+      const x=bomen3D.struik, rs=Math.sqrt(Math.max(0,STRUIKVER*STRUIKVER-boven*boven));
+      /* de cellen van dichtbij naar ver: is het maximum bereikt, dan
+         vallen de verste weg */
+      const cellen=[];
+      for(let cy=Math.floor(my-rs);cy<=Math.floor(my+rs);cy++)for(let cx=Math.floor(mx-rs);cx<=Math.floor(mx+rs);cx++){
+        const d=Math.hypot(Math.max(0,Math.abs(mx-cx-.5)-.5),Math.max(0,Math.abs(my-cy-.5)-.5)); if(d<=rs)cellen.push([d,cx,cy]);
+      }
+      cellen.sort((a,b)=>a[0]-b[0]);
+      let nb=0;
+      for(const [,cx,cy] of cellen){
+        if(nb>=STRUIKMAX)break;
+        const v=struikenIn(cx,cy);
+        for(let i=0;i<v.length&&nb<STRUIKMAX;i+=8,nb++){
+          boomM.compose(boomP.set(v[i],v[i+1],v[i+2]),boomQ.setFromAxisAngle(boomAs,v[i+4]),boomS.set(v[i+3],v[i+3]*.85,v[i+3]));
+          x.setMatrixAt(nb,boomM); x.instanceColor.setXYZ(nb,v[i+5],v[i+6],v[i+7]);
+        }
+      }
+      x.count=nb; x.instanceMatrix.needsUpdate=true; x.instanceColor.needsUpdate=true;
     }
   }
   const gebouwPlekken=[];        /* [x,y,straal]: de plek van elk gebouwd ding */
