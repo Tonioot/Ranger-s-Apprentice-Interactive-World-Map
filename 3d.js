@@ -1398,6 +1398,9 @@ export async function maak3D(ctx){
     }
     const g=new THREE.BufferGeometry();
     g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+    /* recht omhoog: de shader rekent zelf met golven, maar de ambient
+       occlusion leest de normaal (zonder normaal werd de zee zwart) */
+    g.setAttribute("normal",new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_,i)=>i%3===1?1:0),3));
     g.setIndex(idx);
     return g;
   }
