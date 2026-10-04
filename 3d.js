@@ -145,7 +145,31 @@ function installeerNevel(){
 const klem=(v,a,b)=>v<a?a:v>b?b:v;
 const glad=t=>t*t*(3-2*t);
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const isDonker=()=>+css("--donker")>0;
+/* Dag of nacht in de 3D-wereld. Dat staat los van het thema van de pagina:
+   een donker thema is een keuze voor het scherm, geen tijdstip. De knop naast
+   de 3D-knop zet het om (en het wordt onthouden). */
+let nachtModus=false;
+try{ nachtModus=localStorage.getItem("gj-tijd")==="nacht"; }catch(e){}
+const isDonker=()=>nachtModus;
+/* De kleuren van de wereld (rots, sneeuw, de tinten van de landen) staan in
+   de CSS, per thema. De wereld neemt ze van het lichte thema overdag en van
+   het donkere 's nachts, wat de pagina ook toont. */
+let themaVars=null;
+function wcss(n){
+  if(!themaVars){
+    themaVars={licht:{},donker:{}};
+    for(const blad of document.styleSheets){
+      let regels; try{ regels=blad.cssRules; }catch(e){ continue; }
+      for(const r of regels){
+        const sel=r.selectorText||"";
+        const doel=sel===":root"?themaVars.licht:sel===':root[data-theme="dark"]'?themaVars.donker:null;
+        if(!doel)continue;
+        for(let i=0;i<r.style.length;i++){ const k=r.style[i]; if(k.startsWith("--"))doel[k]=r.style.getPropertyValue(k).trim(); }
+      }
+    }
+  }
+  return (nachtModus?themaVars.donker[n]:themaVars.licht[n])||themaVars.licht[n]||css(n);
+}
 const rgb=hex=>{ const s=hex.replace("#",""); const n=parseInt(s.length===3?s.replace(/./g,"$&$&"):s,16); return [n>>16&255,n>>8&255,n&255]; };
 const mengIn=(k,doel,t)=>{ k[0]+=(doel[0]-k[0])*t; k[1]+=(doel[1]-k[1])*t; k[2]+=(doel[2]-k[2])*t; };
 /* "var(--pers-3)" of "#abc" → een echte kleur */
@@ -564,7 +588,7 @@ export async function maak3D(ctx){
     const fR=new Float32Array(M2), fG=new Float32Array(M2), fB=new Float32Array(M2);
     const fKorrel=new Float32Array(M2), fVlek=new Float32Array(M2);
     const kleurVan=s=>rgb(donker?T.GROEI[s].donker:T.GROEI[s].licht);
-    const tonen={}; for(const k of "abcdef")tonen[k]=rgb(css("--tone-"+k)||"#888888");
+    const tonen={}; for(const k of "abcdef")tonen[k]=rgb(wcss("--tone-"+k)||"#888888");
     const TOON=.30;      /* zelfde als in bouwGrond() */
     const middel=kleurVan("grasland");
     fR.fill(middel[0]); fG.fill(middel[1]); fB.fill(middel[2]);
@@ -592,7 +616,7 @@ export async function maak3D(ctx){
           fKorrel[p]+=(gr.korrel-fKorrel[p])*w; fVlek[p]+=(gr.vlek-fVlek[p])*w;
         }
     }
-    const kl={ROTS:rgb(css("--rots")||"#9C9782"),SNEEUW:rgb(css("--sneeuw")||"#F1EFE4"),GRENS:rgb(css("--coast")||"#5A6356"),
+    const kl={ROTS:rgb(wcss("--rots")||"#9C9782"),SNEEUW:rgb(wcss("--sneeuw")||"#F1EFE4"),GRENS:rgb(wcss("--coast")||"#5A6356"),
       ZAND:rgb(th.zand),RIV:rgb(th.rivier),BO:rgb(th.bodemOndiep),BD:rgb(th.bodemDiep)};
     const uit=new Uint8Array(N*4);
     const RAND=Math.round(7*RES)+2;     /* rijen extra boven en onder, voor de holtes */
@@ -1560,7 +1584,7 @@ export async function maak3D(ctx){
     for(const k of ["aBoom","aSoort","aKleur"]){ const at=g.getAttribute(k); at.needsUpdate=true; at.clearUpdateRanges?.(); at.addUpdateRange?.(0,n*at.itemSize); }
     /* de stenen in de vakken dichtbij */
     if(stenen){
-      steenK.set(css("--rots")||"#9C9782");
+      steenK.set(wcss("--rots")||"#9C9782");
       let ns=0;
       for(const [d,cx,cy] of vakken2){
         if(Math.hypot(d,boven)>=DETAILVER)continue;
@@ -1982,7 +2006,7 @@ export async function maak3D(ctx){
     if(lichtjes)lichtjes.visible=!!th.lichtjes;
     GEDEELD.uGebouwLicht.value=isDonker()?.04:.13;
     GEDEELD.uNacht.value=isDonker()?1:0;
-    rotsKleur.value.set(css("--rots")||"#9C9782");
+    rotsKleur.value.set(wcss("--rots")||"#9C9782");
     wegKleur.value.set(th.weg);
     th.akkers.forEach((k,i)=>akkU.value[i].set(k)); hegKleur.value.set(th.heg);
     if(D)tekenRoutes();
@@ -2352,8 +2376,17 @@ export async function maak3D(ctx){
       tekenKeuze(id);
     },
     routes(){ if(actief)tekenRoutes(); },
+    /* het thema van de pagina is gewisseld: de wereld blijft wat hij is
+       (dag of nacht), alleen de lijnen en de keuze krijgen de nieuwe kleuren */
     async thema(){
       if(!gebouwd)return;
+      zetThema(); tekenKeuze(gekozen);
+    },
+    /* dag of nacht: de kleuren van het land zijn erin gebakken, dus die opnieuw */
+    async wisselTijd(){
+      nachtModus=!nachtModus;
+      try{ localStorage.setItem("gj-tijd",nachtModus?"nacht":"dag"); }catch(e){}
+      if(!gebouwd)return nachtModus;
       ctx.laad.aan(); await ctx.adem();
       try{
         const k=await opnieuwBijFout(bouwKleur);
@@ -2361,6 +2394,7 @@ export async function maak3D(ctx){
         randVakken.clear(); detailVakken.clear(); werkRandBomenBij(true);
         zetThema();
       }finally{ ctx.laad.weg(); }
+      return nachtModus;
     },
     zoom(f){
       vlucht=null;

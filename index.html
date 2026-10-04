@@ -231,6 +231,13 @@ button,input{font:inherit;color:inherit}
   color:var(--ink-soft);margin-bottom:6px}
 .ctrl .k3d:hover{color:var(--ink)}
 .ctrl .k3d[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+/* dag of nacht in de 3D-wereld: los van het thema van de pagina (een donker
+   thema is een keuze voor het scherm, geen tijdstip). Alleen te zien in 3D. */
+.ctrl .kdag{display:none;margin-bottom:6px}
+body.drie3d .ctrl .kdag{display:grid}
+.ctrl .kdag svg{fill:none;stroke:currentColor;stroke-width:1.5;width:16px;height:16px}
+.ctrl .kdag .i-zon,.ctrl .kdag[aria-pressed=true] .i-maan{display:none}
+.ctrl .kdag[aria-pressed=true] .i-zon{display:block}
 .drie{position:absolute;inset:0;z-index:0;background:var(--sea)}
 .drie[hidden]{display:none}
 .drie canvas{display:block;touch-action:none;outline:none}
@@ -1175,6 +1182,7 @@ body.zetten .routepunt:hover .stip{stroke-width:2}
     </div>
     <div class="ctrl">
       <button id="z3d" class="k3d" type="button" aria-pressed="false" data-t-aria="drieDAan" aria-label="Bekijk in 3D" data-t-attr="title:drieDAan" title="Bekijk in 3D">3D</button>
+      <button id="zdag" class="kdag" type="button" aria-pressed="false" data-t-aria="drieNacht" aria-label="Nacht" data-t-attr="title:drieNacht" title="Nacht"><svg class="i-maan" viewBox="0 0 18 18" aria-hidden="true"><path d="M15 10.2A6.2 6.2 0 0 1 7.8 3 6.5 6.5 0 1 0 15 10.2Z"/></svg><svg class="i-zon" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="3.4"/><path d="M9 1.5v2M9 14.5v2M16.5 9h-2M3.5 9h-2M14.4 3.6l-1.4 1.4M4.98 13l-1.4 1.4M14.4 14.4l-1.4-1.4M4.98 5l-1.4-1.4"/></svg></button>
       <button id="zin" data-t-aria="inzoomen" aria-label="Inzoomen"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></button>
       <button id="zout" data-t-aria="uitzoomen" aria-label="Uitzoomen"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button>
       <button id="zfit" data-t-aria="heleKaart" aria-label="Hele kaart tonen"><svg viewBox="0 0 16 16"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg></button>
@@ -1485,6 +1493,8 @@ const U={
   bezigRivier:{nl:"Rivier wordt uitgerekend",en:"Recalculating the river"},
   drieDAan:{nl:"Bekijk in 3D",en:"View in 3D"},
   drieDUit:{nl:"Terug naar de platte kaart",en:"Back to the flat map"},
+  drieNacht:{nl:"Nacht in 3D",en:"Night in 3D"},
+  drieDag:{nl:"Dag in 3D",en:"Day in 3D"},
   bezig3D:{nl:"De wereld rijst op in 3D",en:"Raising the world in 3D"},
   drieDFout:{nl:"3D werkt niet in deze browser",en:"3D is not available in this browser"},
 };
@@ -4873,6 +4883,17 @@ function drieContext(){
     adem
   };
 }
+/* dag of nacht in 3D: de knop zet het om en onthoudt het */
+function zetDagKnop(nacht){
+  const k=$("#zdag"), sl=nacht?"drieDag":"drieNacht";
+  k.setAttribute("aria-pressed",nacht?"true":"false"); k.title=t(sl); k.setAttribute("aria-label",t(sl)); k.dataset.tAria=sl; k.dataset.tAttr="title:"+sl;
+}
+try{ zetDagKnop(localStorage.getItem("gj-tijd")==="nacht"); }catch(e){}
+$("#zdag").onclick=async()=>{
+  if(!drieD||!in3D())return;
+  const k=$("#zdag"); if(k.disabled)return; k.disabled=true;
+  try{ zetDagKnop(await drieD.wisselTijd()); }finally{ k.disabled=false; }
+};
 $("#z3d").onclick=async()=>{
   const knop=$("#z3d");
   if(knop.disabled)return;
